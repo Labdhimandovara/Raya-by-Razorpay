@@ -9,12 +9,11 @@ import {
 const BRIDGE_URL = process.env.NEXUS_STORE_BRIDGE_URL || "https://bazaar-ai-lm2z.onrender.com/bazaar";
 const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 
-// Best Groq models for function calling, in priority order
+// Current active Groq production models (updated Sept 2026)
 const GROQ_MODELS = [
-  "llama-3.3-70b-versatile",
-  "llama3-groq-70b-8192-tool-use-preview",
-  "llama-3.1-70b-versatile",
-  "llama3-70b-8192",
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "qwen/qwen3.6-27b",
 ];
 
 let workingModel: string | null = null;
