@@ -17,6 +17,41 @@ const GROQ_MODELS = [
 
 let workingModel: string | null = null;
 
+async function getAvailableGroqModel(groqKey: string): Promise<string> {
+  if (workingModel) return workingModel;
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/models", {
+      headers: { Authorization: `Bearer ${groqKey}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const modelIds: string[] = (data.data || []).map((m: any) => m.id);
+      console.log("[Raya Groq] Available models on account:", modelIds);
+      const preferred = [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-70b-versatile",
+        "llama-3.1-8b-instant",
+        "llama3-70b-8192",
+        "llama3-8b-8192",
+      ];
+      for (const p of preferred) {
+        if (modelIds.includes(p)) {
+          workingModel = p;
+          return p;
+        }
+      }
+      const llama = modelIds.find((id) => id.includes("llama"));
+      if (llama) {
+        workingModel = llama;
+        return llama;
+      }
+    }
+  } catch (e) {
+    console.warn("[Raya Groq] Models endpoint fetch error:", e);
+  }
+  return "llama-3.3-70b-versatile";
+}
+
 async function callAI(
   messages: any[],
   groqKey: string,
@@ -27,40 +62,36 @@ async function callAI(
 
   // 1. Try Groq if key is available
   if (groqKey) {
-    const modelsToTry = workingModel
-      ? [workingModel, ...GROQ_MODELS.filter((m) => m !== workingModel)]
-      : GROQ_MODELS;
+    const modelToUse = await getAvailableGroqModel(groqKey);
 
-    for (const model of modelsToTry) {
-      try {
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${groqKey}`,
-          },
-          body: JSON.stringify({
-            model,
-            messages,
-            tools: GROQ_TOOLS,
-            tool_choice: "auto",
-            max_tokens: 4096,
-          }),
-        });
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify({
+          model: modelToUse,
+          messages,
+          tools: GROQ_TOOLS,
+          tool_choice: "auto",
+          max_tokens: 4096,
+        }),
+      });
 
-        if (res.ok) {
-          workingModel = model;
-          return await res.json();
-        }
-
-        workingModel = null; // Clear cached model on failure
-        const errData = await res.json().catch(() => null);
-        lastError = errData?.error?.message || `HTTP ${res.status}`;
-        console.error(`[Raya Groq Error] Model ${model} failed:`, lastError);
-      } catch (e: any) {
-        workingModel = null;
-        lastError = e.message;
+      if (res.ok) {
+        workingModel = modelToUse;
+        return await res.json();
       }
+
+      const errData = await res.json().catch(() => null);
+      lastError = `[Model ${modelToUse}]: ${errData?.error?.message || `HTTP ${res.status}`}`;
+      console.error(`[Raya Groq Error]`, lastError);
+      workingModel = null;
+    } catch (e: any) {
+      workingModel = null;
+      lastError = e.message;
     }
     console.warn(`[Raya] Groq attempts failed: ${lastError}. Checking alternative providers...`);
   }
