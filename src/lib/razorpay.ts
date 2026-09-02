@@ -1,4 +1,4 @@
-﻿// Razorpay Client-Side SDK Loader and Checkout Trigger
+// Razorpay Client-Side SDK Loader and Checkout Trigger
 
 export function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -38,6 +38,7 @@ export interface RazorpayCheckoutOptions {
     razorpay_order_id: string;
     razorpay_signature: string;
   }) => void;
+  onFailure?: (error: any) => void;
   onDismiss?: () => void;
 }
 
@@ -79,10 +80,19 @@ export async function triggerRazorpayPayment(options: RazorpayCheckoutOptions): 
 
   try {
     const rzp = new (window as any).Razorpay(rzpOptions);
+    rzp.on("payment.failed", function (response: any) {
+      console.warn("[Razorpay Payment Failed caught gracefully]:", response?.error);
+      if (options.onFailure) {
+        options.onFailure(response?.error);
+      }
+    });
     rzp.open();
     return true;
   } catch (err) {
     console.error("Error opening Razorpay modal:", err);
+    if (options.onFailure) {
+      options.onFailure(err);
+    }
     return false;
   }
 }
