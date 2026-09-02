@@ -61,10 +61,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
 
-    // Read Gemini API key dynamically
+    // Read Gemini API key dynamically (supports both uppercase and lowercase)
     const geminiKey = (
       process.env.GEMINI_API_KEY ||
+      process.env.gemini_api_key ||
+      process.env.Gemini_Api_Key ||
       process.env.GOOGLE_API_KEY ||
+      process.env.google_api_key ||
       process.env.GOOGLE_GENAI_API_KEY ||
       ""
     ).trim();
