@@ -10,104 +10,26 @@ import {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const GROQ_PRIORITY_MODELS = [
-  "llama-3.3-70b-versatile",
-  "llama-3.1-8b-instant",
-  "gemma2-9b-it",
+const GEMINI_MODELS = [
+  "gemini-1.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-pro",
 ];
 
-async function callAI(
-  messages: any[],
-  groqKey: string,
-  geminiKey: string,
-  openaiKey: string
-): Promise<any> {
-  let groqLastError = "";
+async function callGemini(messages: any[], geminiKey: string): Promise<any> {
+  let lastError = "Unknown Gemini error";
 
-  // 1. Try Groq with high-capacity models first
-  if (groqKey) {
-    for (const model of GROQ_PRIORITY_MODELS) {
-      try {
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${groqKey}`,
-          },
-          body: JSON.stringify({
-            model,
-            messages,
-            tools: GROQ_TOOLS,
-            tool_choice: "auto",
-            max_tokens: 4096,
-          }),
-        });
-
-        if (res.ok) {
-          return await res.json();
-        }
-
-        const errData = await res.json().catch(() => null);
-        const errMsg = errData?.error?.message || `HTTP ${res.status}`;
-        groqLastError = errMsg;
-
-        // If rate limited (429) or overloaded, proceed to next model or fallback to Gemini
-        console.warn(`[Raya Groq] Model ${model} returned ${res.status}: ${errMsg}`);
-      } catch (e: any) {
-        groqLastError = e.message;
-      }
-    }
-    console.warn(`[Raya] All Groq priority models failed. Checking Gemini fallback...`);
-  }
-
-  // 2. Seamless Fallback to Google Gemini (High TPM, fast, reliable)
-  if (geminiKey) {
-    console.log("[Raya] Engaging Google Gemini fallback engine...");
-    const geminiModels = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
-
-    for (const gModel of geminiModels) {
-      try {
-        const res = await fetch(
-          "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${geminiKey}`,
-            },
-            body: JSON.stringify({
-              model: gModel,
-              messages,
-              tools: GROQ_TOOLS,
-              tool_choice: "auto",
-            }),
-          }
-        );
-
-        if (res.ok) {
-          console.log(`[Raya] Gemini model ${gModel} succeeded!`);
-          return await res.json();
-        }
-
-        const gErr = await res.json().catch(() => null);
-        console.warn(`[Raya Gemini] ${gModel} returned ${res.status}:`, gErr);
-      } catch (e: any) {
-        console.warn(`[Raya Gemini] Exception with ${gModel}:`, e.message);
-      }
-    }
-  }
-
-  // 3. Fallback to OpenAI if configured
-  if (openaiKey) {
+  for (const model of GEMINI_MODELS) {
     try {
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      const url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
+      const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${openaiKey}`,
+          Authorization: `Bearer ${geminiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model,
           messages,
           tools: GROQ_TOOLS,
           tool_choice: "auto",
@@ -117,28 +39,17 @@ async function callAI(
       if (res.ok) {
         return await res.json();
       }
+
+      const errData = await res.json().catch(() => null);
+      lastError = errData?.error?.message || `HTTP ${res.status}`;
+      console.warn(`[Raya Gemini] Model ${model} returned ${res.status}:`, lastError);
     } catch (e: any) {
-      console.warn("[Raya OpenAI] Exception:", e.message);
+      lastError = e.message;
+      console.warn(`[Raya Gemini] Model ${model} exception:`, e.message);
     }
   }
 
-  // If Groq was rate-limited and Gemini is missing, provide a clear actionable message
-  if (groqLastError && groqLastError.toLowerCase().includes("rate limit")) {
-    if (!geminiKey) {
-      throw new Error(
-        "Groq free-tier rate limit reached! Please add your `GEMINI_API_KEY` to Vercel Environment Variables so Raya can automatically switch to Google Gemini when Groq is busy."
-      );
-    }
-    throw new Error(`Groq rate-limited and Gemini fallback also failed: ${groqLastError}`);
-  }
-
-  if (groqLastError) {
-    throw new Error(`Groq Error: ${groqLastError}`);
-  }
-
-  throw new Error(
-    "No AI provider credentials available. Please configure GROQ_API_KEY or GEMINI_API_KEY in Vercel environment variables."
-  );
+  throw new Error(`Google Gemini Error: ${lastError}`);
 }
 
 export async function POST(req: NextRequest) {
@@ -150,10 +61,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
 
-    // Read environment variables dynamically at request time
-    const groqKey = (process.env.GROQ_API_KEY || "").trim();
-    const geminiKey = (process.env.GEMINI_API_KEY || "").trim();
-    const openaiKey = (process.env.OPENAI_API_KEY || "").trim();
+    // Read Gemini API key dynamically
+    const geminiKey = (
+      process.env.GEMINI_API_KEY ||
+      process.env.GOOGLE_API_KEY ||
+      process.env.GOOGLE_GENAI_API_KEY ||
+      ""
+    ).trim();
 
     const bridgeUrl = (
       process.env.BAZAAR_BRIDGE_URL ||
@@ -161,15 +75,15 @@ export async function POST(req: NextRequest) {
       "https://bazaar-ai-backend.onrender.com/api/bridge"
     ).trim();
 
-    if (!groqKey && !geminiKey && !openaiKey) {
+    if (!geminiKey) {
       return NextResponse.json({
-        text: "👋 Welcome to Raya by Razorpay! Please configure `GROQ_API_KEY` or `GEMINI_API_KEY` in your Vercel environment variables.",
+        text: "👋 Welcome to Raya by Razorpay! Please configure your `GEMINI_API_KEY` in Vercel environment variables.",
         toolExecutions: [],
         history: [],
       });
     }
 
-    // Build OpenAI-compatible messages array
+    // Build OpenAI-compatible messages array for Gemini
     const messages: any[] = [{ role: "system", content: RAYA_SYSTEM_INSTRUCTION }];
 
     // Map existing history
@@ -194,12 +108,12 @@ export async function POST(req: NextRequest) {
     while (iterations < MAX_ITERATIONS) {
       iterations++;
 
-      const data = await callAI(messages, groqKey, geminiKey, openaiKey);
+      const data = await callGemini(messages, geminiKey);
       const choice = data.choices?.[0];
       const assistantMessage = choice?.message;
 
       if (!assistantMessage) {
-        finalText = "I couldn't process your request. Please try again.";
+        finalText = "I couldn't process your request with Gemini. Please try again.";
         break;
       }
 
@@ -221,7 +135,7 @@ export async function POST(req: NextRequest) {
             args = {};
           }
 
-          console.log(`[RAYA TOOL EXECUTION] Tool: ${toolName}`, args);
+          console.log(`[RAYA GEMINI TOOL CALL] Tool: ${toolName}`, args);
 
           const execResult = await executeBridgeTool(toolName, args, bridgeUrl);
 
@@ -288,9 +202,9 @@ export async function POST(req: NextRequest) {
       history: clientHistory,
     });
   } catch (error: any) {
-    console.error("[RAYA AGENT ERROR]", error);
+    console.error("[RAYA GEMINI ERROR]", error);
     return NextResponse.json(
-      { error: error.message || "Failed to process chat message" },
+      { error: error.message || "Failed to process chat message with Gemini" },
       { status: 500 }
     );
   }
