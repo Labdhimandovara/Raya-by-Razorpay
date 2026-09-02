@@ -36,65 +36,77 @@ Tone & Persona:
 - Always reassure the user that payments and orders are protected under Razorpay purchase guard.
 `;
 
-export const GEMINI_TOOLS = [
+// OpenAI-compatible tools format (works with Groq)
+export const GROQ_TOOLS = [
   {
-    functionDeclarations: [
-      {
-        name: "listProducts",
-        description: "Search NexusStore catalog products by keyword, name, or category",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            search: { type: "STRING", description: "Product name or search keyword (e.g. shirt, shoes, watch, bag)" },
-            category: { type: "STRING", description: "Filter category (e.g. Clothing, Electronics, Books, Accessories)" },
-          },
+    type: "function",
+    function: {
+      name: "listProducts",
+      description: "Search NexusStore catalog products by keyword, name, or category",
+      parameters: {
+        type: "object",
+        properties: {
+          search: { type: "string", description: "Product name or search keyword (e.g. shirt, shoes, watch, bag)" },
+          category: { type: "string", description: "Filter category (e.g. Clothing, Electronics, Books, Accessories)" },
         },
       },
-      {
-        name: "viewCart",
-        description: "View current shopping cart contents, total amount, and item count",
-        parameters: {
-          type: "OBJECT",
-          properties: {},
-        },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "viewCart",
+      description: "View current shopping cart contents, total amount, and item count",
+      parameters: {
+        type: "object",
+        properties: {},
       },
-      {
-        name: "addToCart",
-        description: "Add a specific product to the user's shopping cart",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            productId: { type: "STRING", description: "The unique ID of the product" },
-            quantity: { type: "INTEGER", description: "Number of units to add (default: 1)" },
-          },
-          required: ["productId"],
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "addToCart",
+      description: "Add a specific product to the user's shopping cart",
+      parameters: {
+        type: "object",
+        properties: {
+          productId: { type: "string", description: "The unique ID of the product" },
+          quantity: { type: "integer", description: "Number of units to add (default: 1)" },
         },
+        required: ["productId"],
       },
-      {
-        name: "checkoutOrder",
-        description: "Place order from active cart with delivery address and payment method",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            name: { type: "STRING", description: "Full name of the recipient" },
-            street: { type: "STRING", description: "Street address" },
-            city: { type: "STRING", description: "City" },
-            country: { type: "STRING", description: "Country (e.g. USA, India)" },
-            zip: { type: "STRING", description: "Postal or ZIP code" },
-            paymentMethod: { type: "STRING", enum: ["card", "cash"], description: "Payment method" },
-          },
-          required: ["name", "street", "city", "country", "zip"],
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "checkoutOrder",
+      description: "Place order from active cart with delivery address and payment method",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Full name of the recipient" },
+          street: { type: "string", description: "Street address" },
+          city: { type: "string", description: "City" },
+          country: { type: "string", description: "Country (e.g. USA, India)" },
+          zip: { type: "string", description: "Postal or ZIP code" },
+          paymentMethod: { type: "string", enum: ["card", "cash"], description: "Payment method" },
         },
+        required: ["name", "street", "city", "country", "zip"],
       },
-      {
-        name: "getOrderHistory",
-        description: "Fetch list of past orders and tracking status",
-        parameters: {
-          type: "OBJECT",
-          properties: {},
-        },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "getOrderHistory",
+      description: "Fetch list of past orders and tracking status",
+      parameters: {
+        type: "object",
+        properties: {},
       },
-    ],
+    },
   },
 ];
 

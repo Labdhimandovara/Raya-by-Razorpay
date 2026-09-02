@@ -1,59 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   RAYA_SYSTEM_INSTRUCTION,
-  GEMINI_TOOLS,
+  GROQ_TOOLS,
   executeBridgeTool,
   ToolExecutionResult,
 } from "@/lib/gemini";
 
 const BRIDGE_URL = process.env.NEXUS_STORE_BRIDGE_URL || "https://bazaar-ai-lm2z.onrender.com/bazaar";
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
-const CUSTOM_MODEL = process.env.GEMINI_MODEL;
+const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 
-// Resilient list of Gemini model endpoints attempted in order
-const CANDIDATE_ENDPOINTS = [
-  ...(CUSTOM_MODEL ? [{ version: "v1beta", model: CUSTOM_MODEL }, { version: "v1", model: CUSTOM_MODEL }] : []),
-  { version: "v1beta", model: "gemini-1.5-flash-latest" },
-  { version: "v1beta", model: "gemini-2.0-flash" },
-  { version: "v1",     model: "gemini-1.5-flash" },
-  { version: "v1beta", model: "gemini-1.5-flash-001" },
-  { version: "v1beta", model: "gemini-1.5-flash-002" },
-  { version: "v1beta", model: "gemini-1.5-pro-latest" },
-  { version: "v1",     model: "gemini-1.5-pro" },
+// Best Groq models for function calling, in priority order
+const GROQ_MODELS = [
+  "llama-3.3-70b-versatile",
+  "llama3-groq-70b-8192-tool-use-preview",
+  "llama-3.1-70b-versatile",
+  "llama3-70b-8192",
 ];
 
-let workingEndpointConfig: { version: string; model: string } | null = null;
+let workingModel: string | null = null;
 
-async function callGeminiWithFallback(payload: any, apiKey: string): Promise<any> {
-  // If we already resolved a working model for this server instance, try it first
-  if (workingEndpointConfig) {
-    const url = `https://generativelanguage.googleapis.com/${workingEndpointConfig.version}/models/${workingEndpointConfig.model}:generateContent?key=${apiKey}`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+async function callGroq(messages: any[], apiKey: string): Promise<any> {
+  const modelsToTry = workingModel
+    ? [workingModel, ...GROQ_MODELS.filter((m) => m !== workingModel)]
+    : GROQ_MODELS;
 
-    if (res.ok) {
-      return await res.json();
-    }
-    // If it failed, invalidate cache and proceed to fallback loop
-    workingEndpointConfig = null;
-  }
+  let lastError: string = "Unknown error";
 
-  let lastError: any = null;
-
-  for (const candidate of CANDIDATE_ENDPOINTS) {
+  for (const model of modelsToTry) {
     try {
-      const url = `https://generativelanguage.googleapis.com/${candidate.version}/models/${candidate.model}:generateContent?key=${apiKey}`;
-      const res = await fetch(url, {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          tools: GROQ_TOOLS,
+          tool_choice: "auto",
+          max_tokens: 4096,
+        }),
       });
 
       if (res.ok) {
-        workingEndpointConfig = candidate; // Cache successful model!
+        workingModel = model; // Cache winner
         return await res.json();
       }
 
@@ -64,7 +55,7 @@ async function callGeminiWithFallback(payload: any, apiKey: string): Promise<any
     }
   }
 
-  throw new Error(`Gemini API Error: ${lastError || "Could not connect to any available Gemini model endpoint."}`);
+  throw new Error(`Groq API Error: ${lastError}`);
 }
 
 export async function POST(req: NextRequest) {
@@ -76,35 +67,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
 
-    if (!GEMINI_API_KEY) {
-      // Graceful fallback if user has not yet set their Gemini key
+    if (!GROQ_API_KEY) {
       return NextResponse.json({
-        text: "👋 Welcome to Raya by Razorpay! Please configure your `GEMINI_API_KEY` in your environment variables or Vercel dashboard to enable live agentic tool calling.",
+        text: "👋 Welcome to Raya by Razorpay! Please configure your `GROQ_API_KEY` in Vercel environment variables. Get a free key at https://console.groq.com",
         toolExecutions: [],
-        history: [...history, { role: "user", parts: [{ text: message }] }],
+        history: [],
       });
     }
 
-    // Build the Gemini conversation contents
-    const contents: any[] = [];
+    // Build OpenAI-compatible messages array
+    const messages: any[] = [
+      { role: "system", content: RAYA_SYSTEM_INSTRUCTION },
+    ];
 
-    // Map history
+    // Map existing history
     for (const h of history) {
-      if (h.role && h.parts) {
-        contents.push(h);
-      } else if (h.role && h.content) {
-        contents.push({
-          role: h.role === "assistant" ? "model" : "user",
-          parts: [{ text: h.content }],
-        });
+      if (h.role === "user" || h.role === "assistant") {
+        messages.push({ role: h.role, content: h.content || h.text || "" });
       }
     }
 
     // Add current user message
-    contents.push({
-      role: "user",
-      parts: [{ text: message }],
-    });
+    messages.push({ role: "user", content: message });
 
     const toolExecutions: ToolExecutionResult[] = [];
     let extractedProducts: any[] | undefined = undefined;
@@ -118,83 +102,89 @@ export async function POST(req: NextRequest) {
     while (iterations < MAX_ITERATIONS) {
       iterations++;
 
-      const payload = {
-        contents,
-        systemInstruction: {
-          parts: [{ text: RAYA_SYSTEM_INSTRUCTION }],
-        },
-        tools: GEMINI_TOOLS,
-      };
+      const data = await callGroq(messages, GROQ_API_KEY);
+      const choice = data.choices?.[0];
+      const assistantMessage = choice?.message;
 
-      const data = await callGeminiWithFallback(payload, GEMINI_API_KEY);
-      const candidate = data.candidates?.[0];
-      const modelParts = candidate?.content?.parts || [];
+      if (!assistantMessage) {
+        finalText = "I couldn't process your request. Please try again.";
+        break;
+      }
 
-      // Add model response to contents history
-      contents.push({
-        role: "model",
-        parts: modelParts,
-      });
+      // Add assistant message to conversation
+      messages.push(assistantMessage);
 
-      // Check if model called any function
-      const functionCallPart = modelParts.find((p: any) => p.functionCall);
+      // Check if model called any tools
+      const toolCalls = assistantMessage.tool_calls;
 
-      if (functionCallPart && functionCallPart.functionCall) {
-        const { name, args } = functionCallPart.functionCall;
-        console.log(`[RAYA TOOL EXECUTION] Tool: ${name}`, args);
+      if (toolCalls && toolCalls.length > 0) {
+        // Execute all tool calls
+        for (const toolCall of toolCalls) {
+          const toolName = toolCall.function.name;
+          let args: any = {};
 
-        // Execute against NexusStore Bridge
-        const execResult = await executeBridgeTool(name, args, BRIDGE_URL);
+          try {
+            args = JSON.parse(toolCall.function.arguments || "{}");
+          } catch {
+            args = {};
+          }
 
-        toolExecutions.push({
-          tool: name,
-          args,
-          status: execResult.status,
-          result: execResult.data,
-        });
+          console.log(`[RAYA TOOL EXECUTION] Tool: ${toolName}`, args);
 
-        // Extract specialized UI data for Generative UI
-        if (name === "listProducts" && Array.isArray(execResult.data)) {
-          extractedProducts = execResult.data;
-        } else if (name === "listProducts" && execResult.data?.products) {
-          extractedProducts = execResult.data.products;
+          const execResult = await executeBridgeTool(toolName, args, BRIDGE_URL);
+
+          toolExecutions.push({
+            tool: toolName,
+            args,
+            status: execResult.status,
+            result: execResult.data,
+          });
+
+          // Extract specialized UI data
+          if (toolName === "listProducts" && Array.isArray(execResult.data)) {
+            extractedProducts = execResult.data;
+          } else if (toolName === "listProducts" && execResult.data?.products) {
+            extractedProducts = execResult.data.products;
+          }
+
+          if (toolName === "viewCart" || toolName === "addToCart") {
+            extractedCart = execResult.data;
+          }
+
+          if (toolName === "checkoutOrder" && execResult.status === "SUCCESS") {
+            extractedReceipt = {
+              orderId:
+                execResult.data?.id ||
+                execResult.data?.orderId ||
+                `ORD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+              details: execResult.data,
+              address: args,
+              paymentMethod: args.paymentMethod || "card",
+              timestamp: new Date().toISOString(),
+            };
+          }
+
+          // Feed tool result back into conversation
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: JSON.stringify(execResult.data),
+          });
         }
-
-        if (name === "viewCart" || name === "addToCart") {
-          extractedCart = execResult.data;
-        }
-
-        if (name === "checkoutOrder" && execResult.status === "SUCCESS") {
-          extractedReceipt = {
-            orderId: execResult.data?.id || execResult.data?.orderId || `ORD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-            details: execResult.data,
-            address: args,
-            paymentMethod: args.paymentMethod || "card",
-            timestamp: new Date().toISOString(),
-          };
-        }
-
-        // Feed function response back to Gemini
-        contents.push({
-          role: "function",
-          parts: [
-            {
-              functionResponse: {
-                name,
-                response: {
-                  result: execResult.data,
-                },
-              },
-            },
-          ],
-        });
       } else {
-        // No more function calls, capture final text
-        const textParts = modelParts.filter((p: any) => p.text).map((p: any) => p.text);
-        finalText = textParts.join("\n").trim();
+        // No tool calls — this is the final text response
+        finalText = assistantMessage.content || "I have processed your request.";
         break;
       }
     }
+
+    // Build clean history for the client
+    const clientHistory = messages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({
+        role: m.role,
+        content: typeof m.content === "string" ? m.content : "",
+      }));
 
     return NextResponse.json({
       text: finalText || "I have processed your request.",
@@ -202,14 +192,12 @@ export async function POST(req: NextRequest) {
       products: extractedProducts,
       cart: extractedCart,
       receipt: extractedReceipt,
-      history: contents,
+      history: clientHistory,
     });
   } catch (error: any) {
     console.error("[RAYA AGENT ERROR]", error);
     return NextResponse.json(
-      {
-        error: error.message || "Failed to process chat message",
-      },
+      { error: error.message || "Failed to process chat message" },
       { status: 500 }
     );
   }
