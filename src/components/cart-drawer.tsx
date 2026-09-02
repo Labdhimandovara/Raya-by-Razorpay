@@ -1,16 +1,19 @@
 "use client";
 
 import React from "react";
-import { X, Trash2, ShoppingBag, ArrowRight, ShieldCheck } from "lucide-react";
+import { X, ShoppingBag, ArrowRight, ShieldCheck } from "lucide-react";
+import { CONNECTED_STORES } from "@/lib/gemini";
 
 interface CartItem {
   id: string;
   productId: string;
   quantity: number;
+  store?: string;
   product?: {
     name: string;
     price: number;
     imageUrl?: string;
+    store?: string;
   };
 }
 
@@ -62,7 +65,7 @@ export function CartDrawer({
               </div>
               <h4 className="font-bold text-raya-navy">Your cart is currently empty</h4>
               <p className="text-xs text-raya-coolGray max-w-xs leading-relaxed">
-                Ask Raya to discover items from NexusStore or click "Add" on any product card.
+                Ask Raya to discover items from NexusStore, ThreadVault, or PixelMart.
               </p>
             </div>
           ) : (
@@ -70,6 +73,8 @@ export function CartDrawer({
               const name = item.product?.name || `Product (${item.productId})`;
               const price = item.product?.price || 0;
               const img = item.product?.imageUrl || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200";
+              const storeKey = (item.store || item.product?.store || "nexusstore").toLowerCase();
+              const storeMeta = CONNECTED_STORES[storeKey] || CONNECTED_STORES.nexusstore;
 
               return (
                 <div
@@ -82,6 +87,11 @@ export function CartDrawer({
                     className="w-13 h-13 object-cover rounded-lg bg-white border border-raya-lightGray shrink-0"
                   />
                   <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${storeMeta.badgeClass}`}>
+                        {storeMeta.icon} {storeMeta.name}
+                      </span>
+                    </div>
                     <h5 className="text-xs font-bold text-raya-navy truncate">{name}</h5>
                     <p className="text-xs font-semibold text-raya-blue mt-0.5">
                       ₹{price.toLocaleString()} × {item.quantity}
@@ -108,10 +118,9 @@ export function CartDrawer({
 
             <div className="flex items-center gap-2 p-2.5 rounded-xl bg-raya-softWhite text-raya-navy text-[11px] font-medium border border-raya-lightGray">
               <ShieldCheck className="w-4 h-4 shrink-0 text-raya-blue" />
-              <span>Razorpay FastCheckout & Buyer Safety Active</span>
+              <span>Razorpay FastCheckout & Multi-Store Buyer Safety</span>
             </div>
 
-            {/* Primary Button as specified in Brand Kit */}
             <button
               onClick={() => {
                 onClose();
@@ -129,4 +138,3 @@ export function CartDrawer({
     </div>
   );
 }
-

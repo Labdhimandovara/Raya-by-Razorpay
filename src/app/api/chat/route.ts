@@ -6,55 +6,114 @@ import {
   ToolExecutionResult,
 } from "@/lib/gemini";
 
-const BRIDGE_URL = process.env.NEXUS_STORE_BRIDGE_URL || "https://bazaar-ai-lm2z.onrender.com/bazaar";
+const BRIDGE_URL =
+  process.env.BAZAAR_BRIDGE_URL ||
+  process.env.NEXUS_STORE_BRIDGE_URL ||
+  "https://bazaar-ai-backend.onrender.com/api/bridge";
+
 const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 
 // Current active Groq production models (updated Sept 2026)
 const GROQ_MODELS = [
   "openai/gpt-oss-120b",
   "openai/gpt-oss-20b",
   "qwen/qwen3.6-27b",
+  "llama-3.3-70b-versatile",
 ];
 
 let workingModel: string | null = null;
 
-async function callGroq(messages: any[], apiKey: string): Promise<any> {
-  const modelsToTry = workingModel
-    ? [workingModel, ...GROQ_MODELS.filter((m) => m !== workingModel)]
-    : GROQ_MODELS;
+async function callAI(messages: any[]): Promise<any> {
+  // 1. Try Groq if GROQ_API_KEY is available
+  if (GROQ_API_KEY) {
+    const modelsToTry = workingModel
+      ? [workingModel, ...GROQ_MODELS.filter((m) => m !== workingModel)]
+      : GROQ_MODELS;
 
-  let lastError: string = "Unknown error";
+    let lastError = "Unknown Groq error";
+    for (const model of modelsToTry) {
+      try {
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${GROQ_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            tools: GROQ_TOOLS,
+            tool_choice: "auto",
+            max_tokens: 4096,
+          }),
+        });
 
-  for (const model of modelsToTry) {
+        if (res.ok) {
+          workingModel = model;
+          return await res.json();
+        }
+
+        const errData = await res.json().catch(() => null);
+        lastError = errData?.error?.message || `HTTP ${res.status}`;
+      } catch (e: any) {
+        lastError = e.message;
+      }
+    }
+    console.warn(`[Raya] Groq attempts failed: ${lastError}. Checking alternative providers...`);
+  }
+
+  // 2. Fallback to Google Gemini (OpenAI-compatible endpoint)
+  if (GEMINI_API_KEY) {
     try {
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          tools: GROQ_TOOLS,
-          tool_choice: "auto",
-          max_tokens: 4096,
-        }),
-      });
+      const res = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${GEMINI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "gemini-1.5-flash",
+            messages,
+            tools: GROQ_TOOLS,
+            tool_choice: "auto",
+          }),
+        }
+      );
 
       if (res.ok) {
-        workingModel = model; // Cache winner
         return await res.json();
       }
-
-      const errData = await res.json().catch(() => null);
-      lastError = errData?.error?.message || `HTTP ${res.status}`;
     } catch (e: any) {
-      lastError = e.message;
+      console.warn("[Raya] Gemini fallback error:", e.message);
     }
   }
 
-  throw new Error(`Groq API Error: ${lastError}`);
+  // 3. Fallback to OpenAI if OPENAI_API_KEY is available
+  if (OPENAI_API_KEY) {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages,
+        tools: GROQ_TOOLS,
+        tool_choice: "auto",
+      }),
+    });
+
+    if (res.ok) {
+      return await res.json();
+    }
+  }
+
+  throw new Error("No AI provider credentials available. Please configure GROQ_API_KEY or GEMINI_API_KEY.");
 }
 
 export async function POST(req: NextRequest) {
@@ -66,18 +125,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
 
-    if (!GROQ_API_KEY) {
+    if (!GROQ_API_KEY && !GEMINI_API_KEY && !OPENAI_API_KEY) {
       return NextResponse.json({
-        text: "👋 Welcome to Raya by Razorpay! Please configure your `GROQ_API_KEY` in Vercel environment variables. Get a free key at https://console.groq.com",
+        text: "👋 Welcome to Raya by Razorpay! Please configure `GROQ_API_KEY` or `GEMINI_API_KEY` in your environment variables.",
         toolExecutions: [],
         history: [],
       });
     }
 
     // Build OpenAI-compatible messages array
-    const messages: any[] = [
-      { role: "system", content: RAYA_SYSTEM_INSTRUCTION },
-    ];
+    const messages: any[] = [{ role: "system", content: RAYA_SYSTEM_INSTRUCTION }];
 
     // Map existing history
     for (const h of history) {
@@ -101,7 +158,7 @@ export async function POST(req: NextRequest) {
     while (iterations < MAX_ITERATIONS) {
       iterations++;
 
-      const data = await callGroq(messages, GROQ_API_KEY);
+      const data = await callAI(messages);
       const choice = data.choices?.[0];
       const assistantMessage = choice?.message;
 
@@ -158,6 +215,7 @@ export async function POST(req: NextRequest) {
                 `ORD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
               details: execResult.data,
               address: args,
+              store: args.store || "nexusstore",
               paymentMethod: args.paymentMethod || "card",
               timestamp: new Date().toISOString(),
             };
@@ -186,7 +244,7 @@ export async function POST(req: NextRequest) {
       }));
 
     return NextResponse.json({
-      text: finalText || "I have processed your request.",
+      text: finalText || "I have processed your request across the connected stores.",
       toolExecutions,
       products: extractedProducts,
       cart: extractedCart,

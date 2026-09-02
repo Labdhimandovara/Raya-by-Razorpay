@@ -2,11 +2,13 @@
 
 import React from "react";
 import { CheckCircle2, ShieldCheck, MapPin, Package, CreditCard } from "lucide-react";
+import { CONNECTED_STORES } from "@/lib/gemini";
 
 interface OrderReceiptProps {
   receipt: {
     orderId: string;
     details?: any;
+    store?: string;
     address?: {
       name?: string;
       street?: string;
@@ -23,7 +25,9 @@ export function OrderReceipt({ receipt }: OrderReceiptProps) {
   if (!receipt) return null;
 
   const addr = receipt.address || {};
-  const orderId = receipt.orderId || "NX-ORDER";
+  const orderId = receipt.orderId || "ORD-SUCCESS";
+  const storeKey = (receipt.store || "nexusstore").toLowerCase();
+  const storeMeta = CONNECTED_STORES[storeKey] || CONNECTED_STORES.nexusstore;
 
   return (
     <div className="my-3 sm:my-4 p-4 sm:p-5 rounded-2xl bg-white border-2 border-raya-success/30 shadow-xs max-w-lg w-full space-y-3.5 animate-fadeIn">
@@ -43,7 +47,7 @@ export function OrderReceipt({ receipt }: OrderReceiptProps) {
         </span>
       </div>
 
-      {/* Details Grid (1 col on small phones, 2 cols on sm+) */}
+      {/* Details Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs">
         <div className="p-3 rounded-xl bg-raya-softWhite border border-raya-lightGray">
           <div className="flex items-center gap-1.5 text-raya-coolGray font-semibold text-[10px] uppercase mb-1">
@@ -71,15 +75,14 @@ export function OrderReceipt({ receipt }: OrderReceiptProps) {
         </div>
       </div>
 
-      {/* Footer Assurance */}
+      {/* Footer Fulfillment */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-raya-coolGray pt-1 gap-1">
         <span className="flex items-center gap-1 text-raya-stone font-medium">
           <Package className="w-3.5 h-3.5 text-raya-blue" />
-          <span>Fulfillment via NexusStore</span>
+          <span>Fulfillment via <strong>{storeMeta.icon} {storeMeta.name}</strong></span>
         </span>
         <span className="font-bold text-raya-blue">Protected by Razorpay Guard</span>
       </div>
     </div>
   );
 }
-

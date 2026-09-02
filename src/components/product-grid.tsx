@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Check, ShoppingBag, Tag, ArrowRight } from "lucide-react";
+import { Plus, Check, Tag, ExternalLink } from "lucide-react";
+import { CONNECTED_STORES, StoreInfo } from "@/lib/gemini";
 
 interface Product {
   id: string;
@@ -11,6 +12,9 @@ interface Product {
   stock?: number;
   category?: string;
   imageUrl?: string;
+  store?: string;
+  storeName?: string;
+  storeUrl?: string;
 }
 
 interface ProductGridProps {
@@ -31,22 +35,30 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
     }, 2000);
   };
 
+  const getStoreMeta = (storeSlug?: string): StoreInfo => {
+    const key = (storeSlug || "nexusstore").toLowerCase();
+    return CONNECTED_STORES[key] || CONNECTED_STORES.nexusstore;
+  };
+
   return (
     <div className="my-3 sm:my-4 space-y-2.5 w-full">
-      <div className="flex items-center gap-2 text-xs font-bold text-raya-coolGray uppercase tracking-wider">
-        <Tag className="w-3.5 h-3.5 text-raya-blue" />
-        <span>NexusStore Recommendations ({products.length})</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-xs font-bold text-raya-coolGray uppercase tracking-wider">
+          <Tag className="w-3.5 h-3.5 text-raya-blue" />
+          <span>Multi-Store Recommendations ({products.length})</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 w-full">
         {products.map((p) => {
           const isAdded = addedMap[p.id];
           const img = p.imageUrl || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400";
+          const storeMeta = getStoreMeta(p.store);
 
           return (
             <div
               key={p.id}
-              className="bg-white rounded-2xl border border-raya-lightGray hover:border-raya-blue/40 shadow-xs hover:shadow-raya-glow/20 transition-all p-3 sm:p-3.5 flex flex-col justify-between group"
+              className={`bg-white rounded-2xl border border-raya-lightGray ${storeMeta.borderClass} shadow-xs hover:shadow-raya-glow/20 transition-all p-3 sm:p-3.5 flex flex-col justify-between group`}
             >
               <div>
                 <div className="relative w-full h-36 sm:h-40 rounded-xl overflow-hidden bg-raya-softWhite mb-3">
@@ -56,21 +68,37 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
                   />
-                  {p.category && (
-                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-white/95 backdrop-blur-xs text-[10px] font-bold text-raya-navy shadow-xs">
-                      {p.category}
-                    </span>
-                  )}
+                  
+                  {/* Store Badge */}
+                  <span className={`absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold border backdrop-blur-xs shadow-xs ${storeMeta.badgeClass}`}>
+                    {storeMeta.icon} {storeMeta.name}
+                  </span>
+
+                  {/* Category or Stock */}
                   {p.stock !== undefined && (
-                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-raya-success/90 text-white text-[10px] font-bold shadow-xs">
+                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-white/90 text-raya-navy text-[10px] font-bold shadow-xs">
                       {p.stock} in stock
                     </span>
                   )}
                 </div>
 
-                <h4 className="font-bold text-xs sm:text-sm text-raya-navy line-clamp-1 group-hover:text-raya-blue transition-colors">
-                  {p.name}
-                </h4>
+                <div className="flex items-start justify-between gap-1">
+                  <h4 className="font-bold text-xs sm:text-sm text-raya-navy line-clamp-1 group-hover:text-raya-blue transition-colors">
+                    {p.name}
+                  </h4>
+                  {p.storeUrl && (
+                    <a
+                      href={`${p.storeUrl}/products/${p.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-raya-coolGray hover:text-raya-blue p-0.5"
+                      title={`View on ${storeMeta.name}`}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+
                 {p.description && (
                   <p className="text-[11px] sm:text-xs text-raya-coolGray line-clamp-2 mt-1 font-normal">
                     {p.description}
@@ -114,4 +142,3 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
     </div>
   );
 }
-

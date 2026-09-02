@@ -5,13 +5,25 @@ import { RayaHeader } from "@/components/raya-header";
 import { RayaChat, Message } from "@/components/raya-chat";
 import { RayaInput } from "@/components/raya-input";
 import { CartDrawer } from "@/components/cart-drawer";
+import { CONNECTED_STORES } from "@/lib/gemini";
+import { Sparkles, Layers } from "lucide-react";
 
 export default function RayaHome() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "intro-msg",
       role: "assistant",
-      text: "👋 Hi! I am Raya, your autonomous shopping agent by Razorpay.\n\nI can help you discover products on NexusStore, curate items to your preferences, manage your cart, and execute verified checkouts.\n\nTry asking me: \"Find backpacks or white shirts under ₹2,000\"!",
+      text: `👋 Hi! I am Raya, your autonomous shopping agent by Razorpay.
+
+I am connected to 3 live e-commerce stores across the Bazaar ecosystem:
+• ⚡ **NexusStore**: Sleek high-performance smart apparel & tech electronics
+• 🧵 **ThreadVault**: Curated minimalist luxury fashion, Mongolian cashmere & artisan audio
+• 🎮 **PixelMart**: Cyberpunk creator equipment, macro keypads & RGB hardware
+
+Try asking me:
+• *"Find luxury sweaters from ThreadVault and RGB desk gear from PixelMart"*
+• *"Show me the best techwear jackets across all stores under ₹5,000"*
+• Or click one of the store pills below to start browsing!`,
     },
   ]);
 
@@ -59,7 +71,7 @@ export default function RayaHome() {
       const assistantMsg: Message = {
         id: `ast-${Date.now()}`,
         role: "assistant",
-        text: data.text || "Here are the details from NexusStore.",
+        text: data.text || "Here are the details from the connected stores.",
         products: data.products,
         receipt: data.receipt,
         toolExecutions: data.toolExecutions,
@@ -82,7 +94,7 @@ export default function RayaHome() {
         {
           id: `err-${Date.now()}`,
           role: "assistant",
-          text: `⚠️ Error: ${err.message || "Unable to reach Raya agent service. Please check your Gemini API key and NexusStore bridge connection."}`,
+          text: `⚠️ Error: ${err.message || "Unable to reach Raya agent service. Please check your AI API key and store bridge connection."}`,
         },
       ]);
     } finally {
@@ -91,6 +103,7 @@ export default function RayaHome() {
   };
 
   const handleAddToCartFromCard = (product: any) => {
+    const store = product.store || "nexusstore";
     // Add locally to cart items for immediate feedback
     setCartItems((prev) => {
       const existing = prev.find((i) => i.productId === product.id);
@@ -99,11 +112,11 @@ export default function RayaHome() {
           i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      return [...prev, { id: `cart-${Date.now()}`, productId: product.id, quantity: 1, product }];
+      return [...prev, { id: `cart-${Date.now()}`, productId: product.id, quantity: 1, store, product }];
     });
 
-    // Send command to Raya to persist in the backend
-    handleSendMessage(`Add the product "${product.name}" (ID: ${product.id}) to my cart`);
+    // Send command to Raya to persist in the backend on the correct store
+    handleSendMessage(`Add product "${product.name}" (ID: ${product.id}) from ${store} to my cart`);
   };
 
   const handleCheckoutFromDrawer = () => {
@@ -112,6 +125,13 @@ export default function RayaHome() {
     );
   };
 
+  const storeButtons = [
+    { label: "🌐 All 3 Stores", query: "Show me the top recommended products across all 3 stores" },
+    { label: "⚡ NexusStore", query: "Show me smart apparel and electronics from NexusStore" },
+    { label: "🧵 ThreadVault", query: "Show me luxury clothing and acoustic gear from ThreadVault" },
+    { label: "🎮 PixelMart", query: "Show me cyberpunk streetwear and creator gear from PixelMart" },
+  ];
+
   return (
     <div className="flex flex-col min-h-screen min-h-[100dvh] bg-raya-cloud bg-brand-pattern-light">
       {/* Top Navbar */}
@@ -119,7 +139,31 @@ export default function RayaHome() {
         cartCount={cartItems.length}
         onOpenCart={() => setCartOpen(true)}
         budget={15000}
+        onSelectStore={(storeId) => {
+          const store = CONNECTED_STORES[storeId];
+          if (store) {
+            handleSendMessage(`Show me the featured products from ${store.name}`);
+          }
+        }}
       />
+
+      {/* Store Quick Filter Bar */}
+      <div className="max-w-5xl w-full mx-auto px-3.5 sm:px-6 pt-3 pb-1 flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <span className="text-[11px] font-bold text-raya-coolGray uppercase tracking-wider shrink-0 flex items-center gap-1">
+          <Layers className="w-3.5 h-3.5 text-raya-blue" />
+          <span>Quick Explore:</span>
+        </span>
+        {storeButtons.map((btn, idx) => (
+          <button
+            key={idx}
+            onClick={() => handleSendMessage(btn.query)}
+            disabled={loading}
+            className="px-3 py-1 rounded-full bg-white hover:bg-raya-softWhite active:scale-95 border border-raya-lightGray text-raya-navy text-xs font-semibold whitespace-nowrap shadow-2xs hover:border-raya-blue/50 transition-all cursor-pointer disabled:opacity-50"
+          >
+            {btn.label}
+          </button>
+        ))}
+      </div>
 
       {/* Main Chat Flow */}
       <main className="flex-1 flex flex-col justify-between max-w-5xl w-full mx-auto relative">
@@ -143,4 +187,3 @@ export default function RayaHome() {
     </div>
   );
 }
-

@@ -113,7 +113,7 @@ export function RayaChat({ messages, loading, onAddToCart }: RayaChatProps) {
           </div>
           <div className="px-4 py-2.5 rounded-2xl bg-white border border-raya-lightGray shadow-xs flex items-center gap-2.5 text-xs font-medium text-raya-stone">
             <span className="w-2 h-2 rounded-full bg-raya-blue animate-ping" />
-            <span>Raya is consulting NexusStore catalog & policies...</span>
+            <span>Raya is consulting multi-store catalog & live inventory...</span>
           </div>
         </div>
       )}
