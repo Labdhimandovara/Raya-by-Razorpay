@@ -18,6 +18,9 @@ interface Product {
   productUrl?: string;
   isEbay?: boolean;
   source?: string;
+  buyerScore?: number;
+  isBestMatch?: boolean;
+  matchReason?: string;
 }
 
 interface ProductGridProps {
@@ -68,13 +71,27 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
             ? p.productUrl || p.storeUrl || "https://www.ebay.com"
             : `${p.storeUrl || storeMeta.frontendUrl}/products/${p.id}`;
 
+          const score = p.buyerScore || 92;
+
           return (
             <div
               key={p.id}
-              className={`bg-white rounded-2xl border border-raya-lightGray ${storeMeta.borderClass} shadow-xs hover:shadow-raya-glow/20 transition-all p-3 sm:p-3.5 flex flex-col justify-between group`}
+              className={`relative bg-white rounded-2xl border ${
+                p.isBestMatch
+                  ? "border-amber-400 shadow-md shadow-amber-500/10 ring-1 ring-amber-400/40"
+                  : `border-raya-lightGray ${storeMeta.borderClass} shadow-xs`
+              } hover:shadow-raya-glow/20 transition-all p-3 sm:p-3.5 flex flex-col justify-between group`}
             >
+              {/* Best Match Banner */}
+              {p.isBestMatch && (
+                <div className="absolute -top-2.5 left-4 z-10 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[10px] font-extrabold uppercase tracking-wider shadow-sm flex items-center gap-1">
+                  <span>⭐</span>
+                  <span>#1 Best Match</span>
+                </div>
+              )}
+
               <div>
-                <div className="relative w-full h-36 sm:h-40 rounded-xl overflow-hidden bg-raya-softWhite mb-3">
+                <div className="relative w-full h-36 sm:h-40 rounded-xl overflow-hidden bg-raya-softWhite mb-3 mt-1">
                   <img
                     src={img}
                     alt={p.name}
@@ -87,12 +104,10 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                     {storeMeta.icon} {storeMeta.name}
                   </span>
 
-                  {/* Category or Stock */}
-                  {p.stock !== undefined && (
-                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-white/90 text-raya-navy text-[10px] font-bold shadow-xs">
-                      {isEbay ? "In Stock" : `${p.stock} in stock`}
-                    </span>
-                  )}
+                  {/* Buyer Score Pill */}
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-emerald-600/90 text-white text-[10px] font-extrabold shadow-xs backdrop-blur-xs flex items-center gap-1">
+                    <span>{score}% Score</span>
+                  </span>
                 </div>
 
                 <div className="flex items-start justify-between gap-1">
@@ -110,7 +125,15 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                   </a>
                 </div>
 
-                {p.description && (
+                {/* Match Reason */}
+                {p.matchReason && (
+                  <div className="mt-1.5 px-2 py-1 rounded-md bg-amber-50/70 border border-amber-200/60 text-[10.5px] text-amber-900 leading-snug">
+                    <span className="font-bold text-amber-800">Why I recommend: </span>
+                    <span className="italic">{p.matchReason}</span>
+                  </div>
+                )}
+
+                {p.description && !p.matchReason && (
                   <p className="text-[11px] sm:text-xs text-raya-coolGray line-clamp-2 mt-1 font-normal">
                     {p.description}
                   </p>

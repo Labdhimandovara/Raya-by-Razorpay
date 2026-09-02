@@ -212,6 +212,18 @@ export async function POST(req: NextRequest) {
           const toolName = call.name;
           const args = call.args || {};
 
+          // Safety net: Auto-detect maxPrice from user message if LLM missed it
+          if (toolName === "listProducts" && args.maxPrice === undefined) {
+            const budgetMatch = (message || "").match(/(?:under|below|less than|budget)\s*(?:₹|rs\.?|inr)?\s*(\d+(?:,\d+)*(?:\.\d+)?|\d+k)/i);
+            if (budgetMatch) {
+              const rawVal = budgetMatch[1].toLowerCase().replace(/,/g, "");
+              const parsed = rawVal.endsWith("k") ? parseFloat(rawVal) * 1000 : parseFloat(rawVal);
+              if (!isNaN(parsed) && parsed > 0) {
+                args.maxPrice = parsed;
+              }
+            }
+          }
+
           console.log(`[RAYA GEMINI NATIVE TOOL] Executing ${toolName}:`, args);
 
           const execResult = await executeBridgeTool(toolName, args, bridgeUrl);

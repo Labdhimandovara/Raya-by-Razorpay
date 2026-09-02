@@ -33,6 +33,7 @@ Try asking me:
   const [history, setHistory] = useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [budget, setBudget] = useState(15000);
 
   const cartTotal = cartItems.reduce((acc, item) => {
     const price = item.product?.price || item.price || 0;
@@ -42,6 +43,16 @@ Try asking me:
 
   const handleSendMessage = async (userText: string) => {
     if (!userText.trim() || loading) return;
+
+    // Detect dynamic budget constraints (e.g. "under 5000", "budget 5k", "below ₹5,000")
+    const budgetMatch = userText.match(/(?:under|below|less than|budget)\s*(?:₹|rs\.?|inr)?\s*(\d+(?:,\d+)*(?:\.\d+)?|\d+k)/i);
+    if (budgetMatch) {
+      let rawVal = budgetMatch[1].toLowerCase().replace(/,/g, "");
+      let parsedBudget = rawVal.endsWith("k") ? parseFloat(rawVal) * 1000 : parseFloat(rawVal);
+      if (!isNaN(parsedBudget) && parsedBudget > 0) {
+        setBudget(parsedBudget);
+      }
+    }
 
     const userMsgId = `user-${Date.now()}`;
     const newMsg: Message = {
@@ -128,6 +139,7 @@ Try asking me:
   };
 
   const storeButtons = [
+    { label: "🎧 Headphones under ₹5,000", query: "Show me headphones and audio electronics from all stores and eBay under 5000" },
     { label: "🌐 All Stores", query: "Show me the top recommended products across all stores and eBay" },
     { label: "⚡ NexusStore", query: "Show me smart apparel and electronics from NexusStore" },
     { label: "🧵 ThreadVault", query: "Show me luxury clothing and acoustic gear from ThreadVault" },
@@ -141,7 +153,7 @@ Try asking me:
       <RayaHeader
         cartCount={cartItems.length}
         onOpenCart={() => setCartOpen(true)}
-        budget={15000}
+        budget={budget}
         onSelectStore={(storeId) => {
           const store = CONNECTED_STORES[storeId];
           if (store) {
@@ -186,6 +198,7 @@ Try asking me:
         items={cartItems}
         total={cartTotal}
         onCheckout={handleCheckoutFromDrawer}
+        budget={budget}
       />
     </div>
   );

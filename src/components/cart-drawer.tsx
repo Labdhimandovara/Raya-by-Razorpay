@@ -23,6 +23,7 @@ interface CartDrawerProps {
   items: CartItem[];
   total: number;
   onCheckout: () => void;
+  budget?: number;
 }
 
 export function CartDrawer({
@@ -31,8 +32,11 @@ export function CartDrawer({
   items,
   total,
   onCheckout,
+  budget = 15000,
 }: CartDrawerProps) {
   if (!isOpen) return null;
+
+  const isLimitExceeded = total > budget;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-raya-navy/50 backdrop-blur-xs transition-opacity animate-fadeIn">
@@ -65,7 +69,7 @@ export function CartDrawer({
               </div>
               <h4 className="font-bold text-raya-navy">Your cart is currently empty</h4>
               <p className="text-xs text-raya-coolGray max-w-xs leading-relaxed">
-                Ask Raya to discover items from NexusStore, ThreadVault, or PixelMart.
+                Ask Raya to discover items from NexusStore, ThreadVault, PixelMart, or eBay.
               </p>
             </div>
           ) : (
@@ -112,23 +116,46 @@ export function CartDrawer({
         {items.length > 0 && (
           <div className="p-4 sm:p-5 border-t border-raya-lightGray bg-white space-y-3 sm:space-y-4 shadow-lg">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-raya-coolGray font-medium">Subtotal</span>
+              <div>
+                <span className="text-raya-coolGray font-medium block">Subtotal</span>
+                <span className="text-[11px] text-raya-coolGray">Safety Limit: ₹{budget.toLocaleString()}</span>
+              </div>
               <span className="text-lg font-black text-raya-navy">₹{total.toLocaleString()}</span>
             </div>
 
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-raya-softWhite text-raya-navy text-[11px] font-medium border border-raya-lightGray">
-              <ShieldCheck className="w-4 h-4 shrink-0 text-raya-blue" />
-              <span>Razorpay FastCheckout & Multi-Store Buyer Safety</span>
-            </div>
+            {/* Policy Spending Cap Exceeded Alert */}
+            {isLimitExceeded ? (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs space-y-1">
+                <div className="font-bold flex items-center gap-1.5 text-red-700">
+                  <span>🚫</span>
+                  <span>SAFETY SPENDING LIMIT EXCEEDED</span>
+                </div>
+                <p className="text-[11px] text-red-600 leading-snug">
+                  Cart total of ₹{total.toLocaleString()} exceeds your active policy limit of ₹{budget.toLocaleString()}.
+                  Checkout has been blocked by Autonomous Purchase Guard. Please remove items or adjust your budget.
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-raya-softWhite text-raya-navy text-[11px] font-medium border border-raya-lightGray">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-raya-blue" />
+                <span>Razorpay Autonomous Purchase Guard Active & Compliant</span>
+              </div>
+            )}
 
             <button
+              disabled={isLimitExceeded}
               onClick={() => {
+                if (isLimitExceeded) return;
                 onClose();
                 onCheckout();
               }}
-              className="w-full py-3 rounded-xl bg-raya-blue hover:bg-blue-600 active:scale-[0.98] text-white font-medium text-sm transition-all shadow-sm shadow-raya-blue/20 flex items-center justify-center gap-2 cursor-pointer"
+              className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                isLimitExceeded
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300 shadow-none"
+                  : "bg-raya-blue hover:bg-blue-600 active:scale-[0.98] text-white shadow-sm shadow-raya-blue/20 cursor-pointer"
+              }`}
             >
-              <span>Instant Checkout with Raya</span>
+              <span>{isLimitExceeded ? "Checkout Blocked by Policy Guard" : "Instant Checkout with Raya"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
