@@ -13,7 +13,6 @@ export const runtime = "nodejs";
 const GROQ_MODELS = [
   "llama-3.3-70b-versatile",
   "llama-3.1-8b-instant",
-  "mixtral-8x7b-32768",
 ];
 
 let workingModel: string | null = null;
@@ -54,9 +53,12 @@ async function callAI(
           return await res.json();
         }
 
+        workingModel = null; // Clear cached model on failure
         const errData = await res.json().catch(() => null);
         lastError = errData?.error?.message || `HTTP ${res.status}`;
+        console.error(`[Raya Groq Error] Model ${model} failed:`, lastError);
       } catch (e: any) {
+        workingModel = null;
         lastError = e.message;
       }
     }
