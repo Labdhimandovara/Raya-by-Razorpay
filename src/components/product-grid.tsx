@@ -15,6 +15,9 @@ interface Product {
   store?: string;
   storeName?: string;
   storeUrl?: string;
+  productUrl?: string;
+  isEbay?: boolean;
+  source?: string;
 }
 
 interface ProductGridProps {
@@ -45,7 +48,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold text-raya-coolGray uppercase tracking-wider">
           <Tag className="w-3.5 h-3.5 text-raya-blue" />
-          <span>Multi-Store Recommendations ({products.length})</span>
+          <span>Multi-Store & Marketplace Recommendations ({products.length})</span>
         </div>
       </div>
 
@@ -54,6 +57,16 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
           const isAdded = addedMap[p.id];
           const img = p.imageUrl || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400";
           const storeMeta = getStoreMeta(p.store);
+          const isEbay =
+            p.store === "ebay" ||
+            p.source === "ebay" ||
+            p.isEbay ||
+            p.id?.startsWith("ebay-") ||
+            p.productUrl?.includes("ebay.com");
+
+          const productLink = isEbay
+            ? p.productUrl || p.storeUrl || "https://www.ebay.com"
+            : `${p.storeUrl || storeMeta.frontendUrl}/products/${p.id}`;
 
           return (
             <div
@@ -77,7 +90,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                   {/* Category or Stock */}
                   {p.stock !== undefined && (
                     <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-white/90 text-raya-navy text-[10px] font-bold shadow-xs">
-                      {p.stock} in stock
+                      {isEbay ? "In Stock" : `${p.stock} in stock`}
                     </span>
                   )}
                 </div>
@@ -86,17 +99,15 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                   <h4 className="font-bold text-xs sm:text-sm text-raya-navy line-clamp-1 group-hover:text-raya-blue transition-colors">
                     {p.name}
                   </h4>
-                  {p.storeUrl && (
-                    <a
-                      href={`${p.storeUrl}/products/${p.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-raya-coolGray hover:text-raya-blue p-0.5"
-                      title={`View on ${storeMeta.name}`}
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  )}
+                  <a
+                    href={productLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-raya-coolGray hover:text-raya-blue p-0.5"
+                    title={`View on ${storeMeta.name}`}
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
                 </div>
 
                 {p.description && (
@@ -114,26 +125,38 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                   </span>
                 </div>
 
-                <button
-                  onClick={() => handleAdd(p)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs font-medium transition-all shadow-2xs active:scale-95 cursor-pointer ${
-                    isAdded
-                      ? "bg-raya-success text-white"
-                      : "bg-raya-blue hover:bg-blue-600 text-white"
-                  }`}
-                >
-                  {isAdded ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Added</span>
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add</span>
-                    </>
-                  )}
-                </button>
+                {isEbay ? (
+                  <a
+                    href={productLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer bg-[#0064D2] hover:bg-[#0053b3] text-white"
+                  >
+                    <span>View on eBay</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => handleAdd(p)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs font-medium transition-all shadow-2xs active:scale-95 cursor-pointer ${
+                      isAdded
+                        ? "bg-raya-success text-white"
+                        : "bg-raya-blue hover:bg-blue-600 text-white"
+                    }`}
+                  >
+                    {isAdded ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Added</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           );

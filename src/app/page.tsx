@@ -15,14 +15,16 @@ export default function RayaHome() {
       role: "assistant",
       text: `👋 Hi! I am Raya, your autonomous shopping agent by Razorpay.
 
-I am connected to 3 live e-commerce stores across the Bazaar ecosystem:
+I am connected to live merchant stores and marketplaces across the Bazaar ecosystem:
 • ⚡ **NexusStore**: Sleek high-performance smart apparel & tech electronics
-• 🧵 **ThreadVault**: Curated minimalist luxury fashion, Mongolian cashmere & artisan audio
+• 🧵 **ThreadVault**: Curated minimalist luxury fashion, cashmere & artisan audio
 • 🎮 **PixelMart**: Cyberpunk creator equipment, macro keypads & RGB hardware
+• 🛍️ **eBay**: Global marketplace with certified refurbished tech & direct listings
 
 Try asking me:
-• *"Find luxury sweaters from ThreadVault and RGB desk gear from PixelMart"*
-• *"Show me the best techwear jackets across all stores under ₹5,000"*
+• *"Find luxury clothing from ThreadVault and gaming gear from PixelMart"*
+• *"Show me certified refurbished tech deals on eBay"*
+• *"Show me the best jackets across all stores and eBay under ₹15,000"*
 • Or click one of the store pills below to start browsing!`,
     },
   ]);
@@ -126,10 +128,11 @@ Try asking me:
   };
 
   const storeButtons = [
-    { label: "🌐 All 3 Stores", query: "Show me the top recommended products across all 3 stores" },
+    { label: "🌐 All Stores", query: "Show me the top recommended products across all stores and eBay" },
     { label: "⚡ NexusStore", query: "Show me smart apparel and electronics from NexusStore" },
     { label: "🧵 ThreadVault", query: "Show me luxury clothing and acoustic gear from ThreadVault" },
     { label: "🎮 PixelMart", query: "Show me cyberpunk streetwear and creator gear from PixelMart" },
+    { label: "🛍️ eBay", query: "Show me certified tech deals and items on eBay" },
   ];
 
   return (

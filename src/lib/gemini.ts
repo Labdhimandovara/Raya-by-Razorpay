@@ -65,11 +65,22 @@ export const CONNECTED_STORES: Record<string, StoreInfo> = {
     baseUrl: process.env.PIXELMART_API_URL || "https://pixelmart-api-2d25.onrender.com/api",
     frontendUrl: "https://pixelmart-frontend.vercel.app",
   },
+  ebay: {
+    id: "ebay",
+    name: "eBay",
+    vibe: "Global Marketplace & Refurbished",
+    tagline: "Worldwide marketplace with verified buyer protection & refurbished electronics",
+    icon: "🛍️",
+    badgeClass: "bg-blue-50 text-blue-700 border-blue-200",
+    borderClass: "hover:border-blue-400",
+    baseUrl: "https://www.ebay.com",
+    frontendUrl: "https://www.ebay.com",
+  },
 };
 
 export const RAYA_SYSTEM_INSTRUCTION = `
 You are Raya, an autonomous AI shopping intelligence agent created by Razorpay.
-You represent a unified shopping bridge connecting users to 3 live e-commerce stores:
+You represent a unified shopping bridge connecting users to live e-commerce stores and global marketplaces:
 
 1. ⚡ NexusStore ('nexusstore'):
    - Vibe: Sleek high-performance smart apparel, connected wearable jackets, and daily tech electronics.
@@ -77,20 +88,24 @@ You represent a unified shopping bridge connecting users to 3 live e-commerce st
    - Vibe: Curated minimalist luxury fashion, Mongolian cashmere, bespoke heavyweight streetwear, and audiophile acoustic gear.
 3. 🎮 PixelMart ('pixelmart'):
    - Vibe: Cyberpunk streetwear, streaming equipment, macro keypads, and RGB desktop hardware.
+4. 🛍️ eBay ('ebay'):
+   - Vibe: Global marketplace with certified refurbished electronics, flagship tech, and rare apparel.
+   - Important: eBay items cannot be checked out via native Razorpay merchant checkout; users click the "View on eBay" button on product cards to view and purchase directly on eBay.
 
 Your Capabilities & Tools:
-1. 'listProducts': Search products across 'all' stores simultaneously (default), or filter to a specific store ('nexusstore', 'threadvault', or 'pixelmart').
-2. 'listConnectedStores': Discover the 3 connected stores, their live health, and specializations.
-3. 'viewCart': View active shopping cart for a store (specify store name).
-4. 'addToCart': Add item to cart with store name and product ID.
+1. 'listProducts': Search products across 'all' stores simultaneously (default), or filter to a specific store ('nexusstore', 'threadvault', 'pixelmart', or 'ebay').
+2. 'listConnectedStores': Discover the connected stores, their live health, and specializations.
+3. 'viewCart': View active shopping cart for a merchant store (specify store name).
+4. 'addToCart': Add item to cart with store name and product ID (for NexusStore, ThreadVault, PixelMart).
 5. 'checkoutOrder': Place order on a store with shipping address (name, street, city, country, zip) and payment method.
 6. 'getOrderHistory': Fetch customer orders and tracking status.
 
 Tone & Persona:
 - Fast, friendly, highly knowledgeable, and authoritative on e-commerce.
-- Always mention which store each recommended item comes from (e.g., "From ThreadVault: ...", "From PixelMart: ...").
-- Format prices in ₹ (INR) and mention stock levels.
-- Reassure users that transactions are secured by Razorpay autonomous purchase guard.
+- Always mention which store each recommended item comes from (e.g., "From eBay: ...", "From ThreadVault: ...").
+- Format prices in ₹ (INR) and mention stock levels or condition.
+- For eBay items, explain that users can click "View on eBay" to view the listing directly.
+- Reassure users that transactions on merchant stores are secured by Razorpay autonomous purchase guard.
 `;
 
 export const GROQ_TOOLS = [
@@ -98,7 +113,7 @@ export const GROQ_TOOLS = [
     type: "function",
     function: {
       name: "listConnectedStores",
-      description: "List all 3 connected merchant stores (NexusStore, ThreadVault, PixelMart) with their vibes and live status",
+      description: "List all connected merchant stores and marketplaces (NexusStore, ThreadVault, PixelMart, eBay) with their vibes and live status",
       parameters: {
         type: "object",
         properties: {},
@@ -109,18 +124,18 @@ export const GROQ_TOOLS = [
     type: "function",
     function: {
       name: "listProducts",
-      description: "Search catalog products across all stores simultaneously or target a specific store",
+      description: "Search catalog products across all stores simultaneously or target a specific store or eBay marketplace",
       parameters: {
         type: "object",
         properties: {
           store: {
             type: "string",
-            description: "Store to search: 'all' (default, searches all 3 stores), 'nexusstore', 'threadvault', or 'pixelmart'",
-            enum: ["all", "nexusstore", "threadvault", "pixelmart"],
+            description: "Store to search: 'all' (default, searches all stores + eBay), 'nexusstore', 'threadvault', 'pixelmart', or 'ebay'",
+            enum: ["all", "nexusstore", "threadvault", "pixelmart", "ebay"],
           },
           search: {
             type: "string",
-            description: "Product keyword, item name, or style (e.g. cashmere, microphone, headphones, jacket, keyboard)",
+            description: "Product keyword, item name, or style (e.g. cashmere, iPhone, headphones, jacket, keyboard)",
           },
           category: {
             type: "string",
@@ -210,6 +225,99 @@ export const GROQ_TOOLS = [
   },
 ];
 
+export const SAMPLE_EBAY_PRODUCTS = [
+  {
+    id: "ebay-iphone-15-pro-max",
+    name: "Apple iPhone 15 Pro Max 256GB Titanium (Refurbished Excellent)",
+    description: "Certified Refurbished with 1-Year Allstate Warranty, 100% battery health, unlocked worldwide.",
+    price: 89999,
+    stock: 8,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&auto=format&fit=crop",
+    store: "ebay",
+    storeName: "eBay",
+    storeUrl: "https://www.ebay.com",
+    productUrl: "https://www.ebay.com/itm/386123456789",
+    isEbay: true,
+    source: "ebay",
+  },
+  {
+    id: "ebay-sony-wh1000xm5",
+    name: "Sony WH-1000XM5 Wireless Noise-Canceling Headphones - Black",
+    description: "Industry-leading noise cancellation, dual processors, 30-hour battery life with quick charge.",
+    price: 24999,
+    stock: 14,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop",
+    store: "ebay",
+    storeName: "eBay",
+    storeUrl: "https://www.ebay.com",
+    productUrl: "https://www.ebay.com/itm/386234567890",
+    isEbay: true,
+    source: "ebay",
+  },
+  {
+    id: "ebay-apple-watch-ultra-2",
+    name: "Apple Watch Ultra 2 GPS + Cellular 49mm Titanium - Orange Band",
+    description: "Rugged and capable smartwatch with precision dual-frequency GPS, up to 36 hours of battery life.",
+    price: 62999,
+    stock: 5,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop",
+    store: "ebay",
+    storeName: "eBay",
+    storeUrl: "https://www.ebay.com",
+    productUrl: "https://www.ebay.com/itm/386345678901",
+    isEbay: true,
+    source: "ebay",
+  },
+  {
+    id: "ebay-bose-qc-ultra-earbuds",
+    name: "Bose QuietComfort Ultra Wireless Earbuds with Spatial Audio",
+    description: "Breakthrough spatial audio for immersive listening, world-class active noise cancellation.",
+    price: 19999,
+    stock: 12,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop",
+    store: "ebay",
+    storeName: "eBay",
+    storeUrl: "https://www.ebay.com",
+    productUrl: "https://www.ebay.com/itm/386456789012",
+    isEbay: true,
+    source: "ebay",
+  },
+  {
+    id: "ebay-steam-deck-oled-1tb",
+    name: "Steam Deck OLED 1TB Handheld Gaming Console (Certified)",
+    description: "7.4-inch 90Hz HDR OLED display, faster downloads with Wi-Fi 6E, 50Whr battery.",
+    price: 54999,
+    stock: 6,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop",
+    store: "ebay",
+    storeName: "eBay",
+    storeUrl: "https://www.ebay.com",
+    productUrl: "https://www.ebay.com/itm/386567890123",
+    isEbay: true,
+    source: "ebay",
+  },
+  {
+    id: "ebay-vintage-nike-acg-jacket",
+    name: "Vintage 90s Nike ACG Storm-FIT Mountain Parka Jacket",
+    description: "Heavyweight weather-resistant technical mountaineering jacket in contrast retro purple/teal.",
+    price: 14999,
+    stock: 4,
+    category: "Clothing",
+    imageUrl: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop",
+    store: "ebay",
+    storeName: "eBay",
+    storeUrl: "https://www.ebay.com",
+    productUrl: "https://www.ebay.com/itm/386789012345",
+    isEbay: true,
+    source: "ebay",
+  },
+];
+
 // Execute tool against Bazaar AI Multi-Store Bridge or direct store backends
 export async function executeBridgeTool(
   toolName: string,
@@ -233,6 +341,21 @@ export async function executeBridgeTool(
 
       case "listProducts": {
         const store = args?.store || "all";
+
+        // Direct eBay search
+        if (store === "ebay") {
+          const search = (args?.search || "").toLowerCase();
+          const filtered = search
+            ? SAMPLE_EBAY_PRODUCTS.filter(
+                (p) =>
+                  p.name.toLowerCase().includes(search) ||
+                  p.description.toLowerCase().includes(search) ||
+                  p.category.toLowerCase().includes(search)
+              )
+            : SAMPLE_EBAY_PRODUCTS;
+          return { status: "SUCCESS", data: filtered };
+        }
+
         const params = new URLSearchParams();
         params.append("store", store);
         if (args?.search) params.append("search", args.search);
@@ -249,6 +372,8 @@ export async function executeBridgeTool(
               store: p.store || store,
               storeName: p.storeName || CONNECTED_STORES[p.store || store]?.name || "Store",
               storeUrl: p.storeUrl || CONNECTED_STORES[p.store || store]?.frontendUrl || "",
+              productUrl: p.productUrl || (p.store === "ebay" ? "https://www.ebay.com" : undefined),
+              isEbay: p.store === "ebay" || p.source === "ebay",
             }));
             return { status: "SUCCESS", data: products };
           }
@@ -257,7 +382,11 @@ export async function executeBridgeTool(
         }
 
         // Direct Fallback to Store Endpoints
-        const targetStores = store === "all" ? Object.values(CONNECTED_STORES) : [CONNECTED_STORES[store] || CONNECTED_STORES.nexusstore];
+        const targetStores =
+          store === "all"
+            ? Object.values(CONNECTED_STORES).filter((s) => s.id !== "ebay")
+            : [CONNECTED_STORES[store] || CONNECTED_STORES.nexusstore];
+
         const directPromises = targetStores.map(async (st) => {
           try {
             const searchParams = new URLSearchParams();
@@ -279,6 +408,12 @@ export async function executeBridgeTool(
         });
 
         const directResults = (await Promise.all(directPromises)).flat();
+
+        // If "all" was requested, also append top eBay items
+        if (store === "all") {
+          directResults.push(...SAMPLE_EBAY_PRODUCTS.slice(0, 2));
+        }
+
         return { status: "SUCCESS", data: directResults };
       }
 
