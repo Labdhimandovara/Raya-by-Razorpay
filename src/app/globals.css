@@ -1,17 +1,26 @@
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  html {
+    font-family: 'Satoshi', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
   body {
-    @apply bg-[#F8FAFC] text-[#0C2340] antialiased selection:bg-[#0C66E4] selection:text-white font-sans;
+    @apply bg-raya-cloud text-raya-ink antialiased selection:bg-raya-blue selection:text-white font-sans;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 }
 
-/* Custom Smooth Scrollbar */
+/* Custom Smooth Brand Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -24,18 +33,42 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: #64748B;
+}
+
+/* Hide scrollbar for clean horizontal chip scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Subtle Brand Geometric Watermark Pattern */
+.bg-brand-pattern-light {
+  background-color: #F8FAFC;
+  background-image: radial-gradient(#6DA8FF 0.75px, transparent 0.75px), radial-gradient(#0A63FF 0.75px, #F8FAFC 0.75px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+}
+
+.bg-brand-pattern-dark {
+  background-color: #0D1B2A;
+  background-image: radial-gradient(#0A63FF 0.75px, transparent 0.75px);
+  background-size: 24px 24px;
 }
 
 @keyframes pulseGlow {
   0%, 100% {
-    box-shadow: 0 0 15px rgba(0, 208, 156, 0.4);
+    box-shadow: 0 0 15px rgba(10, 99, 255, 0.35);
   }
   50% {
-    box-shadow: 0 0 25px rgba(12, 102, 228, 0.6);
+    box-shadow: 0 0 25px rgba(109, 168, 255, 0.6);
   }
 }
 
 .animate-pulse-glow {
   animation: pulseGlow 3s infinite ease-in-out;
 }
+

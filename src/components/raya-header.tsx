@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { ShoppingBag, ShieldCheck, Zap } from "lucide-react";
+import { ShoppingBag, ShieldCheck, Sparkles } from "lucide-react";
+import { RayaLogo } from "./raya-logo";
 
 interface RayaHeaderProps {
   cartCount: number;
@@ -11,51 +12,50 @@ interface RayaHeaderProps {
 
 export function RayaHeader({ cartCount, onOpenCart, budget = 15000 }: RayaHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-[#E2E8F0] shadow-sm px-4 sm:px-8 py-3.5 flex items-center justify-between">
+    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-raya-lightGray/60 shadow-xs px-3.5 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between transition-all">
       {/* Brand Identity */}
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0C66E4] to-[#00D09C] flex items-center justify-center text-white shadow-md shadow-[#0C66E4]/20 font-bold text-lg tracking-wider">
-          <Zap className="w-5 h-5 fill-current text-white" />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-[#0C2340] text-lg tracking-tight">Raya</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#EBF3FF] text-[#0C66E4] border border-[#0C66E4]/20">
-              by Razorpay
-            </span>
-          </div>
-          <p className="text-[11px] text-[#64748B] hidden sm:block">Autonomous Shopping Intelligence</p>
+        <RayaLogo variant="light" size="sm" />
+        <div className="hidden lg:flex items-center gap-2 pl-2 border-l border-raya-lightGray/80">
+          <span className="text-[11px] font-medium text-raya-coolGray">
+            Autonomous Shopping Intelligence
+          </span>
         </div>
       </div>
 
-      {/* Trust & Safety Status Bar */}
-      <div className="hidden md:flex items-center gap-3">
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>NexusStore Bridge Active</span>
+      {/* Trust & Safety Status Bar (Hidden on small mobile, visible on tablet+) */}
+      <div className="hidden sm:flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-raya-success text-xs font-semibold shadow-2xs">
+          <span className="w-2 h-2 rounded-full bg-raya-success animate-pulse" />
+          <span>NexusStore Live</span>
         </div>
 
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-[#475569] text-xs font-semibold">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#0C66E4]" />
-          <span>Max Budget: ₹{budget.toLocaleString()}</span>
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-raya-softWhite border border-raya-lightGray text-raya-stone text-xs font-semibold">
+          <ShieldCheck className="w-3.5 h-3.5 text-raya-blue" />
+          <span className="hidden md:inline">Max Budget:</span>
+          <span>₹{budget.toLocaleString()}</span>
         </div>
       </div>
 
-      {/* Cart & Actions */}
+      {/* Cart & Quick Action */}
       <div className="flex items-center gap-2">
         <button
           onClick={onOpenCart}
-          className="relative flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#0C2340] hover:bg-[#112B50] text-white text-xs font-bold transition-all shadow-sm"
+          className="relative flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-raya-navy hover:bg-raya-slate active:scale-95 text-white text-xs font-bold transition-all shadow-sm"
+          aria-label="View Shopping Cart"
         >
-          <ShoppingBag className="w-4 h-4 text-[#00D09C]" />
-          <span>Cart</span>
-          {cartCount > 0 && (
-            <span className="ml-1 px-1.5 py-0.2 rounded-full bg-[#00D09C] text-[#0C2340] text-[11px] font-black animate-bounce">
+          <ShoppingBag className="w-4 h-4 text-raya-sky" />
+          <span className="hidden xs:inline">Cart</span>
+          {cartCount > 0 ? (
+            <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-raya-blue text-white text-[10px] font-extrabold animate-bounce">
               {cartCount}
             </span>
+          ) : (
+            <span className="text-[10px] text-raya-coolGray hidden sm:inline">0</span>
           )}
         </button>
       </div>
     </header>
   );
 }
+

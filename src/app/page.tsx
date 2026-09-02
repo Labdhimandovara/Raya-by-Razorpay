@@ -11,7 +11,7 @@ export default function RayaHome() {
     {
       id: "intro-msg",
       role: "assistant",
-      text: "👋 Hi! I am Raya, your autonomous shopping agent by Razorpay. I can help you discover products on NexusStore, manage your cart, and complete verified checkouts.\n\nTry asking me: \"Find backpacks or white shirts under ₹2,000\"!",
+      text: "👋 Hi! I am Raya, your autonomous shopping agent by Razorpay.\n\nI can help you discover products on NexusStore, curate items to your preferences, manage your cart, and execute verified checkouts.\n\nTry asking me: \"Find backpacks or white shirts under ₹2,000\"!",
     },
   ]);
 
@@ -113,7 +113,7 @@ export default function RayaHome() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FAFC]">
+    <div className="flex flex-col min-h-screen min-h-[100dvh] bg-raya-cloud bg-brand-pattern-light">
       {/* Top Navbar */}
       <RayaHeader
         cartCount={cartItems.length}
@@ -122,7 +122,7 @@ export default function RayaHome() {
       />
 
       {/* Main Chat Flow */}
-      <main className="flex-1 flex flex-col justify-between max-w-5xl w-full mx-auto">
+      <main className="flex-1 flex flex-col justify-between max-w-5xl w-full mx-auto relative">
         <RayaChat
           messages={messages}
           loading={loading}
@@ -143,3 +143,4 @@ export default function RayaHome() {
     </div>
   );
 }
+

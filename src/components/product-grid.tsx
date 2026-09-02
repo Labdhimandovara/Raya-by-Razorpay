@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Check, ShoppingCart, Tag } from "lucide-react";
+import { Plus, Check, ShoppingBag, Tag, ArrowRight } from "lucide-react";
 
 interface Product {
   id: string;
@@ -32,13 +32,13 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
   };
 
   return (
-    <div className="my-4 space-y-2">
-      <div className="flex items-center gap-2 text-xs font-bold text-[#64748B] uppercase tracking-wider">
-        <Tag className="w-3.5 h-3.5 text-[#0C66E4]" />
-        <span>NexusStore Catalog Results ({products.length})</span>
+    <div className="my-3 sm:my-4 space-y-2.5 w-full">
+      <div className="flex items-center gap-2 text-xs font-bold text-raya-coolGray uppercase tracking-wider">
+        <Tag className="w-3.5 h-3.5 text-raya-blue" />
+        <span>NexusStore Recommendations ({products.length})</span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 w-full">
         {products.map((p) => {
           const isAdded = addedMap[p.id];
           const img = p.imageUrl || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400";
@@ -46,51 +46,52 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
           return (
             <div
               key={p.id}
-              className="bg-white rounded-2xl border border-[#E2E8F0] hover:border-[#0C66E4]/40 hover:shadow-md transition-all p-3.5 flex flex-col justify-between group"
+              className="bg-white rounded-2xl border border-raya-lightGray hover:border-raya-blue/40 shadow-xs hover:shadow-raya-glow/20 transition-all p-3 sm:p-3.5 flex flex-col justify-between group"
             >
               <div>
-                <div className="relative w-full h-36 rounded-xl overflow-hidden bg-slate-100 mb-3">
+                <div className="relative w-full h-36 sm:h-40 rounded-xl overflow-hidden bg-raya-softWhite mb-3">
                   <img
                     src={img}
                     alt={p.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
                   />
                   {p.category && (
-                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-sm text-[10px] font-bold text-[#0C2340] shadow-sm">
+                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-white/95 backdrop-blur-xs text-[10px] font-bold text-raya-navy shadow-xs">
                       {p.category}
                     </span>
                   )}
                   {p.stock !== undefined && (
-                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-emerald-500/90 text-white text-[10px] font-bold shadow-sm">
+                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-raya-success/90 text-white text-[10px] font-bold shadow-xs">
                       {p.stock} in stock
                     </span>
                   )}
                 </div>
 
-                <h4 className="font-bold text-sm text-[#0C2340] line-clamp-1 group-hover:text-[#0C66E4] transition-colors">
+                <h4 className="font-bold text-xs sm:text-sm text-raya-navy line-clamp-1 group-hover:text-raya-blue transition-colors">
                   {p.name}
                 </h4>
                 {p.description && (
-                  <p className="text-xs text-[#64748B] line-clamp-2 mt-1 font-normal">
+                  <p className="text-[11px] sm:text-xs text-raya-coolGray line-clamp-2 mt-1 font-normal">
                     {p.description}
                   </p>
                 )}
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-raya-lightGray/60 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-[#64748B] block font-semibold uppercase">Price</span>
-                  <span className="text-base font-extrabold text-[#0C2340]">
+                  <span className="text-[10px] text-raya-coolGray block font-medium uppercase">Price</span>
+                  <span className="text-sm sm:text-base font-extrabold text-raya-navy">
                     ₹{p.price.toLocaleString()}
                   </span>
                 </div>
 
                 <button
                   onClick={() => handleAdd(p)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs font-medium transition-all shadow-2xs active:scale-95 cursor-pointer ${
                     isAdded
-                      ? "bg-emerald-600 text-white"
-                      : "bg-[#0C66E4] hover:bg-[#0052CC] text-white"
+                      ? "bg-raya-success text-white"
+                      : "bg-raya-blue hover:bg-blue-600 text-white"
                   }`}
                 >
                   {isAdded ? (
@@ -101,7 +102,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                   ) : (
                     <>
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Add to Cart</span>
+                      <span>Add</span>
                     </>
                   )}
                 </button>
@@ -113,3 +114,4 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
     </div>
   );
 }
+
