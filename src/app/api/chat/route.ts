@@ -26,24 +26,41 @@ async function getAvailableGroqModel(groqKey: string): Promise<string> {
     if (res.ok) {
       const data = await res.json();
       const modelIds: string[] = (data.data || []).map((m: any) => m.id);
-      console.log("[Raya Groq] Available models on account:", modelIds);
+      
+      // Filter out non-chat models (guard, whisper, embed)
+      const chatModels = modelIds.filter((id: string) => {
+        const lower = id.toLowerCase();
+        return (
+          !lower.includes("guard") &&
+          !lower.includes("whisper") &&
+          !lower.includes("embed") &&
+          (lower.includes("llama") || lower.includes("gemma") || lower.includes("qwen"))
+        );
+      });
+
+      console.log("[Raya Groq Available Chat Models]:", chatModels);
+
+      // Prefer large versatile models first, then standard 8b
       const preferred = [
         "llama-3.3-70b-versatile",
         "llama-3.1-70b-versatile",
         "llama-3.1-8b-instant",
         "llama3-70b-8192",
         "llama3-8b-8192",
+        "gemma2-9b-it",
       ];
+
       for (const p of preferred) {
-        if (modelIds.includes(p)) {
-          workingModel = p;
-          return p;
+        const match = chatModels.find((m) => m.toLowerCase() === p.toLowerCase() || m.includes(p));
+        if (match) {
+          workingModel = match;
+          return match;
         }
       }
-      const llama = modelIds.find((id) => id.includes("llama"));
-      if (llama) {
-        workingModel = llama;
-        return llama;
+
+      if (chatModels.length > 0) {
+        workingModel = chatModels[0];
+        return chatModels[0];
       }
     }
   } catch (e) {
