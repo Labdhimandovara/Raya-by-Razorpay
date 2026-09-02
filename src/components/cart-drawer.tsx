@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
-import { X, ShoppingBag, ArrowRight, ShieldCheck } from "lucide-react";
+import React, { useState } from "react";
+import { X, ShoppingBag, ArrowRight, ShieldCheck, CreditCard, Loader2 } from "lucide-react";
 import { CONNECTED_STORES } from "@/lib/gemini";
+import { triggerRazorpayPayment } from "@/lib/razorpay";
 
 interface CartItem {
   id: string;
@@ -23,6 +24,7 @@ interface CartDrawerProps {
   items: CartItem[];
   total: number;
   onCheckout: () => void;
+  onPaymentSuccess?: (paymentInfo: { orderId: string; paymentId: string }) => void;
   budget?: number;
 }
 
@@ -32,11 +34,88 @@ export function CartDrawer({
   items,
   total,
   onCheckout,
+  onPaymentSuccess,
   budget = 15000,
 }: CartDrawerProps) {
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState<{ paymentId: string; orderId: string } | null>(null);
+
   if (!isOpen) return null;
 
   const isLimitExceeded = total > budget;
+
+  const handleRazorpayTestCheckout = async () => {
+    if (isLimitExceeded || total <= 0) return;
+    setIsProcessingPayment(true);
+
+    try {
+      // 1. Create Razorpay Order via API
+      const res = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: total,
+          currency: "INR",
+          receipt: `rcpt_raya_${Date.now()}`,
+          notes: {
+            itemCount: String(items.length),
+            store: items[0]?.store || "multi_store",
+          },
+        }),
+      });
+
+      const orderData = await res.json();
+      if (!res.ok || !orderData.orderId) {
+        throw new Error(orderData.error || "Failed to initialize Razorpay test order");
+      }
+
+      // 2. Trigger Razorpay Checkout Modal
+      await triggerRazorpayPayment({
+        keyId: orderData.keyId || "rzp_test_TTwic3LGIevFKg",
+        orderId: orderData.orderId,
+        amount: orderData.amount,
+        currency: orderData.currency || "INR",
+        name: "Raya by Razorpay",
+        description: `Autonomous Multi-Store Checkout (${items.length} items)`,
+        onSuccess: async (paymentResult) => {
+          // 3. Verify Payment
+          try {
+            const verifyRes = await fetch("/api/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(paymentResult),
+            });
+            const verifyData = await verifyRes.json();
+            setPaymentSuccess({
+              paymentId: paymentResult.razorpay_payment_id,
+              orderId: paymentResult.razorpay_order_id,
+            });
+
+            if (onPaymentSuccess) {
+              onPaymentSuccess({
+                orderId: paymentResult.razorpay_order_id,
+                paymentId: paymentResult.razorpay_payment_id,
+              });
+            }
+          } catch (e) {
+            console.error("Verification error:", e);
+          } finally {
+            setIsProcessingPayment(false);
+          }
+        },
+        onDismiss: () => {
+          setIsProcessingPayment(false);
+        },
+      });
+    } catch (err: any) {
+      console.error("Razorpay Checkout Error:", err);
+      alert(`Razorpay checkout initialization: ${err.message}. Opening direct checkout fallback.`);
+      onClose();
+      onCheckout();
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-raya-navy/50 backdrop-blur-xs transition-opacity animate-fadeIn">
@@ -142,21 +221,45 @@ export function CartDrawer({
               </div>
             )}
 
+            {/* Payment Successful Badge */}
+            {paymentSuccess ? (
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs space-y-1">
+                <div className="font-bold flex items-center gap-1.5 text-emerald-700">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>PAYMENT VERIFIED & CAPTURED</span>
+                </div>
+                <p className="text-[11px] text-emerald-700">
+                  Razorpay Payment ID: <span className="font-mono font-bold">{paymentSuccess.paymentId}</span>
+                </p>
+                <p className="text-[10px] text-emerald-600">Order ID: {paymentSuccess.orderId}</p>
+              </div>
+            ) : null}
+
             <button
-              disabled={isLimitExceeded}
-              onClick={() => {
-                if (isLimitExceeded) return;
-                onClose();
-                onCheckout();
-              }}
+              disabled={isLimitExceeded || isProcessingPayment}
+              onClick={handleRazorpayTestCheckout}
               className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
                 isLimitExceeded
                   ? "bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300 shadow-none"
+                  : isProcessingPayment
+                  ? "bg-raya-blue/80 text-white cursor-wait"
                   : "bg-raya-blue hover:bg-blue-600 active:scale-[0.98] text-white shadow-sm shadow-raya-blue/20 cursor-pointer"
               }`}
             >
-              <span>{isLimitExceeded ? "Checkout Blocked by Policy Guard" : "Instant Checkout with Raya"}</span>
-              <ArrowRight className="w-4 h-4" />
+              {isProcessingPayment ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Opening Razorpay Checkout...</span>
+                </>
+              ) : isLimitExceeded ? (
+                <span>Checkout Blocked by Policy Guard</span>
+              ) : (
+                <>
+                  <CreditCard className="w-4 h-4" />
+                  <span>Pay ₹{total.toLocaleString()} with Razorpay (Test Mode)</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
         )}

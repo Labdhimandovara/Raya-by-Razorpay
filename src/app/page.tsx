@@ -198,6 +198,12 @@ Try asking me:
         items={cartItems}
         total={cartTotal}
         onCheckout={handleCheckoutFromDrawer}
+        onPaymentSuccess={({ orderId, paymentId }) => {
+          setCartItems([]);
+          handleSendMessage(
+            `Payment completed successfully via Razorpay Test Mode! Razorpay Payment ID: ${paymentId}, Order ID: ${orderId}. Please confirm my receipt and tracking.`
+          );
+        }}
         budget={budget}
       />
     </div>
