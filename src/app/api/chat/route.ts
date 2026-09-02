@@ -11,10 +11,9 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const GROQ_MODELS = [
-  "openai/gpt-oss-120b",
-  "openai/gpt-oss-20b",
-  "qwen/qwen3.6-27b",
   "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
+  "mixtral-8x7b-32768",
 ];
 
 let workingModel: string | null = null;
@@ -25,13 +24,14 @@ async function callAI(
   geminiKey: string,
   openaiKey: string
 ): Promise<any> {
+  let lastError = "No AI provider succeeded.";
+
   // 1. Try Groq if key is available
   if (groqKey) {
     const modelsToTry = workingModel
       ? [workingModel, ...GROQ_MODELS.filter((m) => m !== workingModel)]
       : GROQ_MODELS;
 
-    let lastError = "Unknown Groq error";
     for (const model of modelsToTry) {
       try {
         const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -110,6 +110,10 @@ async function callAI(
     if (res.ok) {
       return await res.json();
     }
+  }
+
+  if (groqKey) {
+    throw new Error(`Groq API Error: ${lastError}`);
   }
 
   throw new Error("No AI provider credentials available. Please configure GROQ_API_KEY or GEMINI_API_KEY.");
