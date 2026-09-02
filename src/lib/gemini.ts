@@ -829,13 +829,21 @@ export async function executeBridgeTool(
           });
           if (res.ok) {
             const json = await res.json();
+            const allKnown = [...SAMPLE_NEXUS_PRODUCTS, ...SAMPLE_EBAY_PRODUCTS];
+            const lookup = (pid: string) => allKnown.find((p) => p.id === pid);
+            if (json.items && Array.isArray(json.items)) {
+              json.items = json.items.map((it: any) => ({
+                ...it,
+                product: it.product || lookup(it.productId || it.product_id),
+              }));
+            }
             return { status: "SUCCESS", data: json };
           }
         } catch (err: any) {
           console.warn("[Raya Bridge addToCart]", err.message);
         }
 
-        // Resilient fallback: lookup known product details and return SUCCESS
+        // Resilient fallback: lookup known product details and return SUCCESS with enriched items
         const allKnown = [...SAMPLE_NEXUS_PRODUCTS, ...SAMPLE_EBAY_PRODUCTS];
         const matched = allKnown.find((p) => p.id === args.productId);
         return {
@@ -847,6 +855,15 @@ export async function executeBridgeTool(
             quantity: args.quantity || 1,
             store,
             product: matched,
+            items: [
+              {
+                id: `cart_${Date.now()}`,
+                productId: args.productId,
+                quantity: args.quantity || 1,
+                store,
+                product: matched,
+              },
+            ],
           },
         };
       }

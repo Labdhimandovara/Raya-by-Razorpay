@@ -1,14 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, ShoppingBag, ArrowRight, ShieldCheck, CreditCard, Loader2 } from "lucide-react";
-import { CONNECTED_STORES } from "@/lib/gemini";
+import { X, ShoppingBag, ArrowRight, ShieldCheck, CreditCard, Loader2, Trash2 } from "lucide-react";
+import { CONNECTED_STORES, SAMPLE_NEXUS_PRODUCTS, SAMPLE_EBAY_PRODUCTS } from "@/lib/gemini";
 import { triggerRazorpayPayment } from "@/lib/razorpay";
+
+function lookupProduct(productId: string) {
+  const all = [...SAMPLE_NEXUS_PRODUCTS, ...SAMPLE_EBAY_PRODUCTS];
+  return all.find((p) => p.id === productId);
+}
 
 interface CartItem {
   id: string;
   productId: string;
   quantity: number;
+  price?: number;
+  name?: string;
   store?: string;
   product?: {
     name: string;
@@ -25,6 +32,7 @@ interface CartDrawerProps {
   total: number;
   onCheckout: () => void;
   onPaymentSuccess?: (paymentInfo: { orderId: string; paymentId: string }) => void;
+  onRemoveItem?: (productId: string) => void;
   budget?: number;
 }
 
@@ -35,6 +43,7 @@ export function CartDrawer({
   total,
   onCheckout,
   onPaymentSuccess,
+  onRemoveItem,
   budget = 15000,
 }: CartDrawerProps) {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -153,21 +162,26 @@ export function CartDrawer({
             </div>
           ) : (
             items.map((item, idx) => {
-              const name = item.product?.name || `Product (${item.productId})`;
-              const price = item.product?.price || 0;
-              const img = item.product?.imageUrl || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200";
-              const storeKey = (item.store || item.product?.store || "nexusstore").toLowerCase();
+              const productMeta = item.product || lookupProduct(item.productId);
+              const name = productMeta?.name || item.name || `Product (${item.productId})`;
+              const price = productMeta?.price || item.price || 0;
+              const img =
+                productMeta?.imageUrl ||
+                (item.store === "ebay"
+                  ? "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200"
+                  : "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=200");
+              const storeKey = (item.store || productMeta?.store || "nexusstore").toLowerCase();
               const storeMeta = CONNECTED_STORES[storeKey] || CONNECTED_STORES.nexusstore;
 
               return (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl border border-raya-lightGray bg-raya-softWhite/50 flex items-center gap-3"
+                  className="p-3 rounded-xl border border-raya-lightGray bg-white hover:border-raya-blue/30 transition-all flex items-center gap-3 shadow-2xs group"
                 >
                   <img
                     src={img}
                     alt={name}
-                    className="w-13 h-13 object-cover rounded-lg bg-white border border-raya-lightGray shrink-0"
+                    className="w-14 h-14 object-cover rounded-lg bg-raya-softWhite border border-raya-lightGray shrink-0"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
@@ -175,15 +189,26 @@ export function CartDrawer({
                         {storeMeta.icon} {storeMeta.name}
                       </span>
                     </div>
-                    <h5 className="text-xs font-bold text-raya-navy truncate">{name}</h5>
+                    <h5 className="text-xs font-bold text-raya-navy truncate" title={name}>
+                      {name}
+                    </h5>
                     <p className="text-xs font-semibold text-raya-blue mt-0.5">
                       ₹{price.toLocaleString()} × {item.quantity}
                     </p>
                   </div>
-                  <div className="text-right shrink-0">
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
                     <span className="text-xs font-black text-raya-navy">
                       ₹{(price * item.quantity).toLocaleString()}
                     </span>
+                    {onRemoveItem && (
+                      <button
+                        onClick={() => onRemoveItem(item.productId || item.id)}
+                        title="Remove from cart"
+                        className="text-raya-coolGray hover:text-red-500 p-0.5 rounded transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               );

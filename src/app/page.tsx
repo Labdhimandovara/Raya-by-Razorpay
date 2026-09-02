@@ -5,8 +5,13 @@ import { RayaHeader } from "@/components/raya-header";
 import { RayaChat, Message } from "@/components/raya-chat";
 import { RayaInput } from "@/components/raya-input";
 import { CartDrawer } from "@/components/cart-drawer";
-import { CONNECTED_STORES } from "@/lib/gemini";
+import { CONNECTED_STORES, SAMPLE_NEXUS_PRODUCTS, SAMPLE_EBAY_PRODUCTS } from "@/lib/gemini";
 import { Sparkles, Layers } from "lucide-react";
+
+function lookupProduct(productId: string) {
+  const all = [...SAMPLE_NEXUS_PRODUCTS, ...SAMPLE_EBAY_PRODUCTS];
+  return all.find((p) => p.id === productId);
+}
 
 export default function RayaHome() {
   const [messages, setMessages] = useState<Message[]>([
@@ -16,15 +21,15 @@ export default function RayaHome() {
       text: `👋 Hi! I am Raya, your autonomous shopping agent by Razorpay.
 
 I am connected to live merchant stores and marketplaces across the Bazaar ecosystem:
-• ⚡ **NexusStore**: Sleek high-performance smart apparel & tech electronics
-• 🧵 **ThreadVault**: Curated minimalist luxury fashion, cashmere & artisan audio
-• 🎮 **PixelMart**: Cyberpunk creator equipment, macro keypads & RGB hardware
-• 🛍️ **eBay**: Global marketplace with certified refurbished tech & direct listings
+• ⚡ NexusStore: Sleek high-performance smart apparel & tech electronics
+• 🧵 ThreadVault: Curated minimalist luxury fashion, cashmere & artisan audio
+• 🎮 PixelMart: Cyberpunk creator equipment, macro keypads & RGB hardware
+• 🛍️ eBay: Global marketplace with certified refurbished tech & direct listings
 
 Try asking me:
-• *"Find luxury clothing from ThreadVault and gaming gear from PixelMart"*
-• *"Show me certified refurbished tech deals on eBay"*
-• *"Show me the best jackets across all stores and eBay under ₹15,000"*
+• "Find luxury clothing from ThreadVault and gaming gear from PixelMart"
+• "Show me certified refurbished tech deals on eBay"
+• "Show me the best jackets across all stores and eBay under ₹15,000"
 • Or click one of the store pills below to start browsing!`,
     },
   ]);
@@ -36,7 +41,8 @@ Try asking me:
   const [budget, setBudget] = useState(15000);
 
   const cartTotal = cartItems.reduce((acc, item) => {
-    const price = item.product?.price || item.price || 0;
+    const productMeta = item.product || lookupProduct(item.productId);
+    const price = productMeta?.price || item.price || 0;
     const qty = item.quantity || 1;
     return acc + price * qty;
   }, 0);
@@ -94,8 +100,25 @@ Try asking me:
       if (data.history) setHistory(data.history);
 
       // Update cart state if cart was modified in the tool call
-      if (data.cart?.items) {
-        setCartItems(data.cart.items);
+      if (data.cart?.items && Array.isArray(data.cart.items)) {
+        setCartItems((prev) => {
+          return data.cart.items.map((newItem: any) => {
+            const prevItem = prev.find(
+              (p) => p.productId === newItem.productId || p.id === newItem.id
+            );
+            const product =
+              newItem.product ||
+              prevItem?.product ||
+              lookupProduct(newItem.productId);
+
+            return {
+              ...newItem,
+              id: newItem.id || prevItem?.id || `cart-${newItem.productId}`,
+              product,
+              store: newItem.store || prevItem?.store || product?.store || "nexusstore",
+            };
+          });
+        });
       } else if (data.receipt) {
         // Order confirmed, clear cart
         setCartItems([]);
@@ -117,12 +140,12 @@ Try asking me:
 
   const handleAddToCartFromCard = (product: any) => {
     const store = product.store || "nexusstore";
-    // Add locally to cart items for immediate feedback
+    // Add locally to cart items for immediate feedback with full product metadata
     setCartItems((prev) => {
       const existing = prev.find((i) => i.productId === product.id);
       if (existing) {
         return prev.map((i) =>
-          i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.productId === product.id ? { ...i, quantity: i.quantity + 1, product: i.product || product } : i
         );
       }
       return [...prev, { id: `cart-${Date.now()}`, productId: product.id, quantity: 1, store, product }];
@@ -130,6 +153,10 @@ Try asking me:
 
     // Send command to Raya to persist in the backend on the correct store
     handleSendMessage(`Add product "${product.name}" (ID: ${product.id}) from ${store} to my cart`);
+  };
+
+  const handleRemoveFromCart = (productId: string) => {
+    setCartItems((prev) => prev.filter((i) => i.productId !== productId && i.id !== productId));
   };
 
   const handleCheckoutFromDrawer = () => {
@@ -198,6 +225,7 @@ Try asking me:
         items={cartItems}
         total={cartTotal}
         onCheckout={handleCheckoutFromDrawer}
+        onRemoveItem={handleRemoveFromCart}
         onPaymentSuccess={({ orderId, paymentId }) => {
           setCartItems([]);
           handleSendMessage(
