@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, ShoppingBag, ArrowRight, ShieldCheck, CreditCard, Loader2, Trash2 } from "lucide-react";
+import { X, ShoppingBag, ArrowRight, ShieldCheck, CreditCard, Loader2, Trash2, Plus, Minus } from "lucide-react";
 import { CONNECTED_STORES, SAMPLE_NEXUS_PRODUCTS, SAMPLE_EBAY_PRODUCTS } from "@/lib/gemini";
 import { triggerRazorpayPayment } from "@/lib/razorpay";
 
@@ -33,6 +33,8 @@ interface CartDrawerProps {
   onCheckout: () => void;
   onPaymentSuccess?: (paymentInfo: { orderId: string; paymentId: string }) => void;
   onRemoveItem?: (productId: string) => void;
+  onUpdateQuantity?: (productId: string, newQuantity: number) => void;
+  onClearCart?: () => void;
   budget?: number;
 }
 
@@ -44,6 +46,8 @@ export function CartDrawer({
   onCheckout,
   onPaymentSuccess,
   onRemoveItem,
+  onUpdateQuantity,
+  onClearCart,
   budget = 15000,
 }: CartDrawerProps) {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -139,13 +143,25 @@ export function CartDrawer({
               {items.length} {items.length === 1 ? "item" : "items"}
             </span>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-raya-lightGray/50 active:scale-95 text-raya-coolGray flex items-center justify-center transition-all cursor-pointer"
-            aria-label="Close cart"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            {onClearCart && items.length > 0 && (
+              <button
+                onClick={onClearCart}
+                className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded-lg font-semibold flex items-center gap-1 transition-all cursor-pointer mr-1"
+                title="Empty entire cart"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline">Clear All</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full hover:bg-raya-lightGray/50 active:scale-95 text-raya-coolGray flex items-center justify-center transition-all cursor-pointer"
+              aria-label="Close cart"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Drawer Content */}
@@ -192,19 +208,50 @@ export function CartDrawer({
                     <h5 className="text-xs font-bold text-raya-navy truncate" title={name}>
                       {name}
                     </h5>
-                    <p className="text-xs font-semibold text-raya-blue mt-0.5">
-                      ₹{price.toLocaleString()} × {item.quantity}
-                    </p>
+                    <div className="flex items-center gap-2.5 mt-1.5">
+                      <span className="text-xs font-semibold text-raya-navy">
+                        ₹{price.toLocaleString()}
+                      </span>
+
+                      {/* + and - Stepper Controls */}
+                      <div className="flex items-center gap-1 bg-raya-softWhite border border-raya-lightGray rounded-lg p-0.5 shadow-2xs">
+                        <button
+                          onClick={() => {
+                            if (onUpdateQuantity) {
+                              onUpdateQuantity(item.productId || item.id, item.quantity - 1);
+                            }
+                          }}
+                          title="Decrease quantity"
+                          className="w-5 h-5 flex items-center justify-center rounded hover:bg-white text-raya-navy font-bold text-xs active:scale-90 transition-all cursor-pointer"
+                        >
+                          <Minus className="w-3 h-3 text-raya-coolGray hover:text-raya-navy" />
+                        </button>
+                        <span className="text-xs font-bold text-raya-navy px-1.5 min-w-[20px] text-center select-none">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => {
+                            if (onUpdateQuantity) {
+                              onUpdateQuantity(item.productId || item.id, item.quantity + 1);
+                            }
+                          }}
+                          title="Increase quantity"
+                          className="w-5 h-5 flex items-center justify-center rounded hover:bg-white text-raya-navy font-bold text-xs active:scale-90 transition-all cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3 text-raya-coolGray hover:text-raya-navy" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <div className="flex flex-col items-end gap-2 shrink-0">
                     <span className="text-xs font-black text-raya-navy">
                       ₹{(price * item.quantity).toLocaleString()}
                     </span>
                     {onRemoveItem && (
                       <button
                         onClick={() => onRemoveItem(item.productId || item.id)}
-                        title="Remove from cart"
-                        className="text-raya-coolGray hover:text-red-500 p-0.5 rounded transition-colors cursor-pointer"
+                        title="Delete product from cart"
+                        className="text-raya-coolGray hover:text-red-500 hover:bg-red-50 p-1 rounded-md transition-all cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

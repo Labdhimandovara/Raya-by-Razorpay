@@ -159,6 +159,24 @@ Try asking me:
     setCartItems((prev) => prev.filter((i) => i.productId !== productId && i.id !== productId));
   };
 
+  const handleUpdateQuantity = (productId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      handleRemoveFromCart(productId);
+      return;
+    }
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.productId === productId || item.id === productId
+          ? { ...item, quantity: newQuantity }
+          : item
+      )
+    );
+  };
+
+  const handleClearCart = () => {
+    setCartItems([]);
+  };
+
   const handleCheckoutFromDrawer = () => {
     handleSendMessage(
       "Please checkout my active cart with paymentMethod: card for recipient: Jane Doe, 100 Broadway, New York, USA, 10005"
@@ -226,6 +244,8 @@ Try asking me:
         total={cartTotal}
         onCheckout={handleCheckoutFromDrawer}
         onRemoveItem={handleRemoveFromCart}
+        onUpdateQuantity={handleUpdateQuantity}
+        onClearCart={handleClearCart}
         onPaymentSuccess={({ orderId, paymentId }) => {
           setCartItems([]);
           handleSendMessage(

@@ -85,7 +85,7 @@ export function RayaInput({ onSend, loading }: RayaInputProps) {
         </form>
 
         <p className="text-[10px] sm:text-[11px] text-center text-raya-coolGray">
-          Raya by Razorpay is connected to live NexusStore with verified guardrails.
+          Raya by Razorpay is connected to live NexusStore, ThreadVault, PixelMart & eBay with verified guardrails.
         </p>
       </div>
     </div>
