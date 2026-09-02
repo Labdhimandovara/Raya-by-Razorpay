@@ -10,11 +10,51 @@ import {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const GEMINI_MODELS = [
-  "gemini-1.5-flash",
-  "gemini-2.0-flash",
-  "gemini-1.5-pro",
-];
+let workingGeminiModel: string | null = null;
+
+async function getAvailableGeminiModel(geminiKey: string): Promise<string> {
+  if (workingGeminiModel) return workingGeminiModel;
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(geminiKey)}`
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const models = data.models || [];
+      const supported = models
+        .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent"))
+        .map((m: any) => m.name.replace("models/", ""));
+
+      console.log("[Raya Gemini Supported Models]:", supported);
+
+      const preferred = [
+        "gemini-1.5-flash-latest",
+        "gemini-1.5-flash",
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-exp",
+        "gemini-1.5-flash-8b",
+        "gemini-1.5-pro-latest",
+        "gemini-1.5-pro",
+        "gemini-pro",
+      ];
+
+      for (const p of preferred) {
+        if (supported.includes(p)) {
+          workingGeminiModel = p;
+          return p;
+        }
+      }
+
+      if (supported.length > 0) {
+        workingGeminiModel = supported[0];
+        return supported[0];
+      }
+    }
+  } catch (e) {
+    console.warn("[Raya Gemini] ListModels error:", e);
+  }
+  return "gemini-1.5-flash";
+}
 
 // Native function declarations for Google Gemini
 const GEMINI_FUNCTION_DECLARATIONS = GROQ_TOOLS.map((t) => t.function);
@@ -25,70 +65,71 @@ async function callNativeGemini(
 ): Promise<{ text?: string; functionCalls?: Array<{ name: string; args: any }>; rawContent?: any }> {
   let lastError = "Unknown Gemini error";
 
-  for (const model of GEMINI_MODELS) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
-        geminiKey
-      )}`;
+  const modelToUse = await getAvailableGeminiModel(geminiKey);
 
-      const payload = {
-        system_instruction: {
-          parts: [{ text: RAYA_SYSTEM_INSTRUCTION }],
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${encodeURIComponent(
+      geminiKey
+    )}`;
+
+    const payload = {
+      system_instruction: {
+        parts: [{ text: RAYA_SYSTEM_INSTRUCTION }],
+      },
+      contents,
+      tools: [
+        {
+          function_declarations: GEMINI_FUNCTION_DECLARATIONS,
         },
-        contents,
-        tools: [
-          {
-            function_declarations: GEMINI_FUNCTION_DECLARATIONS,
-          },
-        ],
-      };
+      ],
+    };
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
 
-      if (res.ok) {
-        const data = await res.json();
-        const candidate = data.candidates?.[0];
-        const content = candidate?.content;
+    if (res.ok) {
+      const data = await res.json();
+      const candidate = data.candidates?.[0];
+      const content = candidate?.content;
 
-        if (!content || !content.parts) {
-          return { text: "I processed your request, but received an empty response from Gemini." };
-        }
-
-        const functionCalls: Array<{ name: string; args: any }> = [];
-        let accumulatedText = "";
-
-        for (const part of content.parts) {
-          if (part.functionCall) {
-            functionCalls.push({
-              name: part.functionCall.name,
-              args: part.functionCall.args || {},
-            });
-          }
-          if (part.text) {
-            accumulatedText += part.text;
-          }
-        }
-
-        return {
-          text: accumulatedText || undefined,
-          functionCalls: functionCalls.length > 0 ? functionCalls : undefined,
-          rawContent: content,
-        };
+      if (!content || !content.parts) {
+        return { text: "I processed your request, but received an empty response from Gemini." };
       }
 
-      const errData = await res.json().catch(() => null);
-      lastError = errData?.error?.message || `HTTP ${res.status}`;
-      console.warn(`[Raya Gemini Native] Model ${model} returned ${res.status}:`, lastError);
-    } catch (e: any) {
-      lastError = e.message;
-      console.warn(`[Raya Gemini Native] Model ${model} exception:`, e.message);
+      const functionCalls: Array<{ name: string; args: any }> = [];
+      let accumulatedText = "";
+
+      for (const part of content.parts) {
+        if (part.functionCall) {
+          functionCalls.push({
+            name: part.functionCall.name,
+            args: part.functionCall.args || {},
+          });
+        }
+        if (part.text) {
+          accumulatedText += part.text;
+        }
+      }
+
+      return {
+        text: accumulatedText || undefined,
+        functionCalls: functionCalls.length > 0 ? functionCalls : undefined,
+        rawContent: content,
+      };
     }
+
+    const errData = await res.json().catch(() => null);
+    lastError = `[Model ${modelToUse}]: ${errData?.error?.message || `HTTP ${res.status}`}`;
+    console.warn(`[Raya Gemini Native Error]`, lastError);
+    workingGeminiModel = null;
+  } catch (e: any) {
+    lastError = e.message;
+    workingGeminiModel = null;
   }
 
   throw new Error(`Google Gemini Error: ${lastError}`);
