@@ -16,36 +16,78 @@ const GEMINI_MODELS = [
   "gemini-1.5-pro",
 ];
 
-async function callGemini(messages: any[], geminiKey: string): Promise<any> {
+// Native function declarations for Google Gemini
+const GEMINI_FUNCTION_DECLARATIONS = GROQ_TOOLS.map((t) => t.function);
+
+async function callNativeGemini(
+  contents: any[],
+  geminiKey: string
+): Promise<{ text?: string; functionCalls?: Array<{ name: string; args: any }>; rawContent?: any }> {
   let lastError = "Unknown Gemini error";
 
   for (const model of GEMINI_MODELS) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
+        geminiKey
+      )}`;
+
+      const payload = {
+        system_instruction: {
+          parts: [{ text: RAYA_SYSTEM_INSTRUCTION }],
+        },
+        contents,
+        tools: [
+          {
+            function_declarations: GEMINI_FUNCTION_DECLARATIONS,
+          },
+        ],
+      };
+
       const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${geminiKey}`,
         },
-        body: JSON.stringify({
-          model,
-          messages,
-          tools: GROQ_TOOLS,
-          tool_choice: "auto",
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
-        return await res.json();
+        const data = await res.json();
+        const candidate = data.candidates?.[0];
+        const content = candidate?.content;
+
+        if (!content || !content.parts) {
+          return { text: "I processed your request, but received an empty response from Gemini." };
+        }
+
+        const functionCalls: Array<{ name: string; args: any }> = [];
+        let accumulatedText = "";
+
+        for (const part of content.parts) {
+          if (part.functionCall) {
+            functionCalls.push({
+              name: part.functionCall.name,
+              args: part.functionCall.args || {},
+            });
+          }
+          if (part.text) {
+            accumulatedText += part.text;
+          }
+        }
+
+        return {
+          text: accumulatedText || undefined,
+          functionCalls: functionCalls.length > 0 ? functionCalls : undefined,
+          rawContent: content,
+        };
       }
 
       const errData = await res.json().catch(() => null);
       lastError = errData?.error?.message || `HTTP ${res.status}`;
-      console.warn(`[Raya Gemini] Model ${model} returned ${res.status}:`, lastError);
+      console.warn(`[Raya Gemini Native] Model ${model} returned ${res.status}:`, lastError);
     } catch (e: any) {
       lastError = e.message;
-      console.warn(`[Raya Gemini] Model ${model} exception:`, e.message);
+      console.warn(`[Raya Gemini Native] Model ${model} exception:`, e.message);
     }
   }
 
@@ -80,24 +122,32 @@ export async function POST(req: NextRequest) {
 
     if (!geminiKey) {
       return NextResponse.json({
-        text: "👋 Welcome to Raya by Razorpay! Please configure your `GEMINI_API_KEY` in Vercel environment variables.",
+        text: "👋 Welcome to Raya by Razorpay! Please configure your `gemini_api_key` in Vercel environment variables.",
         toolExecutions: [],
         history: [],
       });
     }
 
-    // Build OpenAI-compatible messages array for Gemini
-    const messages: any[] = [{ role: "system", content: RAYA_SYSTEM_INSTRUCTION }];
+    // Build Gemini native contents history
+    const contents: any[] = [];
 
-    // Map existing history
+    // Map existing history into Gemini roles ("user" | "model")
     for (const h of history) {
-      if (h.role === "user" || h.role === "assistant") {
-        messages.push({ role: h.role, content: h.content || h.text || "" });
+      const role = h.role === "assistant" ? "model" : "user";
+      const textContent = h.content || h.text || "";
+      if (textContent) {
+        contents.push({
+          role,
+          parts: [{ text: textContent }],
+        });
       }
     }
 
     // Add current user message
-    messages.push({ role: "user", content: message });
+    contents.push({
+      role: "user",
+      parts: [{ text: message }],
+    });
 
     const toolExecutions: ToolExecutionResult[] = [];
     let extractedProducts: any[] | undefined = undefined;
@@ -111,34 +161,21 @@ export async function POST(req: NextRequest) {
     while (iterations < MAX_ITERATIONS) {
       iterations++;
 
-      const data = await callGemini(messages, geminiKey);
-      const choice = data.choices?.[0];
-      const assistantMessage = choice?.message;
+      const geminiResult = await callNativeGemini(contents, geminiKey);
 
-      if (!assistantMessage) {
-        finalText = "I couldn't process your request with Gemini. Please try again.";
-        break;
-      }
+      // If Gemini called tools
+      if (geminiResult.functionCalls && geminiResult.functionCalls.length > 0) {
+        // Append model's tool call turn to contents history
+        if (geminiResult.rawContent) {
+          contents.push(geminiResult.rawContent);
+        }
 
-      // Add assistant message to conversation
-      messages.push(assistantMessage);
+        // Execute each tool call
+        for (const call of geminiResult.functionCalls) {
+          const toolName = call.name;
+          const args = call.args || {};
 
-      // Check if model called any tools
-      const toolCalls = assistantMessage.tool_calls;
-
-      if (toolCalls && toolCalls.length > 0) {
-        // Execute all tool calls
-        for (const toolCall of toolCalls) {
-          const toolName = toolCall.function.name;
-          let args: any = {};
-
-          try {
-            args = JSON.parse(toolCall.function.arguments || "{}");
-          } catch {
-            args = {};
-          }
-
-          console.log(`[RAYA GEMINI TOOL CALL] Tool: ${toolName}`, args);
+          console.log(`[RAYA GEMINI NATIVE TOOL] Executing ${toolName}:`, args);
 
           const execResult = await executeBridgeTool(toolName, args, bridgeUrl);
 
@@ -174,26 +211,35 @@ export async function POST(req: NextRequest) {
             };
           }
 
-          // Feed tool result back into conversation
-          messages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: JSON.stringify(execResult.data),
+          // Feed function result back to Gemini in its native role: "function" format
+          contents.push({
+            role: "function",
+            parts: [
+              {
+                functionResponse: {
+                  name: toolName,
+                  response: {
+                    name: toolName,
+                    content: execResult.data,
+                  },
+                },
+              },
+            ],
           });
         }
       } else {
-        // No tool calls — this is the final text response
-        finalText = assistantMessage.content || "I have processed your request.";
+        // No function calls — final answer reached
+        finalText = geminiResult.text || "I have processed your request.";
         break;
       }
     }
 
-    // Build clean history for the client
-    const clientHistory = messages
-      .filter((m) => m.role === "user" || m.role === "assistant")
-      .map((m) => ({
-        role: m.role,
-        content: typeof m.content === "string" ? m.content : "",
+    // Build clean history for the frontend client
+    const clientHistory = contents
+      .filter((c) => c.role === "user" || c.role === "model")
+      .map((c) => ({
+        role: c.role === "model" ? "assistant" : "user",
+        content: c.parts?.map((p: any) => p.text || "").join("") || "",
       }));
 
     return NextResponse.json({
