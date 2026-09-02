@@ -25,6 +25,114 @@ interface RayaChatProps {
   onAddToCart: (product: any) => void;
 }
 
+function renderInlineContent(text: string, isUser: boolean) {
+  // Regex to match bold markers **...**
+  const parts = text.split(/(\*\*[^*]+?\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+      const content = part.slice(2, -2).replace(/\*/g, "").trim();
+      return (
+        <strong
+          key={index}
+          className={`font-bold ${isUser ? "text-white" : "text-raya-navy"}`}
+        >
+          {content}
+        </strong>
+      );
+    }
+    // Strip any lingering stray asterisks
+    const clean = part.replace(/\*/g, "");
+    return <React.Fragment key={index}>{clean}</React.Fragment>;
+  });
+}
+
+function FormattedChatText({ text, isUser }: { text: string; isUser: boolean }) {
+  if (!text) return null;
+
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+  let listBuffer: { type: "bullet" | "number"; num?: string; text: string }[] = [];
+
+  const flushList = () => {
+    if (listBuffer.length === 0) return;
+    elements.push(
+      <ul key={`list-${elements.length}`} className="my-1.5 space-y-1.5 pl-1">
+        {listBuffer.map((item, idx) => (
+          <li key={idx} className="flex items-start gap-2">
+            {item.type === "bullet" ? (
+              <span className={`text-[12px] select-none mt-0.5 ${isUser ? "text-white/80" : "text-raya-blue"}`}>
+                •
+              </span>
+            ) : (
+              <span
+                className={`text-[10px] font-bold select-none px-1.5 py-0.5 rounded-md leading-none mt-0.5 ${
+                  isUser
+                    ? "bg-white/20 text-white"
+                    : "bg-raya-softWhite text-raya-blue border border-raya-lightGray"
+                }`}
+              >
+                {item.num}
+              </span>
+            )}
+            <span className="flex-1 leading-relaxed">{renderInlineContent(item.text, isUser)}</span>
+          </li>
+        ))}
+      </ul>
+    );
+    listBuffer = [];
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i].trim();
+    if (!rawLine) {
+      flushList();
+      continue;
+    }
+
+    // Numbered list: e.g. "1. ..." or "2) ..."
+    const numMatch = rawLine.match(/^(\d+)[\.\)]\s+(.+)$/);
+    if (numMatch) {
+      listBuffer.push({ type: "number", num: numMatch[1], text: numMatch[2] });
+      continue;
+    }
+
+    // Bullet list: e.g. "* ...", "- ...", "• ..."
+    const bulletMatch = rawLine.match(/^[\*\-\•]\s+(.+)$/);
+    if (bulletMatch) {
+      listBuffer.push({ type: "bullet", text: bulletMatch[1] });
+      continue;
+    }
+
+    flushList();
+
+    // Headers: e.g. "### ...", "## ..."
+    const headerMatch = rawLine.match(/^#{1,4}\s+(.+)$/);
+    if (headerMatch) {
+      elements.push(
+        <h4
+          key={`h-${elements.length}`}
+          className={`font-bold mt-2.5 mb-1 text-xs sm:text-sm tracking-tight ${
+            isUser ? "text-white" : "text-raya-navy"
+          }`}
+        >
+          {renderInlineContent(headerMatch[1], isUser)}
+        </h4>
+      );
+      continue;
+    }
+
+    // Regular paragraph
+    elements.push(
+      <p key={`p-${elements.length}`} className="my-1 leading-relaxed">
+        {renderInlineContent(rawLine, isUser)}
+      </p>
+    );
+  }
+
+  flushList();
+  return <div className="space-y-0.5">{elements}</div>;
+}
+
 export function RayaChat({ messages, loading, onAddToCart }: RayaChatProps) {
   const scrollEndRef = useRef<HTMLDivElement>(null);
 
@@ -82,7 +190,7 @@ export function RayaChat({ messages, loading, onAddToCart }: RayaChatProps) {
                       : "bg-white text-raya-ink border border-raya-lightGray rounded-tl-xs"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{m.text}</p>
+                  <FormattedChatText text={m.text} isUser={isUser} />
                 </div>
               )}
 
