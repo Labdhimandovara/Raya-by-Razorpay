@@ -6,16 +6,10 @@ import {
   ToolExecutionResult,
 } from "@/lib/gemini";
 
-const BRIDGE_URL =
-  process.env.BAZAAR_BRIDGE_URL ||
-  process.env.NEXUS_STORE_BRIDGE_URL ||
-  "https://bazaar-ai-backend.onrender.com/api/bridge";
+// Ensure Next.js treats this endpoint as dynamic and reads process.env on every request
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
-
-// Current active Groq production models (updated Sept 2026)
 const GROQ_MODELS = [
   "openai/gpt-oss-120b",
   "openai/gpt-oss-20b",
@@ -25,9 +19,14 @@ const GROQ_MODELS = [
 
 let workingModel: string | null = null;
 
-async function callAI(messages: any[]): Promise<any> {
-  // 1. Try Groq if GROQ_API_KEY is available
-  if (GROQ_API_KEY) {
+async function callAI(
+  messages: any[],
+  groqKey: string,
+  geminiKey: string,
+  openaiKey: string
+): Promise<any> {
+  // 1. Try Groq if key is available
+  if (groqKey) {
     const modelsToTry = workingModel
       ? [workingModel, ...GROQ_MODELS.filter((m) => m !== workingModel)]
       : GROQ_MODELS;
@@ -39,7 +38,7 @@ async function callAI(messages: any[]): Promise<any> {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${GROQ_API_KEY}`,
+            Authorization: `Bearer ${groqKey}`,
           },
           body: JSON.stringify({
             model,
@@ -64,8 +63,8 @@ async function callAI(messages: any[]): Promise<any> {
     console.warn(`[Raya] Groq attempts failed: ${lastError}. Checking alternative providers...`);
   }
 
-  // 2. Fallback to Google Gemini (OpenAI-compatible endpoint)
-  if (GEMINI_API_KEY) {
+  // 2. Fallback to Google Gemini
+  if (geminiKey) {
     try {
       const res = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
@@ -73,7 +72,7 @@ async function callAI(messages: any[]): Promise<any> {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${GEMINI_API_KEY}`,
+            Authorization: `Bearer ${geminiKey}`,
           },
           body: JSON.stringify({
             model: "gemini-1.5-flash",
@@ -92,13 +91,13 @@ async function callAI(messages: any[]): Promise<any> {
     }
   }
 
-  // 3. Fallback to OpenAI if OPENAI_API_KEY is available
-  if (OPENAI_API_KEY) {
+  // 3. Fallback to OpenAI
+  if (openaiKey) {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${openaiKey}`,
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
@@ -125,7 +124,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
 
-    if (!GROQ_API_KEY && !GEMINI_API_KEY && !OPENAI_API_KEY) {
+    // Read environment variables dynamically at request time
+    const groqKey = (process.env.GROQ_API_KEY || "").trim();
+    const geminiKey = (process.env.GEMINI_API_KEY || "").trim();
+    const openaiKey = (process.env.OPENAI_API_KEY || "").trim();
+
+    const bridgeUrl = (
+      process.env.BAZAAR_BRIDGE_URL ||
+      process.env.NEXUS_STORE_BRIDGE_URL ||
+      "https://bazaar-ai-backend.onrender.com/api/bridge"
+    ).trim();
+
+    if (!groqKey && !geminiKey && !openaiKey) {
       return NextResponse.json({
         text: "👋 Welcome to Raya by Razorpay! Please configure `GROQ_API_KEY` or `GEMINI_API_KEY` in your environment variables.",
         toolExecutions: [],
@@ -158,7 +168,7 @@ export async function POST(req: NextRequest) {
     while (iterations < MAX_ITERATIONS) {
       iterations++;
 
-      const data = await callAI(messages);
+      const data = await callAI(messages, groqKey, geminiKey, openaiKey);
       const choice = data.choices?.[0];
       const assistantMessage = choice?.message;
 
@@ -187,7 +197,7 @@ export async function POST(req: NextRequest) {
 
           console.log(`[RAYA TOOL EXECUTION] Tool: ${toolName}`, args);
 
-          const execResult = await executeBridgeTool(toolName, args, BRIDGE_URL);
+          const execResult = await executeBridgeTool(toolName, args, bridgeUrl);
 
           toolExecutions.push({
             tool: toolName,
