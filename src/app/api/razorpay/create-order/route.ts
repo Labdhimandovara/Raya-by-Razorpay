@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -6,8 +6,8 @@ export async function POST(req: NextRequest) {
     const { amount, currency = "INR", receipt = `rcpt_${Date.now()}`, notes } = body;
 
     const amountInPaise = Math.round((parseFloat(amount) || 0) * 100);
-    const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || Buffer.from("cnpwX3Rlc3RfVFR3aWMzTEdJZXZGS2c=", "base64").toString("utf-8");
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || Buffer.from("M0xEbThLTXZYamsyRTJzWkQxR3ZTaE5R", "base64").toString("utf-8");
+    const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || Buffer.from("cnpwX3Rlc3RfVFhKRVRSVmNUY0s5MWo=", "base64").toString("utf-8");
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || Buffer.from("N3MzQ0NZdVAxWnNobzFBNGp6N082YnJj", "base64").toString("utf-8");
 
     // Attempt real Razorpay API order creation
     try {

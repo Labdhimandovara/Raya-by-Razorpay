@@ -38,7 +38,7 @@ Try asking me:
   const [history, setHistory] = useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [budget, setBudget] = useState(15000);
+  const [budget, setBudget] = useState<number | null>(null);
 
   const cartTotal = cartItems.reduce((acc, item) => {
     const productMeta = item.product || lookupProduct(item.productId);
@@ -246,6 +246,7 @@ Try asking me:
         onRemoveItem={handleRemoveFromCart}
         onUpdateQuantity={handleUpdateQuantity}
         onClearCart={handleClearCart}
+        onAddToCart={handleAddToCartFromCard}
         onPaymentSuccess={({ orderId, paymentId }) => {
           setCartItems([]);
           handleSendMessage(

@@ -1,18 +1,19 @@
 "use client";
 
 import React from "react";
-import { ShoppingBag, ShieldCheck, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { ShoppingBag, ShieldCheck, ExternalLink, Store } from "lucide-react";
 import { RayaLogo } from "./raya-logo";
 import { CONNECTED_STORES } from "@/lib/gemini";
 
 interface RayaHeaderProps {
   cartCount: number;
   onOpenCart: () => void;
-  budget?: number;
+  budget?: number | null;
   onSelectStore?: (storeId: string) => void;
 }
 
-export function RayaHeader({ cartCount, onOpenCart, budget = 15000, onSelectStore }: RayaHeaderProps) {
+export function RayaHeader({ cartCount, onOpenCart, budget = null, onSelectStore }: RayaHeaderProps) {
   const stores = Object.values(CONNECTED_STORES);
 
   return (
@@ -43,12 +44,23 @@ export function RayaHeader({ cartCount, onOpenCart, budget = 15000, onSelectStor
 
         <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-raya-softWhite border border-raya-lightGray text-raya-stone text-xs font-semibold ml-1">
           <ShieldCheck className="w-3.5 h-3.5 text-raya-blue" />
-          <span>₹{budget.toLocaleString()} Cap</span>
+          <span>
+            {budget !== null && budget !== undefined ? `₹${budget.toLocaleString()} Cap` : "Policy Guard Active"}
+          </span>
         </div>
       </div>
 
-      {/* Cart & Quick Action */}
+      {/* Cart & Merchant Console Link */}
       <div className="flex items-center gap-2">
+        <Link
+          href="/merchant"
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 border border-slate-200 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+          title="Open Bazaar Multi-Store Merchant Console"
+        >
+          <span>🏪</span>
+          <span className="hidden sm:inline">Merchant Console</span>
+        </Link>
+
         <button
           onClick={onOpenCart}
           className="relative flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-raya-navy hover:bg-raya-slate active:scale-95 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
