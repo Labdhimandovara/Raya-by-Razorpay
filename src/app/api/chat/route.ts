@@ -8,7 +8,64 @@ import {
 
 const BRIDGE_URL = process.env.NEXUS_STORE_BRIDGE_URL || "https://bazaar-ai-lm2z.onrender.com/bazaar";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const CUSTOM_MODEL = process.env.GEMINI_MODEL;
+
+// Resilient list of Gemini model endpoints attempted in order
+const CANDIDATE_ENDPOINTS = [
+  ...(CUSTOM_MODEL ? [{ version: "v1beta", model: CUSTOM_MODEL }, { version: "v1", model: CUSTOM_MODEL }] : []),
+  { version: "v1beta", model: "gemini-1.5-flash-latest" },
+  { version: "v1beta", model: "gemini-2.0-flash" },
+  { version: "v1",     model: "gemini-1.5-flash" },
+  { version: "v1beta", model: "gemini-1.5-flash-001" },
+  { version: "v1beta", model: "gemini-1.5-flash-002" },
+  { version: "v1beta", model: "gemini-1.5-pro-latest" },
+  { version: "v1",     model: "gemini-1.5-pro" },
+];
+
+let workingEndpointConfig: { version: string; model: string } | null = null;
+
+async function callGeminiWithFallback(payload: any, apiKey: string): Promise<any> {
+  // If we already resolved a working model for this server instance, try it first
+  if (workingEndpointConfig) {
+    const url = `https://generativelanguage.googleapis.com/${workingEndpointConfig.version}/models/${workingEndpointConfig.model}:generateContent?key=${apiKey}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      return await res.json();
+    }
+    // If it failed, invalidate cache and proceed to fallback loop
+    workingEndpointConfig = null;
+  }
+
+  let lastError: any = null;
+
+  for (const candidate of CANDIDATE_ENDPOINTS) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/${candidate.version}/models/${candidate.model}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        workingEndpointConfig = candidate; // Cache successful model!
+        return await res.json();
+      }
+
+      const errData = await res.json().catch(() => null);
+      lastError = errData?.error?.message || `HTTP ${res.status}`;
+    } catch (e: any) {
+      lastError = e.message;
+    }
+  }
+
+  throw new Error(`Gemini API Error: ${lastError || "Could not connect to any available Gemini model endpoint."}`);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -61,8 +118,6 @@ export async function POST(req: NextRequest) {
     while (iterations < MAX_ITERATIONS) {
       iterations++;
 
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-
       const payload = {
         contents,
         systemInstruction: {
@@ -71,18 +126,7 @@ export async function POST(req: NextRequest) {
         tools: GEMINI_TOOLS,
       };
 
-      const res = await fetch(geminiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => null);
-        throw new Error(errJson?.error?.message || `Gemini API error: HTTP ${res.status}`);
-      }
-
-      const data = await res.json();
+      const data = await callGeminiWithFallback(payload, GEMINI_API_KEY);
       const candidate = data.candidates?.[0];
       const modelParts = candidate?.content?.parts || [];
 
