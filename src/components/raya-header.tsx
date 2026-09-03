@@ -48,19 +48,8 @@ export function RayaHeader({
         </div>
       </div>
 
-      {/* RIGHT: New Chat, Merchant Link, Cart Icon with Badge, Profile */}
+      {/* RIGHT: Merchant Link, Cart Icon with Badge, Profile */}
       <div className="flex items-center gap-2 sm:gap-2.5">
-        {onNewChat && (
-          <button
-            onClick={onNewChat}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#F7F5F0] border border-[#E6E0D6] text-[#172033] text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
-            title="Start New Chat Session"
-          >
-            <Plus className="w-3.5 h-3.5 text-[#0A63FF]" />
-            <span>New Chat</span>
-          </button>
-        )}
-
         <Link
           href="/merchant"
           className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white hover:bg-[#F7F5F0] border border-[#E6E0D6] text-[#172033] text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"

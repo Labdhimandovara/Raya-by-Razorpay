@@ -691,8 +691,8 @@ export default function RayaHome() {
         />
 
         {/* Compact Explore Row: All Stores + Dynamic Stores Dropdown */}
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-3 pb-1 flex items-center justify-between gap-2 shrink-0">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-3 pb-1 flex items-center justify-between gap-2 shrink-0 overflow-visible relative z-30">
+          <div className="flex items-center gap-2 overflow-visible">
             <span className="text-[11px] font-bold text-[#667085] uppercase tracking-wider shrink-0 flex items-center gap-1">
               <Layers className="w-3.5 h-3.5 text-[#0A63FF]" />
               <span>Explore:</span>
@@ -710,42 +710,59 @@ export default function RayaHome() {
             {/* Dynamic More Stores Dropdown (3 Connected Stores + eBay) */}
             <div className="relative">
               <button
-                onClick={() => setMoreStoresOpen(!moreStoresOpen)}
-                className="px-3 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#667085] hover:text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs transition-all cursor-pointer flex items-center gap-1"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMoreStoresOpen(!moreStoresOpen);
+                }}
+                className={`px-3 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border ${
+                  moreStoresOpen ? "border-[#0A63FF] ring-2 ring-[#0A63FF]/20 text-[#172033]" : "border-[#E6E0D6] text-[#667085]"
+                } text-xs font-semibold whitespace-nowrap shadow-2xs transition-all cursor-pointer flex items-center gap-1.5`}
                 title="Choose from connected merchant stores and eBay"
               >
                 <span>Stores</span>
-                <span className="text-[9px]">▾</span>
+                <span className={`text-[10px] transition-transform duration-150 ${moreStoresOpen ? "rotate-180" : ""}`}>▾</span>
               </button>
 
               {moreStoresOpen && (
-                <div
-                  className="absolute left-0 top-full mt-1.5 z-30 w-52 bg-white border border-[#E6E0D6] rounded-xl shadow-lg p-1.5 space-y-1 animate-in fade-in"
-                  onClick={() => setMoreStoresOpen(false)}
-                >
-                  {Object.values(CONNECTED_STORES).map((store) => (
-                    <button
-                      key={store.id}
-                      onClick={() => {
-                        handleSendMessage(`Show me the featured products from ${store.name}`);
-                        setMoreStoresOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-[#172033] hover:bg-[#F7F5F0] flex items-center gap-2 transition-colors cursor-pointer"
-                    >
-                      <span className="text-sm">{store.icon}</span>
-                      <span className="truncate">{store.name}</span>
-                      {store.id === "ebay" ? (
-                        <span className="ml-auto text-[9px] font-mono px-1.5 py-0.2 rounded bg-blue-50 text-[#0A63FF] border border-blue-200">
-                          Global
-                        </span>
-                      ) : (
-                        <span className="ml-auto text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Connected
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                <>
+                  {/* Backdrop to dismiss on outside click */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setMoreStoresOpen(false)}
+                  />
+                  <div className="absolute left-0 top-full mt-2 z-50 w-64 bg-white border border-[#E6E0D6] rounded-2xl shadow-xl p-2 space-y-1 animate-in fade-in">
+                    <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#667085] border-b border-slate-100 mb-1">
+                      Choose Store
+                    </div>
+                    {Object.values(CONNECTED_STORES).map((store) => (
+                      <button
+                        key={store.id}
+                        type="button"
+                        onClick={() => {
+                          handleSendMessage(`Show me the featured products from ${store.name}`);
+                          setMoreStoresOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-[#172033] hover:bg-[#F7F5F0] flex items-center gap-2.5 transition-colors cursor-pointer group"
+                      >
+                        <span className="text-base group-hover:scale-110 transition-transform shrink-0">{store.icon}</span>
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate font-bold text-[#172033]">{store.name}</span>
+                          <span className="block text-[10px] text-[#667085] truncate">{store.tagline}</span>
+                        </div>
+                        {store.id === "ebay" ? (
+                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-blue-50 text-[#0A63FF] border border-blue-200 shrink-0">
+                            Global
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                            Live
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </div>

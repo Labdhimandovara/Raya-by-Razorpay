@@ -637,18 +637,6 @@ export default function MerchantGrowthControlRoom() {
             <Store className="w-3.5 h-3.5 text-[#0A63FF]" />
             <span>Connected Commerce</span>
           </button>
-
-          <button
-            onClick={() => setActiveTab("copilot")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === "copilot"
-                ? "bg-[#172033] text-white shadow-xs"
-                : "bg-white text-[#667085] hover:bg-[#F7F5F0] border border-[#E6E0D6]"
-            }`}
-          >
-            <Bot className="w-3.5 h-3.5 text-[#0A63FF]" />
-            <span>Merchant Copilot</span>
-          </button>
         </div>
 
         {/* TAB 1: SECTION 3 & 4 — AI GROWTH AGENT (HERO SECTION) */}

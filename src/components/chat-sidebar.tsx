@@ -281,20 +281,6 @@ export function ChatSidebar({
           )
         )}
       </div>
-
-      {/* Footer */}
-      <div className="p-3 border-t border-[#E6E0D6] bg-white/70 text-[11px] text-slate-500 shrink-0">
-        <a
-          href="/merchant"
-          className="w-full py-2 px-2.5 rounded-xl border border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50 transition-all font-bold text-slate-700 flex items-center justify-between text-xs cursor-pointer shadow-2xs"
-        >
-          <span className="flex items-center gap-1.5">
-            <span>🏪</span>
-            <span>Bazaar Growth Control Room</span>
-          </span>
-          <ExternalLink className="w-3 h-3 text-slate-400" />
-        </a>
-      </div>
     </aside>
   );
 }
