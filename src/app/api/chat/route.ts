@@ -18,8 +18,8 @@ async function getGeminiCandidateModels(geminiKey: string): Promise<string[]> {
     return cachedCandidateModels;
   }
 
-  // Fast default list avoiding initial roundtrip
-  const fastDefaults = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-exp"];
+  // Fast default list prioritizing stable gemini-1.5-flash
+  const fastDefaults = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-2.0-flash"];
 
   try {
     const res = await fetch(
@@ -34,11 +34,11 @@ async function getGeminiCandidateModels(geminiKey: string): Promise<string[]> {
         .map((m: any) => m.name.replace("models/", ""));
 
       const preferred = [
-        "gemini-2.0-flash",
         "gemini-1.5-flash",
-        "gemini-2.0-flash-exp",
         "gemini-1.5-flash-latest",
+        "gemini-2.0-flash",
         "gemini-1.5-flash-8b",
+        "gemini-2.0-flash-exp",
       ];
 
       const sorted: string[] = [];
@@ -67,13 +67,18 @@ async function getGeminiCandidateModels(geminiKey: string): Promise<string[]> {
 // Native function declarations for Google Gemini
 const GEMINI_FUNCTION_DECLARATIONS = GROQ_TOOLS.map((t) => t.function);
 
+let workingModel: string | null = null;
+
 async function callNativeGemini(
   contents: any[],
   geminiKey: string
 ): Promise<{ text?: string; functionCalls?: Array<{ name: string; args: any }>; rawContent?: any }> {
   let lastError = "Unknown Gemini error";
 
-  const candidateModels = await getGeminiCandidateModels(geminiKey);
+  const rawCandidates = await getGeminiCandidateModels(geminiKey);
+  const candidateModels = workingModel
+    ? [workingModel, ...rawCandidates.filter((m) => m !== workingModel)]
+    : rawCandidates;
 
   for (const modelToUse of candidateModels) {
     try {
@@ -102,6 +107,7 @@ async function callNativeGemini(
       });
 
       if (res.ok) {
+        workingModel = modelToUse;
         const data = await res.json();
         const candidate = data.candidates?.[0];
         const content = candidate?.content;
