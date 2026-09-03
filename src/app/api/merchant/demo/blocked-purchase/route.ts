@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
         title: "PURCHASE BLOCKED: MAX_SPEND EXCEEDED",
         timestamp: "Just now",
         status: "BLOCKED",
+        decisionType: "SYSTEM",
         summary: `Transaction rejected server-side: Requested ₹${requestedTotal.toLocaleString()} exceeds authorized policy limit of ₹${maxSpendAllowed.toLocaleString()}.`,
         details: {
           gateTriggered: "GATE_01_MAX_SPEND",

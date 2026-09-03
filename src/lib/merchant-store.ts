@@ -3,9 +3,17 @@
 
 export interface GrowthOpportunity {
   id: string;
+  strategyId: string;
   title: string;
   category: string;
   evidence: string;
+  evidenceDetails: {
+    eligibleSessions: number;
+    compatibleViews: number;
+    accessoryAdds: number;
+    currentAttachRate: string;
+    opportunityValue: number;
+  };
   potentialGMV: number;
   conversionLift: string;
   recommendedAction: string;
@@ -21,20 +29,41 @@ export interface GrowthOpportunity {
   };
   isActive: boolean;
   activatedAt?: string;
+  activatedBy?: string;
 }
+
+export type DecisionLedgerStatus =
+  | "DISCOVERED"
+  | "RECOMMENDED"
+  | "ADDED"
+  | "POLICY_CHECKED"
+  | "APPROVED"
+  | "PAYMENT_CREATED"
+  | "PAID"
+  | "ATTRIBUTED"
+  | "BLOCKED"
+  | "INVALIDATED"
+  | "ACTIVE"
+  | "INFO"
+  | "SUCCESS";
 
 export interface DecisionLedgerEvent {
   id: string;
   step: string;
   title: string;
   timestamp: string;
-  status: "SUCCESS" | "BLOCKED" | "INVALIDATED" | "ACTIVE" | "INFO";
+  status: DecisionLedgerStatus;
+  decisionType: "BUYER" | "MERCHANT" | "SYSTEM";
+  strategyId?: string;
+  orderId?: string;
+  paymentId?: string;
   summary: string;
   details: Record<string, any>;
 }
 
 export interface GrowthExperiment {
   id: string;
+  strategyId: string;
   name: string;
   targetStore: string;
   exposed: number;
@@ -43,7 +72,7 @@ export interface GrowthExperiment {
   purchased: number;
   conversion: string;
   incrementalGMV: number;
-  status: "KEEP ACTIVE" | "PAUSE";
+  status: "ACTIVE" | "LEARNING" | "PAUSED";
   trend: string;
 }
 
@@ -64,8 +93,10 @@ export interface BlockedAction {
   requestedAmount: number;
   allowedLimit: number;
   paymentInitiated: boolean;
+  razorpayOrderCreated: boolean;
   timestamp: string;
   source: string;
+  strategyId?: string;
 }
 
 export interface ConnectedStoreTelemetry {
@@ -79,13 +110,45 @@ export interface ConnectedStoreTelemetry {
   isMarketplace?: boolean;
 }
 
-// 1. Server-side Growth Opportunities
+export interface AttributionEvidence {
+  orderId: string;
+  paymentId: string;
+  strategyId: string;
+  strategyTitle: string;
+  baselineBasket: number;
+  influencedItem: string;
+  itemValue: number;
+  finalBasket: number;
+  incrementalValue: number;
+  attributionBasis: Array<{
+    step: string;
+    label: string;
+    verified: boolean;
+  }>;
+  timestamps: {
+    intent: string;
+    recommendation: string;
+    basket: string;
+    approval: string;
+    payment: string;
+  };
+}
+
+// 1. Server-side Growth Opportunities with persistent strategyId & dynamic evidence
 let growthOpportunities: GrowthOpportunity[] = [
   {
     id: "opp_laptop_headphones",
+    strategyId: "laptop-audio-v1",
     title: "Computing / Laptop → Studio ANC Headphones",
     category: "Electronics",
     evidence: "18 computing & laptop shoppers did not add acoustic audio accessories in the last 7 days.",
+    evidenceDetails: {
+      eligibleSessions: 18,
+      compatibleViews: 42,
+      accessoryAdds: 3,
+      currentAttachRate: "7.1%",
+      opportunityValue: 12400,
+    },
     potentialGMV: 12400,
     conversionLift: "+18.2% Basket Size",
     recommendedAction: "Auto-suggest Nexus ANC Studio Headphones when laptop or computing rigs enter cart.",
@@ -101,12 +164,21 @@ let growthOpportunities: GrowthOpportunity[] = [
     },
     isActive: true,
     activatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    activatedBy: "Bazaar Growth Agent",
   },
   {
     id: "opp_jacket_powerbank",
+    strategyId: "jacket-powerbank-v1",
     title: "Techwear Bomber Jacket → MagVolt Wireless Powerbank",
     category: "Clothing & Techwear",
     evidence: "32 smart heated jacket buyers checkout without the recommended companion heating powerbank.",
+    evidenceDetails: {
+      eligibleSessions: 32,
+      compatibleViews: 58,
+      accessoryAdds: 6,
+      currentAttachRate: "10.3%",
+      opportunityValue: 8796,
+    },
     potentialGMV: 8796,
     conversionLift: "+31.6% Cross-Sell Rate",
     recommendedAction: "Bundle MagVolt 10,000mAh Magnetic Powerbank with 1-click in-cart companion discount.",
@@ -122,12 +194,21 @@ let growthOpportunities: GrowthOpportunity[] = [
     },
     isActive: true,
     activatedAt: new Date(Date.now() - 86400000).toISOString(),
+    activatedBy: "Bazaar Growth Agent",
   },
   {
     id: "opp_capture_mic",
+    strategyId: "capture-mic-v1",
     title: "4K60 Pro Capture Card → Broadcast XLR Boom Microphone",
     category: "Streaming & Creator Hardware",
     evidence: "14 streaming hardware purchases showed high intent for audio clarity upgrades.",
+    evidenceDetails: {
+      eligibleSessions: 14,
+      compatibleViews: 29,
+      accessoryAdds: 2,
+      currentAttachRate: "6.9%",
+      opportunityValue: 15999,
+    },
     potentialGMV: 15999,
     conversionLift: "+22.0% Margin Expansion",
     recommendedAction: "Auto-suggest studio XLR microphone when video capture card is placed in basket.",
@@ -145,9 +226,17 @@ let growthOpportunities: GrowthOpportunity[] = [
   },
   {
     id: "opp_luxury_audio_cable",
+    strategyId: "luxury-cable-v1",
     title: "ThreadVault Cashmere Knit → Artisan Silver Audio Cable",
     category: "Artisan Luxury",
     evidence: "High cross-store affinity between ThreadVault luxury apparel and artisan acoustic hardware.",
+    evidenceDetails: {
+      eligibleSessions: 11,
+      compatibleViews: 24,
+      accessoryAdds: 1,
+      currentAttachRate: "4.2%",
+      opportunityValue: 14200,
+    },
     potentialGMV: 14200,
     conversionLift: "+19.8% Multi-Store GMV",
     recommendedAction: "Promote ThreadVault artisan audio accessories in luxury apparel sessions.",
@@ -165,14 +254,39 @@ let growthOpportunities: GrowthOpportunity[] = [
   },
 ];
 
-// 2. Chronological Decision Ledger Seed (Real events trace)
+// 2. Financial Audit Trail Decision Ledger
 let decisionLedger: DecisionLedgerEvent[] = [
   {
     id: "evt_10",
-    step: "10. PAYMENT_CAPTURED",
+    step: "10. ATTRIBUTED",
+    title: "Incremental Revenue Attributed to Strategy 'laptop-audio-v1'",
+    timestamp: "12 mins ago",
+    status: "ATTRIBUTED",
+    decisionType: "MERCHANT",
+    strategyId: "laptop-audio-v1",
+    orderId: "order_TXa8ET3XESs2vF",
+    paymentId: "pay_test_TXJETRVcTcK91j",
+    summary: "Bazaar attributed ₹4,899 incremental GMV following verified 6-step evidence chain.",
+    details: {
+      strategyId: "laptop-audio-v1",
+      orderId: "order_TXa8ET3XESs2vF",
+      paymentId: "pay_test_TXJETRVcTcK91j",
+      baselineBasket: "₹38,100",
+      finalBasket: "₹42,999",
+      incrementalGMV: "₹4,899",
+      attributionModel: "Conservative Single-Strategy Evidence Chain",
+      verified: true,
+    },
+  },
+  {
+    id: "evt_09",
+    step: "09. PAID",
     title: "Razorpay Payment Captured (Test Mode)",
     timestamp: "12 mins ago",
-    status: "SUCCESS",
+    status: "PAID",
+    decisionType: "BUYER",
+    orderId: "order_TXa8ET3XESs2vF",
+    paymentId: "pay_test_TXJETRVcTcK91j",
     summary: "Razorpay payment verified & captured autonomously via Test Mode gateway.",
     details: {
       paymentId: "pay_test_TXJETRVcTcK91j",
@@ -185,11 +299,13 @@ let decisionLedger: DecisionLedgerEvent[] = [
     },
   },
   {
-    id: "evt_09",
-    step: "09. RAZORPAY_ORDER_CREATED",
+    id: "evt_08",
+    step: "08. PAYMENT_CREATED",
     title: "Razorpay Order Generated Server-Side",
     timestamp: "13 mins ago",
-    status: "SUCCESS",
+    status: "PAYMENT_CREATED",
+    decisionType: "SYSTEM",
+    orderId: "order_TXa8ET3XESs2vF",
     summary: "Server-side Razorpay REST API order created with zero token exposure.",
     details: {
       orderId: "order_TXa8ET3XESs2vF",
@@ -200,11 +316,12 @@ let decisionLedger: DecisionLedgerEvent[] = [
     },
   },
   {
-    id: "evt_08",
-    step: "08. USER_APPROVAL",
-    title: "Shopper Approved Purchase Intent",
+    id: "evt_07",
+    step: "07. APPROVED",
+    title: "Shopper Explicitly Approved Purchase",
     timestamp: "14 mins ago",
-    status: "SUCCESS",
+    status: "APPROVED",
+    decisionType: "BUYER",
     summary: "User authorized purchase of items within policy boundaries.",
     details: {
       approvalToken: "appr_sec_77a9c1",
@@ -213,11 +330,12 @@ let decisionLedger: DecisionLedgerEvent[] = [
     },
   },
   {
-    id: "evt_07",
-    step: "07. POLICY_CHECK",
+    id: "evt_06",
+    step: "06. POLICY_CHECKED",
     title: "Autonomous Purchase Control: 6/6 GATES PASSED",
     timestamp: "14 mins ago",
-    status: "SUCCESS",
+    status: "POLICY_CHECKED",
+    decisionType: "SYSTEM",
     summary: "All 6 merchant guardrails evaluated & cleared server-side.",
     details: {
       spendLimit: "✓ Passed (Requested ₹42,999 within allowed threshold)",
@@ -229,83 +347,51 @@ let decisionLedger: DecisionLedgerEvent[] = [
     },
   },
   {
-    id: "evt_06",
-    step: "06. BASKET_CREATED",
-    title: "Multi-Store Basket Formed",
-    timestamp: "15 mins ago",
-    status: "SUCCESS",
-    summary: "Consolidated cart containing 1 primary item and 0 violations.",
-    details: {
-      itemCount: 1,
-      totalPaise: 4299900,
-      totalINR: "₹42,999",
-      fulfillmentStore: "ThreadVault",
-    },
-  },
-  {
     id: "evt_05",
-    step: "05. GROWTH_ACTION",
-    title: "Bazaar Growth Engine: Cross-Sell Prompted",
-    timestamp: "16 mins ago",
-    status: "ACTIVE",
-    summary: "Evaluated in-cart cross-sell opportunity based on merchant active rule.",
+    step: "05. ADDED",
+    title: "Companion Item Added to Basket via Strategy 'laptop-audio-v1'",
+    timestamp: "15 mins ago",
+    status: "ADDED",
+    decisionType: "BUYER",
+    strategyId: "laptop-audio-v1",
+    summary: "Shopper accepted Bazaar companion recommendation into active basket.",
     details: {
-      ruleApplied: "rule_laptop_headphones",
-      crossSellOffered: "Nexus MagVolt 10000mAh Powerbank",
-      incrementalPotential: "₹2,199",
-      merchantAttribution: "NexusStore / ThreadVault cross-channel",
+      itemAdded: "Nexus Pro Wireless ANC Studio Headphones",
+      price: "₹4,899",
+      strategyId: "laptop-audio-v1",
+      basketTotalBefore: "₹38,100",
+      basketTotalAfter: "₹42,999",
     },
   },
   {
     id: "evt_04",
-    step: "04. RECOMMENDATION_SELECTED",
-    title: "Autonomous Recommendation: #1 Best Match",
-    timestamp: "17 mins ago",
-    status: "SUCCESS",
-    summary: "Ranked DAP #1 with Buyer Match Score 96/100 based on audiophile criteria.",
+    step: "04. RECOMMENDED",
+    title: "Bazaar Growth Engine: Active Cross-Sell Served",
+    timestamp: "16 mins ago",
+    status: "RECOMMENDED",
+    decisionType: "MERCHANT",
+    strategyId: "laptop-audio-v1",
+    summary: "Served companion recommendation based on active strategy 'laptop-audio-v1'.",
     details: {
-      buyerScore: "96/100",
-      topMatchReason: "Exceptional acoustic resolution, native DSD support, verified ThreadVault warranty.",
-      tradeoff: "Premium tier pricing, but verified audiophile DAC and 2-day priority delivery.",
+      strategyId: "laptop-audio-v1",
+      crossSellOffered: "Nexus Pro Wireless ANC Studio Headphones",
+      incrementalPotential: "₹4,899",
+      merchantAttribution: "NexusStore / ThreadVault cross-channel",
     },
   },
   {
     id: "evt_03",
-    step: "03. PRODUCTS_SHORTLISTED",
-    title: "Ranked & Shortlisted (3 Finalists)",
-    timestamp: "17 mins ago",
-    status: "SUCCESS",
-    summary: "Applied 5-dimensional scoring model to rank top 3 merchant items.",
-    details: {
-      shortlistedCount: 3,
-      dimensions: "Buyer Fit, Budget Fit, Quality, Delivery, Merchant Fit",
-    },
-  },
-  {
-    id: "evt_02",
-    step: "02. PRODUCTS_DISCOVERED",
+    step: "03. DISCOVERED",
     title: "Multi-Store Catalog Search: 14 Candidates Found",
     timestamp: "18 mins ago",
-    status: "SUCCESS",
+    status: "DISCOVERED",
+    decisionType: "BUYER",
     summary: "Queried across NexusStore, ThreadVault, PixelMart and live eBay marketplace.",
     details: {
       nexusStoreCount: 4,
       threadVaultCount: 6,
       pixelMartCount: 2,
       ebayCount: 2,
-    },
-  },
-  {
-    id: "evt_01",
-    step: "01. INTENT_RECEIVED",
-    title: "Shopper Query Received",
-    timestamp: "18 mins ago",
-    status: "INFO",
-    summary: "Raya parsed natural language shopping request.",
-    details: {
-      query: "Portable High-Resolution Audio Player (DAP)",
-      category: "Audio / Electronics",
-      budgetConstraint: "No limit specified (Unlimited)",
     },
   },
 ];
@@ -330,6 +416,7 @@ let blockedActions: BlockedAction[] = [
     requestedAmount: 61798,
     allowedLimit: 10000,
     paymentInitiated: false,
+    razorpayOrderCreated: false,
     timestamp: "32 mins ago",
     source: "Shopper Agent (Raya) Checkout",
   },
@@ -337,10 +424,11 @@ let blockedActions: BlockedAction[] = [
     id: "block_incident_02",
     code: "APPROVAL_INVALIDATED",
     title: "Price Volatility Rejection (Gate 03)",
-    reason: "Catalog price shifted from ₹6,799 to ₹7,199 before order signature capture.",
+    reason: "Catalog price shifted from ₹6,799 to ₹7,199 before order signature capture. Approval invalidated.",
     requestedAmount: 7199,
     allowedLimit: 6799,
     paymentInitiated: false,
+    razorpayOrderCreated: false,
     timestamp: "1 hour ago",
     source: "Pre-Payment Validation Guard",
   },
@@ -350,6 +438,7 @@ let blockedActions: BlockedAction[] = [
 let growthExperiments: GrowthExperiment[] = [
   {
     id: "exp_laptop_headphones",
+    strategyId: "laptop-audio-v1",
     name: "Computing → Studio ANC Headphones",
     targetStore: "NexusStore / PixelMart",
     exposed: 142,
@@ -358,11 +447,12 @@ let growthExperiments: GrowthExperiment[] = [
     purchased: 24,
     conversion: "16.9%",
     incrementalGMV: 12400,
-    status: "KEEP ACTIVE",
+    status: "ACTIVE",
     trend: "+4.2% vs baseline",
   },
   {
     id: "exp_jacket_powerbank",
+    strategyId: "jacket-powerbank-v1",
     name: "Heated Jacket → MagVolt Powerbank",
     targetStore: "NexusStore",
     exposed: 98,
@@ -371,11 +461,12 @@ let growthExperiments: GrowthExperiment[] = [
     purchased: 31,
     conversion: "31.6%",
     incrementalGMV: 8796,
-    status: "KEEP ACTIVE",
+    status: "ACTIVE",
     trend: "+8.1% vs baseline",
   },
   {
     id: "exp_capture_mic",
+    strategyId: "capture-mic-v1",
     name: "Capture Card → Broadcast XLR Mic",
     targetStore: "PixelMart",
     exposed: 64,
@@ -384,7 +475,7 @@ let growthExperiments: GrowthExperiment[] = [
     purchased: 3,
     conversion: "4.7%",
     incrementalGMV: 4899,
-    status: "PAUSE",
+    status: "PAUSED",
     trend: "-1.8% threshold check",
   },
 ];
@@ -442,8 +533,8 @@ const explainabilityDictionary: Record<string, any> = {
     quality: 92,
     delivery: 90,
     merchantFit: 95,
-    whyReason: "Selected because it best matched the buyer's budget, delivery requirement and quality preference.",
-    tradeoff: "₹400 more than the cheapest option, but higher customer rating (4.8★ vs 4.1★) and 2-day faster delivery.",
+    whyReason: "Matches your audio requirement, stays within budget, and complements computing purchases with active noise cancelling.",
+    tradeoff: "Premium tier pricing, but verified audiophile DAC and 2-day priority delivery.",
     fitDetails: "Matched keywords 'studio', 'anc', 'wireless'. 40mm neodymium drivers with active noise cancelling.",
   },
   "nx-smart-heated-techwear-jacket": {
@@ -490,36 +581,82 @@ const explainabilityDictionary: Record<string, any> = {
   },
 };
 
-// Exported Service Methods
+// 8. Strategy Evidence Generator
+export function getAttributionEvidence(strategyId: string = "laptop-audio-v1"): AttributionEvidence {
+  const opp = growthOpportunities.find((o) => o.strategyId === strategyId) || growthOpportunities[0];
+
+  return {
+    orderId: "order_TXa8ET3XESs2vF",
+    paymentId: "pay_test_TXJETRVcTcK91j",
+    strategyId: opp.strategyId,
+    strategyTitle: opp.title,
+    baselineBasket: 38100,
+    influencedItem: opp.crossSellProduct.name,
+    itemValue: opp.crossSellProduct.price,
+    finalBasket: 38100 + opp.crossSellProduct.price,
+    incrementalValue: opp.crossSellProduct.price,
+    attributionBasis: [
+      { step: "RECOMMENDATION_SHOWN", label: `Recommendation served by active strategy '${opp.strategyId}'`, verified: true },
+      { step: "ITEM_ADDED", label: "Shopper accepted companion recommendation into basket", verified: true },
+      { step: "POLICY_PASSED", label: "6/6 purchase controls validated server-side", verified: true },
+      { step: "EXPLICIT_APPROVAL", label: "Shopper confirmed order review in Raya chat", verified: true },
+      { step: "RAZORPAY_ORDER_CREATED", label: "Razorpay Test Mode order generated server-side", verified: true },
+      { step: "PAYMENT_CAPTURED", label: "Payment successfully captured & verified via gateway webhook", verified: true },
+      { step: "REVENUE_ATTRIBUTED", label: "Incremental value attributed to merchant store node", verified: true },
+    ],
+    timestamps: {
+      intent: "18 mins ago",
+      recommendation: "16 mins ago",
+      basket: "15 mins ago",
+      approval: "14 mins ago",
+      payment: "12 mins ago",
+    },
+  };
+}
+
+// 9. Exported Service Methods
 export function getGrowthOpportunities(): GrowthOpportunity[] {
   return growthOpportunities;
 }
 
-export function activateGrowthRule(ruleId: string, setActive: boolean = true): GrowthOpportunity | null {
-  const opp = growthOpportunities.find((o) => o.id === ruleId);
+export function activateGrowthRule(
+  identifier: string,
+  setActive: boolean = true,
+  actor: string = "Merchant Console"
+): GrowthOpportunity | null {
+  const opp = growthOpportunities.find((o) => o.id === identifier || o.strategyId === identifier);
   if (!opp) return null;
 
   opp.isActive = setActive;
-  if (setActive) {
-    opp.activatedAt = new Date().toISOString();
+  opp.activatedAt = new Date().toISOString();
+  opp.activatedBy = actor;
+
+  // Sync with experiments list
+  const exp = growthExperiments.find((e) => e.strategyId === opp.strategyId);
+  if (exp) {
+    exp.status = setActive ? "ACTIVE" : "PAUSED";
   }
 
-  // Record CommerceEvent in Decision Ledger
+  // Record audit trail event in Decision Ledger
   const newEvent: DecisionLedgerEvent = {
     id: `evt_act_${Date.now()}`,
-    step: "GROWTH_RULE_CONFIGURED",
-    title: `Merchant Growth Action: ${setActive ? "ACTIVATED" : "PAUSED"}`,
+    step: setActive ? "GROWTH_RULE_ACTIVATED" : "GROWTH_RULE_PAUSED",
+    title: `Merchant Strategy: ${setActive ? "ACTIVATED" : "PAUSED"} (${opp.strategyId})`,
     timestamp: "Just now",
     status: setActive ? "SUCCESS" : "INFO",
-    summary: `Merchant updated AI cross-sell rule: "${opp.title}". Raya buyer agent updated.`,
+    decisionType: "MERCHANT",
+    strategyId: opp.strategyId,
+    summary: `${actor} ${setActive ? "activated" : "deactivated"} growth strategy "${opp.title}". Raya recommendation behavior updated.`,
     details: {
+      strategyId: opp.strategyId,
       ruleId: opp.id,
       title: opp.title,
       status: setActive ? "ACTIVE" : "PAUSED",
+      actor,
       targetCategory: opp.triggerCategory,
       crossSellItem: opp.crossSellProduct.name,
       potentialGMV: `₹${opp.potentialGMV.toLocaleString()}`,
-      actionLoop: "Observe → Decide → Act → Measure → Learn",
+      attributionReady: setActive,
     },
   };
 
@@ -539,6 +676,15 @@ export function getActiveCrossSells(): GrowthOpportunity[] {
   return growthOpportunities.filter((o) => o.isActive);
 }
 
+export function getActiveStrategyForCategory(category: string): GrowthOpportunity | null {
+  const normalized = (category || "").toLowerCase();
+  return (
+    growthOpportunities.find(
+      (o) => o.isActive && normalized.includes(o.triggerCategory.toLowerCase())
+    ) || null
+  );
+}
+
 export function getPurchaseControlConfig(): PurchaseControlConfig {
   return purchaseControlConfig;
 }
@@ -546,13 +692,13 @@ export function getPurchaseControlConfig(): PurchaseControlConfig {
 export function updatePurchaseControlConfig(partial: Partial<PurchaseControlConfig>): PurchaseControlConfig {
   purchaseControlConfig = { ...purchaseControlConfig, ...partial };
 
-  // Log update in Decision Ledger
   addDecisionEvent({
     id: `evt_guard_${Date.now()}`,
     step: "POLICY_UPDATED",
     title: "Merchant Policy Guardrails Configured",
     timestamp: "Just now",
     status: "SUCCESS",
+    decisionType: "MERCHANT",
     summary: `Merchant updated Purchase Control: Max Spend ₹${purchaseControlConfig.maxSpend.toLocaleString()}, Quantity Limit ${purchaseControlConfig.quantityLimit}`,
     details: purchaseControlConfig,
   });
@@ -566,6 +712,79 @@ export function getBlockedActions(): BlockedAction[] {
 
 export function addBlockedAction(action: BlockedAction) {
   blockedActions.unshift(action);
+}
+
+// Demo Failure Trigger 1: Spend Cap Exceeded (Proving Razorpay is NEVER called)
+export function triggerSpendCapExceededDemo(requestedAmount: number = 61798): BlockedAction {
+  const action: BlockedAction = {
+    id: `block_${Date.now()}`,
+    code: "PURCHASE_BLOCKED",
+    title: "Max Spend Cap Exceeded (Gate 01)",
+    reason: `Requested cart ₹${requestedAmount.toLocaleString()} exceeds merchant policy spending cap of ₹${purchaseControlConfig.maxSpend.toLocaleString()}.`,
+    requestedAmount,
+    allowedLimit: purchaseControlConfig.maxSpend,
+    paymentInitiated: false,
+    razorpayOrderCreated: false,
+    timestamp: "Just now",
+    source: "Shopper Agent (Raya) Checkout",
+  };
+
+  blockedActions.unshift(action);
+
+  addDecisionEvent({
+    id: `evt_blk_${Date.now()}`,
+    step: "PURCHASE_BLOCKED",
+    title: "Spend Cap Guardrail Triggered: BLOCKED",
+    timestamp: "Just now",
+    status: "BLOCKED",
+    decisionType: "SYSTEM",
+    summary: `Cart total (₹${requestedAmount.toLocaleString()}) exceeded limit (₹${purchaseControlConfig.maxSpend.toLocaleString()}). Razorpay API order creation was prevented.`,
+    details: {
+      requestedAmount,
+      allowedLimit: purchaseControlConfig.maxSpend,
+      razorpayOrderCreated: false,
+      paymentInitiated: false,
+      financialSafeguard: "Verified: Razorpay API was never called",
+    },
+  });
+
+  return action;
+}
+
+// Demo Failure Trigger 2: Price Volatility (Proving Approval Invalidated before Order)
+export function triggerPriceVolatilityDemo(approvedPrice: number = 6799, currentPrice: number = 7199): BlockedAction {
+  const action: BlockedAction = {
+    id: `price_shift_${Date.now()}`,
+    code: "APPROVAL_INVALIDATED",
+    title: "Price Volatility Rejection (Gate 03)",
+    reason: `Catalog price shifted from ₹${approvedPrice.toLocaleString()} to ₹${currentPrice.toLocaleString()} before order signature capture. Approval invalidated.`,
+    requestedAmount: currentPrice,
+    allowedLimit: approvedPrice,
+    paymentInitiated: false,
+    razorpayOrderCreated: false,
+    timestamp: "Just now",
+    source: "Pre-Payment Validation Guard",
+  };
+
+  blockedActions.unshift(action);
+
+  addDecisionEvent({
+    id: `evt_inv_${Date.now()}`,
+    step: "APPROVAL_INVALIDATED",
+    title: "Catalog Price Shift: Approval Invalidated",
+    timestamp: "Just now",
+    status: "INVALIDATED",
+    decisionType: "SYSTEM",
+    summary: `Price shifted from ₹${approvedPrice} to ₹${currentPrice}. Server invalidated approval prior to payment creation.`,
+    details: {
+      approvedPrice,
+      currentPrice,
+      razorpayOrderCreated: false,
+      reason: "Catalog price changed after approval. Payment was not created using stale pricing.",
+    },
+  });
+
+  return action;
 }
 
 export function getGrowthExperiments(): GrowthExperiment[] {

@@ -359,11 +359,6 @@ export function RayaChat({ messages, loading, onAddToCart, onTriggerCheckout, on
                 isUser ? "items-end" : "items-start"
               }`}
             >
-              {/* Single Compact Tool Activity Disclosure */}
-              {!isUser && m.toolExecutions && m.toolExecutions.length > 0 && (
-                <ToolActivityDisclosure executions={m.toolExecutions} />
-              )}
-
               {/* Text Bubble */}
               {m.text && (
                 <div

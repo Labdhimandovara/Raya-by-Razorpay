@@ -5,6 +5,7 @@ import {
   executeBridgeTool,
   ToolExecutionResult,
 } from "@/lib/gemini";
+import { getActiveStrategyForCategory, addDecisionEvent } from "@/lib/merchant-store";
 
 // Ensure Next.js treats this endpoint as dynamic and reads process.env on every request
 export const dynamic = "force-dynamic";
@@ -72,6 +73,10 @@ let workingModel: string | null = null;
 function sanitizeHumanReadableText(text: string): string {
   if (!text) return "";
   let clean = text.replace(/<thought>[\s\S]*?<\/thought>/gi, "").trim();
+
+  // Strip raw tool names / invocations e.g. listProducts() viewCart()
+  clean = clean.replace(/\b(?:listProducts|viewCart|listConnectedStores|checkoutOrder|addToCart|searchEbayRefurbished)\s*\([^)]*\)/gi, "").trim();
+  clean = clean.replace(/^(?:listProducts|viewCart|listConnectedStores)\(\)+/g, "").trim();
 
   // Strip internal third-person monologue / scratchpads
   const markerIndex = clean.search(/(?:I have |I've found |Here are |To complete |Which store |Would you like |I found )/i);
@@ -294,11 +299,50 @@ export async function POST(req: NextRequest) {
 
           // Extract specialized UI data (never attach product cards if shopper is checking out)
           if (toolName === "listProducts" && !isCheckoutOrCartQuery) {
+            let prods: any[] = [];
             if (Array.isArray(execResult.data)) {
-              extractedProducts = execResult.data;
+              prods = execResult.data;
             } else if (execResult.data?.products) {
-              extractedProducts = execResult.data.products;
+              prods = execResult.data.products;
             }
+
+            // Real Growth Strategy Injection: Check if active merchant strategy applies to this search
+            const activeStrategy = getActiveStrategyForCategory(message);
+            if (activeStrategy && prods.length > 0) {
+              const alreadyPresent = prods.some((p: any) => p.id === activeStrategy.crossSellProduct.id);
+              if (!alreadyPresent) {
+                const companion = {
+                  ...activeStrategy.crossSellProduct,
+                  badge: "⚡ Bazaar Strategy Pick",
+                  strategyId: activeStrategy.strategyId,
+                  isCrossSell: true,
+                  whyReason: `Recommended by active merchant strategy '${activeStrategy.strategyId}' to complement this category.`,
+                  score: 95,
+                };
+                prods.push(companion);
+
+                // Emitted to the server-side audit trail Decision Ledger
+                addDecisionEvent({
+                  id: `evt_rec_${Date.now()}`,
+                  step: "RECOMMENDED",
+                  title: `Bazaar Growth Strategy '${activeStrategy.strategyId}' Served`,
+                  timestamp: "Just now",
+                  status: "RECOMMENDED",
+                  decisionType: "MERCHANT",
+                  strategyId: activeStrategy.strategyId,
+                  summary: `Injected companion item "${activeStrategy.crossSellProduct.name}" into discovery stream based on active merchant rule.`,
+                  details: {
+                    strategyId: activeStrategy.strategyId,
+                    query: message,
+                    companionItem: activeStrategy.crossSellProduct.name,
+                    store: activeStrategy.crossSellProduct.storeName,
+                    ruleTitle: activeStrategy.title,
+                  },
+                });
+              }
+            }
+
+            extractedProducts = prods;
           }
 
           if (toolName === "viewCart") {

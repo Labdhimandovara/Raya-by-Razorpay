@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
         title: "APPROVAL INVALIDATED: PRICE_CHANGED",
         timestamp: "Just now",
         status: "INVALIDATED",
+        decisionType: "SYSTEM",
         summary: `Pre-payment price check failed: Approved price of ₹${approvedPrice.toLocaleString()} jumped to ₹${currentPrice.toLocaleString()} (+₹${priceDelta.toLocaleString()}).`,
         details: {
           productName,

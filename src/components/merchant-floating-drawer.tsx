@@ -220,7 +220,7 @@ export function MerchantFloatingDrawer() {
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[11px] font-semibold text-[#667085]">Total GMV:</span>
                 <span className="font-mono font-bold text-[#172033]">
-                  {metrics ? `₹${metrics.totalGMV.toLocaleString()}` : "₹1,53,344"}
+                  {metrics ? `₹${metrics.totalGMV.toLocaleString()}` : "—"}
                 </span>
               </div>
 
@@ -229,7 +229,7 @@ export function MerchantFloatingDrawer() {
               <div className="text-[11px]">
                 <span className="text-[#667085]">Settled: </span>
                 <span className="font-bold text-emerald-700">
-                  {metrics ? `${metrics.totalOrders} Orders` : "25 Orders"}
+                  {metrics ? `${metrics.totalOrders} Orders` : "—"}
                 </span>
               </div>
 
@@ -238,7 +238,7 @@ export function MerchantFloatingDrawer() {
               <div className="text-[11px]">
                 <span className="text-[#667085]">AI Lift: </span>
                 <span className="font-bold text-[#0A63FF]">
-                  {metrics ? `+₹${metrics.incrementalGMV.toLocaleString()}` : "+₹35,269"}
+                  {metrics ? `+₹${metrics.incrementalGMV.toLocaleString()}` : "—"}
                 </span>
               </div>
             </div>
