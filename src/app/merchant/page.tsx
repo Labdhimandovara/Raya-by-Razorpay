@@ -41,6 +41,7 @@ import {
   BlockedAction,
   ConnectedStoreTelemetry,
 } from "@/lib/merchant-store";
+import { MerchantAnalyticsCharts } from "@/components/merchant-analytics-charts";
 
 interface MerchantMetrics {
   totalGMV: number;
@@ -321,32 +322,8 @@ export default function MerchantGrowthControlRoom() {
 
       {/* MAIN CONTAINER */}
       <main className="max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6 flex-1">
-        {/* Real Live Razorpay API Connection Status Banner */}
-        <div className="p-3.5 rounded-2xl bg-[#172033] text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm border border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#22C55E] animate-pulse shrink-0" />
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-xs tracking-wider text-[#22C55E] uppercase">
-                  Live Razorpay Telemetry Connected
-                </span>
-                <span className="font-mono text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300 border border-slate-600">
-                  {keyId}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-300 mt-0.5">
-                {loading
-                  ? "Connecting to live Razorpay orders..."
-                  : orders.length > 0
-                  ? `${orders.length} real test orders totaling ₹${metrics?.totalGMV.toLocaleString()} fetched directly from Razorpay API. Zero hardcoded data.`
-                  : "No orders recorded in Razorpay account yet."}
-              </p>
-            </div>
-          </div>
-          <span className="text-[10px] font-mono text-slate-400">
-            Updated: {new Date().toLocaleTimeString()}
-          </span>
-        </div>
+        {/* Visual Analytics & Growth Trajectory Charts */}
+        <MerchantAnalyticsCharts orders={orders} metrics={metrics} stores={stores} />
 
         {/* SECTION 1 — BUSINESS IMPACT (PREMIUM FINTECH KPIS) */}
         <div>

@@ -201,8 +201,95 @@ export function BasketView({
     }
   };
 
-  const cartProductIds = new Set(items.map((i) => i.productId));
-  const candidateAddons = [
+  const cartProductIds = new Set(items.map((i) => i.productId || i.id));
+
+  // Determine basket category context:
+  // Is the shopper buying clothing / fashion / wearable items or electronics / tech gear?
+  const clothingKeywords = /\b(tee|shirt|jacket|hoodie|pants|trousers|sweater|coat|apparel|wear|cyberpunk|denim|belt|beanie|scarf|socks|kimono|cardigan|vest|streetwear)\b/i;
+  const techKeywords = /\b(earbuds|headphones|laptop|charger|powerbank|keypad|capture|cable|rig|phone|keyboard|mouse|gadget|camera|display|audio)\b/i;
+
+  let hasClothing = false;
+  let hasElectronics = false;
+
+  for (const it of items) {
+    const name = it.name || it.product?.name || "";
+    const cat = ((it as any).category || (it.product as any)?.category || "").toLowerCase();
+    const st = (it.store || it.product?.store || "").toLowerCase();
+
+    if (cat.includes("clothing") || cat.includes("fashion") || st === "threadvault" || clothingKeywords.test(name)) {
+      hasClothing = true;
+    }
+    if (cat.includes("tech") || cat.includes("electronic") || cat.includes("audio") || st === "pixelmart" || techKeywords.test(name)) {
+      hasElectronics = true;
+    }
+  }
+
+  // Curated clothing & wearable accessories pool (ThreadVault & Nexus Wearables)
+  const clothingAddons = [
+    {
+      id: "tv-cashmere-ribbed-beanie",
+      name: "ThreadVault Mongolian Cashmere Ribbed Beanie",
+      price: 1899,
+      category: "Clothing",
+      store: "threadvault",
+      storeName: "ThreadVault",
+      imageUrl: "https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=600&auto=format&fit=crop",
+      badge: "🧵 Style Pairing",
+    },
+    {
+      id: "tv-minimalist-leather-belt",
+      name: "ThreadVault Italian Full-Grain Leather Minimalist Belt",
+      price: 2299,
+      category: "Clothing",
+      store: "threadvault",
+      storeName: "ThreadVault",
+      imageUrl: "https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=600&auto=format&fit=crop",
+      badge: "✨ Luxury Accessory",
+    },
+    {
+      id: "nx-waterproof-techwear-sling",
+      name: "Nexus Modular Waterproof Techwear Sling Bag",
+      price: 2499,
+      category: "Clothing",
+      store: "nexusstore",
+      storeName: "NexusStore",
+      imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop",
+      badge: "⚡ Wearable Gear",
+    },
+    {
+      id: "tv-merino-winter-scarf",
+      name: "ThreadVault Brushed Merino Wool Artisan Scarf",
+      price: 2799,
+      category: "Clothing",
+      store: "threadvault",
+      storeName: "ThreadVault",
+      imageUrl: "https://images.unsplash.com/photo-1607522370275-f14206abe5d3?w=600&auto=format&fit=crop",
+      badge: "🔥 Wardrobe Match",
+    },
+  ];
+
+  // Curated electronics & hardware accessories pool (PixelMart & NexusTech)
+  const electronicsAddons = [
+    {
+      id: "px-100w-gan-fast-charger",
+      name: "PixelMart 100W GaN Ultra-Fast Multi-Port Charger",
+      price: 2199,
+      category: "Tech",
+      store: "pixelmart",
+      storeName: "PixelMart",
+      imageUrl: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600&auto=format&fit=crop",
+      badge: "⚡ 100W Fast Charge",
+    },
+    {
+      id: "nx-magpulse-240w-cable",
+      name: "Nexus MagPulse Braided 240W USB-C Silicone Cable",
+      price: 899,
+      category: "Tech",
+      store: "nexusstore",
+      storeName: "NexusStore",
+      imageUrl: "https://images.unsplash.com/photo-1609081219090-a6d81d3085bf?w=600&auto=format&fit=crop",
+      badge: "🔌 Cable Essential",
+    },
     {
       id: "nx-magnetic-fast-charge-powerbank",
       name: "Nexus MagVolt 10000mAh Magnetic Powerbank",
@@ -211,7 +298,7 @@ export function BasketView({
       store: "nexusstore",
       storeName: "NexusStore",
       imageUrl: "https://images.unsplash.com/photo-1586253634026-8cb574908d1e?w=600&auto=format&fit=crop",
-      badge: "⚡ 88% Match",
+      badge: "⚡ Power Match",
     },
     {
       id: "nx-sport-active-earbuds",
@@ -221,20 +308,23 @@ export function BasketView({
       store: "nexusstore",
       storeName: "NexusStore",
       imageUrl: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop",
-      badge: "🎧 Frequently Bought",
-    },
-    {
-      id: "nx-smart-heated-techwear-jacket",
-      name: "Nexus Smart Heated Techwear Bomber Jacket",
-      price: 7999,
-      category: "Clothing",
-      store: "nexusstore",
-      storeName: "NexusStore",
-      imageUrl: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop",
-      badge: "🔥 Best Seller",
+      badge: "🎧 Top Paired",
     },
   ];
-  const recommendedAddons = candidateAddons.filter((p) => !cartProductIds.has(p.id));
+
+  // Dynamic context selection:
+  // When buying clothes -> recommend clothes/accessories to wear
+  // When buying electronics -> recommend electronics accessories
+  let candidatePool = electronicsAddons;
+  if (hasClothing && !hasElectronics) {
+    candidatePool = clothingAddons;
+  } else if (hasClothing && hasElectronics) {
+    candidatePool = [clothingAddons[0], electronicsAddons[0], clothingAddons[1], electronicsAddons[1]];
+  } else {
+    candidatePool = electronicsAddons;
+  }
+
+  const recommendedAddons = candidatePool.filter((p) => !cartProductIds.has(p.id));
 
   return (
     <div className="w-full h-full bg-white flex flex-col justify-between">

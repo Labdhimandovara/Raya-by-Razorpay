@@ -27,12 +27,12 @@ export function RayaHeader({
     <header className="sticky top-0 z-40 w-full bg-[#FFFFFF]/90 backdrop-blur-md border-b border-[#E6E0D6] shadow-xs px-4 sm:px-6 py-2.5 flex items-center justify-between transition-all">
       {/* LEFT: Sidebar Toggle & Minimal Brand Identity */}
       <div className="flex items-center gap-3">
-        {onToggleSidebar && (
+        {onToggleSidebar && !sidebarOpen && (
           <button
             onClick={onToggleSidebar}
             className="p-2 rounded-xl text-[#667085] hover:text-[#172033] hover:bg-[#F7F5F0] border border-transparent hover:border-[#E6E0D6] transition-all cursor-pointer"
-            title="Toggle Chat Sidebar"
-            aria-label="Toggle sidebar"
+            title="Open Chat Sidebar"
+            aria-label="Open sidebar"
           >
             <PanelLeft className="w-4 h-4" />
           </button>

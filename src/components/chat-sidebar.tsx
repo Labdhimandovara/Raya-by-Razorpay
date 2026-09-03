@@ -67,16 +67,7 @@ export function ChatSidebar({
   const [expandedCartId, setExpandedCartId] = useState<string | null>(null);
 
   if (!isOpen) {
-    return (
-      <button
-        onClick={onToggle}
-        className="fixed top-3.5 left-3.5 z-50 p-2 rounded-xl bg-white border border-[#E6E0D6] text-[#172033] hover:text-raya-blue shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
-        title="Open Conversations & Past Carts Sidebar"
-        aria-label="Open sidebar"
-      >
-        <PanelLeftOpen className="w-4 h-4" />
-      </button>
-    );
+    return null;
   }
 
   return (
