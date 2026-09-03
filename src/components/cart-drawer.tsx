@@ -19,11 +19,22 @@ import {
   FileText,
   AlertTriangle,
 } from "lucide-react";
-import { CONNECTED_STORES, SAMPLE_NEXUS_PRODUCTS, SAMPLE_EBAY_PRODUCTS } from "@/lib/gemini";
+import {
+  CONNECTED_STORES,
+  SAMPLE_NEXUS_PRODUCTS,
+  SAMPLE_EBAY_PRODUCTS,
+  SAMPLE_PIXELMART_PRODUCTS,
+  SAMPLE_THREADVAULT_PRODUCTS,
+} from "@/lib/gemini";
 import { triggerRazorpayPayment } from "@/lib/razorpay";
 
 function lookupProduct(productId: string) {
-  const all = [...SAMPLE_NEXUS_PRODUCTS, ...SAMPLE_EBAY_PRODUCTS];
+  const all = [
+    ...SAMPLE_NEXUS_PRODUCTS,
+    ...SAMPLE_EBAY_PRODUCTS,
+    ...SAMPLE_PIXELMART_PRODUCTS,
+    ...SAMPLE_THREADVAULT_PRODUCTS,
+  ];
   return all.find((p) => p.id === productId);
 }
 

@@ -169,11 +169,13 @@ async function callNativeGemini(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { message, history = [] } = body;
+    const { message, history = [], currentCart = [] } = body;
 
     if (!message || typeof message !== "string") {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
+
+    const isCheckoutOrCartQuery = /\b(checkout|check out|pay|payment|proceed to (?:pay|checkout)|buy now|place order|my cart|my basket|view cart)\b/i.test(message);
 
     // Read Gemini API key dynamically (supports both uppercase and lowercase)
     const geminiKey = (
@@ -221,11 +223,25 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Add current user message
-    contents.push({
-      role: "user",
-      parts: [{ text: message }],
-    });
+    // Add current user message with basket context if checking out
+    if (isCheckoutOrCartQuery && Array.isArray(currentCart) && currentCart.length > 0) {
+      const itemsDesc = currentCart
+        .map((i: any) => `${i.quantity || 1}x ${i.name || i.product?.name || i.productId} (₹${(i.price || i.product?.price || 0) * (i.quantity || 1)}) from ${i.store || "connected store"}`)
+        .join(", ");
+      contents.push({
+        role: "user",
+        parts: [
+          {
+            text: `[SYSTEM NOTE: The shopper currently has ${currentCart.length} item(s) in their active basket: ${itemsDesc}. DO NOT call listProducts or re-search for products. Let the shopper know their active basket is ready with these exact items and they can click the 'Pay with Razorpay (Test Mode)' button directly in their basket on the right to complete payment.]\n${message}`,
+          },
+        ],
+      });
+    } else {
+      contents.push({
+        role: "user",
+        parts: [{ text: message }],
+      });
+    }
 
     const toolExecutions: ToolExecutionResult[] = [];
     let extractedProducts: any[] | undefined = undefined;
@@ -276,14 +292,24 @@ export async function POST(req: NextRequest) {
             result: execResult.data,
           });
 
-          // Extract specialized UI data
-          if (toolName === "listProducts" && Array.isArray(execResult.data)) {
-            extractedProducts = execResult.data;
-          } else if (toolName === "listProducts" && execResult.data?.products) {
-            extractedProducts = execResult.data.products;
+          // Extract specialized UI data (never attach product cards if shopper is checking out)
+          if (toolName === "listProducts" && !isCheckoutOrCartQuery) {
+            if (Array.isArray(execResult.data)) {
+              extractedProducts = execResult.data;
+            } else if (execResult.data?.products) {
+              extractedProducts = execResult.data.products;
+            }
           }
 
-          if (toolName === "viewCart" || toolName === "addToCart") {
+          if (toolName === "viewCart") {
+            if (Array.isArray(currentCart) && currentCart.length > 0) {
+              execResult.data = {
+                items: currentCart,
+                total: currentCart.reduce((s: number, i: any) => s + (i.price || i.product?.price || 0) * (i.quantity || 1), 0),
+              };
+            }
+            extractedCart = execResult.data;
+          } else if (toolName === "addToCart") {
             extractedCart = execResult.data;
           }
 
@@ -331,6 +357,10 @@ export async function POST(req: NextRequest) {
         role: c.role === "model" ? "assistant" : "user",
         content: c.parts?.map((p: any) => p.text || "").join("") || "",
       }));
+
+    if (isCheckoutOrCartQuery) {
+      extractedProducts = undefined;
+    }
 
     return NextResponse.json({
       text: sanitizeHumanReadableText(finalText) || "I have processed your request across the connected stores.",

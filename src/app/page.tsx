@@ -320,6 +320,7 @@ export default function RayaHome() {
         body: JSON.stringify({
           message: textToSend,
           history,
+          currentCart: cartItems,
         }),
       });
 
@@ -352,9 +353,9 @@ export default function RayaHome() {
         }));
       }
 
-      // Sync backend cart response if returned
-      if (data.cart?.items && Array.isArray(data.cart.items)) {
-        updateActiveCart(data.cart.items);
+      // If autonomous checkout succeeded via agent, clear active cart
+      if (data.receipt) {
+        updateActiveCart([]);
       }
     } catch (err: any) {
       console.error("Chat error:", err);
