@@ -42,6 +42,7 @@ import {
   ConnectedStoreTelemetry,
 } from "@/lib/merchant-store";
 import { MerchantAnalyticsCharts } from "@/components/merchant-analytics-charts";
+import { MerchantFloatingDrawer } from "@/components/merchant-floating-drawer";
 
 interface MerchantMetrics {
   totalGMV: number;
@@ -1440,6 +1441,9 @@ export default function MerchantGrowthControlRoom() {
           </div>
         )}
       </main>
+
+      {/* Floating Merchant Assistant Orb Trigger & Drawer */}
+      <MerchantFloatingDrawer />
     </div>
   );
 }

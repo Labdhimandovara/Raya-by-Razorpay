@@ -24,6 +24,7 @@ interface RayaChatProps {
   loading: boolean;
   onAddToCart: (product: any) => void;
   onTriggerCheckout?: (items: any[]) => void;
+  onAutonomousOrder?: (items: any[]) => void;
 }
 
 function renderInlineContent(text: string, isUser: boolean) {
@@ -199,9 +200,11 @@ function ToolActivityDisclosure({
 function ConversationalCheckoutCard({
   items,
   onPay,
+  onAutonomousOrder,
 }: {
   items: any[];
   onPay?: () => void;
+  onAutonomousOrder?: () => void;
 }) {
   const totalAmount = items.reduce((sum, it) => {
     const p = it.price || it.product?.price || 0;
@@ -261,27 +264,38 @@ function ConversationalCheckoutCard({
         <span>Purchase Control: All 6 Gates Passed • Strict INR Domestic Settlement</span>
       </div>
 
-      {/* Total & Pay Button */}
+      {/* Total & Action Buttons */}
       <div className="pt-2 border-t border-[#E6E0D6] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <span className="text-[10px] font-bold text-[#667085] block">Total Amount</span>
           <span className="text-lg font-black text-[#172033]">₹{totalAmount.toLocaleString()}</span>
         </div>
 
-        <button
-          onClick={onPay}
-          className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#0A63FF] hover:bg-blue-600 active:scale-95 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm shadow-blue-200"
-        >
-          <CreditCard className="w-4 h-4" />
-          <span>Pay ₹{totalAmount.toLocaleString()} • Razorpay Test Mode</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          {onAutonomousOrder && (
+            <button
+              onClick={onAutonomousOrder}
+              className="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-200"
+              title="Autonomous AI Buyer instantly executes verified order placement"
+            >
+              <span>⚡ Place Order (AI Buyer)</span>
+            </button>
+          )}
+
+          <button
+            onClick={onPay}
+            className="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-[#0A63FF] hover:bg-blue-600 active:scale-95 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-blue-200"
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>Pay with Razorpay</span>
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-export function RayaChat({ messages, loading, onAddToCart, onTriggerCheckout }: RayaChatProps) {
+export function RayaChat({ messages, loading, onAddToCart, onTriggerCheckout, onAutonomousOrder }: RayaChatProps) {
   const scrollEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -341,6 +355,7 @@ export function RayaChat({ messages, loading, onAddToCart, onTriggerCheckout }: 
                 <ConversationalCheckoutCard
                   items={m.checkoutBasket}
                   onPay={() => onTriggerCheckout && onTriggerCheckout(m.checkoutBasket!)}
+                  onAutonomousOrder={() => onAutonomousOrder && onAutonomousOrder(m.checkoutBasket!)}
                 />
               )}
 

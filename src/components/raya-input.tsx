@@ -9,9 +9,9 @@ interface RayaInputProps {
 }
 
 const QUICK_SUGGESTIONS = [
-  "Find white oxford shirts",
-  "Show me backpacks for travel",
+  "⚡ Place order as AI buyer",
   "Find electronics under ₹5,000",
+  "Find white oxford shirts",
   "What is in my cart?",
 ];
 
