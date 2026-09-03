@@ -17,6 +17,60 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+// Iridescent Swirling AI Assistant Orb matching user screenshot
+function AiSwirlOrb({ className = "w-7 h-7" }: { className?: string }) {
+  return (
+    <div className={`relative flex items-center justify-center shrink-0 ${className}`}>
+      <svg
+        viewBox="0 0 40 40"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full h-full drop-shadow-xs"
+      >
+        <defs>
+          <radialGradient id="aiOrbBase" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#80E9FF" />
+            <stop offset="35%" stopColor="#00E5FF" />
+            <stop offset="70%" stopColor="#00A3FF" />
+            <stop offset="100%" stopColor="#0066FF" />
+          </radialGradient>
+          <radialGradient id="aiOrbHighlight" cx="35%" cy="30%" r="65%">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.85" />
+            <stop offset="40%" stopColor="#38BDF8" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
+          </radialGradient>
+          <filter id="swirlBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="0.8" />
+          </filter>
+        </defs>
+
+        {/* Outer glowing sphere */}
+        <circle cx="20" cy="20" r="19" fill="url(#aiOrbBase)" />
+
+        {/* Internal Swirling Petals / Vortex Aperture */}
+        <g filter="url(#swirlBlur)" opacity="0.95">
+          <path
+            d="M20 6C23 12 19 18 13 19C7 20 5 15 8 10C10 6 15 4 20 6Z"
+            fill="#38BDF8"
+          />
+          <path
+            d="M34 21C28 24 23 20 22 14C21 8 26 6 30 9C34 11 36 16 34 21Z"
+            fill="#00F0FF"
+          />
+          <path
+            d="M16 34C13 28 17 23 23 22C29 21 31 26 29 30C27 34 21 36 16 34Z"
+            fill="#0077FF"
+          />
+        </g>
+
+        {/* Center core light */}
+        <circle cx="20" cy="20" r="18" fill="url(#aiOrbHighlight)" />
+        <circle cx="20" cy="20" r="3.5" fill="#FFFFFF" opacity="0.9" filter="url(#swirlBlur)" />
+      </svg>
+    </div>
+  );
+}
+
 export function MerchantFloatingDrawer() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -123,17 +177,15 @@ export function MerchantFloatingDrawer() {
 
   return (
     <>
-      {/* 1. FLOATING ACTION PILL ON APP */}
+      {/* 1. FLOATING ACTION PILL ON APP (MATCHING USER SCREENSHOT) */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 sm:bottom-6 right-5 z-40 px-3.5 py-2 rounded-full bg-[#172033] hover:bg-slate-800 text-white text-xs font-bold shadow-xl border border-slate-700 flex items-center gap-2 cursor-pointer transition-all active:scale-95 group"
-        title="Tap to ask Merchant Intelligence Copilot & inspect live metrics"
+        className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 bg-white hover:bg-[#FBFBFB] border border-slate-200/90 shadow-md hover:shadow-lg rounded-full pl-2 pr-4 sm:pr-5 py-1.5 sm:py-2 flex items-center gap-2.5 sm:gap-3 cursor-pointer transition-all active:scale-95 group select-none"
+        title="Tap to ask Merchant Assistant & inspect live store metrics"
       >
-        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-        <Store className="w-3.5 h-3.5 text-[#0A63FF] group-hover:scale-110 transition-transform" />
-        <span>Merchant AI</span>
-        <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.2 rounded font-mono border border-slate-700">
-          Live API
+        <AiSwirlOrb className="w-7 h-7 sm:w-8 sm:h-8 group-hover:scale-105 transition-transform" />
+        <span className="text-xs sm:text-[13px] font-semibold text-[#172033] tracking-tight whitespace-nowrap">
+          Ask any questions
         </span>
       </button>
 
