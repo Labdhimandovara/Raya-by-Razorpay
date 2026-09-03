@@ -69,6 +69,22 @@ const GEMINI_FUNCTION_DECLARATIONS = GROQ_TOOLS.map((t) => t.function);
 
 let workingModel: string | null = null;
 
+function sanitizeHumanReadableText(text: string): string {
+  if (!text) return "";
+  let clean = text.replace(/<thought>[\s\S]*?<\/thought>/gi, "").trim();
+
+  // Strip internal third-person monologue / scratchpads
+  const markerIndex = clean.search(/(?:I have |I've found |Here are |To complete |Which store |Would you like |I found )/i);
+  if (markerIndex > 0 && /^(?:The user|Looking at|Plan:|Wait,|Actually)/i.test(clean)) {
+    clean = clean.substring(markerIndex).trim();
+  }
+
+  // Remove trailing prompt meta-thinking if any
+  clean = clean.replace(/\n(?:Wait,|Actually,|Plan:)[\s\S]*$/i, "").trim();
+
+  return clean.replace(/\*\*/g, "").trim();
+}
+
 async function callNativeGemini(
   contents: any[],
   geminiKey: string
@@ -120,19 +136,20 @@ async function callNativeGemini(
         let accumulatedText = "";
 
         for (const part of content.parts) {
+          if (part.thought) continue;
           if (part.functionCall) {
             functionCalls.push({
               name: part.functionCall.name,
               args: part.functionCall.args || {},
             });
           }
-          if (part.text) {
+          if (part.text && !part.thought) {
             accumulatedText += part.text;
           }
         }
 
         return {
-          text: accumulatedText || undefined,
+          text: sanitizeHumanReadableText(accumulatedText) || undefined,
           functionCalls: functionCalls.length > 0 ? functionCalls : undefined,
           rawContent: content,
         };
@@ -316,7 +333,7 @@ export async function POST(req: NextRequest) {
       }));
 
     return NextResponse.json({
-      text: finalText || "I have processed your request across the connected stores.",
+      text: sanitizeHumanReadableText(finalText) || "I have processed your request across the connected stores.",
       toolExecutions,
       products: extractedProducts,
       cart: extractedCart,
