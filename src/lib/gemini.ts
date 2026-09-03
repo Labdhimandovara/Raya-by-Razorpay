@@ -103,7 +103,12 @@ CRITICAL OPERATIONAL RULES:
    - NEVER call 'addToCart' unless the user explicitly commands "add to cart", "add this item", or "put in my cart"!
    - Never add items from other stores automatically into the cart.
 
-3. Uniform Product & Category Matching:
+3. MULTI-STORE BALANCED RESULTS (DO NOT DEFAULT TO ONLY EBAY):
+   - UNLESS the user explicitly names a single store (e.g. "under eBay", "from eBay", "on ThreadVault", "from NexusStore"), you MUST search across ALL stores ('store: all') and present items from NexusStore, ThreadVault, PixelMart, and eBay side-by-side!
+   - NEVER show only eBay items when the user did not choose a specific store. Show the multi-store variety.
+   - ONLY restrict results to eBay if the user explicitly commanded "under ebay", "from ebay", or "only ebay".
+
+4. Uniform Product & Category Matching:
    - When the user asks for a specific category or item (e.g. "headphone", "audio", "electronics", "keyboard", "jacket"):
      - ONLY recommend items that match that item or category!
      - When searching for headphones/audio/electronics, DO NOT recommend unrelated clothing (e.g. blazers, coats, denim).
@@ -369,6 +374,36 @@ export const SAMPLE_EBAY_PRODUCTS = [
     isEbay: true,
     source: "ebay",
   },
+  {
+    id: "ebay-macbook-pro-14",
+    name: "Apple MacBook Pro 14 M2 Pro (16GB RAM, 512GB SSD) Certified Refurbished",
+    description: "Space Gray, 10-core CPU, 16-core GPU, Liquid Retina XDR display with 1-Year Allstate Warranty.",
+    price: 84999,
+    stock: 7,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&auto=format&fit=crop",
+    store: "ebay",
+    storeName: "eBay",
+    storeUrl: "https://www.ebay.com",
+    productUrl: "https://www.ebay.com/itm/386777889901",
+    isEbay: true,
+    source: "ebay",
+  },
+  {
+    id: "ebay-dell-xps-15",
+    name: "Dell XPS 15 9520 OLED Laptop (Intel Core i7, 16GB, 512GB SSD)",
+    description: "3.5K OLED InfinityEdge touchscreen, NVIDIA RTX 3050Ti graphics, precision CNC aluminum chassis.",
+    price: 59999,
+    stock: 5,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=600&auto=format&fit=crop",
+    store: "ebay",
+    storeName: "eBay",
+    storeUrl: "https://www.ebay.com",
+    productUrl: "https://www.ebay.com/itm/386777889902",
+    isEbay: true,
+    source: "ebay",
+  },
 ];
 
 const EBAY_CLIENT_ID = process.env.EBAY_CLIENT_ID || Buffer.from("TGFiZGhpbWEtQmF6YWFyQUktUFJELTYzYTViYmY3Zi1mNjFiYjM0NQ==", "base64").toString("utf-8");
@@ -553,6 +588,192 @@ export const SAMPLE_NEXUS_PRODUCTS = [
     storeName: "NexusStore",
     storeUrl: "https://demo-shop-frontend.vercel.app",
   },
+  {
+    id: "nx-slimcore-ultrabook",
+    name: "Nexus SlimCore 14-Inch Touchscreen Ultrabook Laptop",
+    description: "Ultra-thin aerospace aluminum laptop with 2.8K OLED touchscreen, Intel Core Ultra 7, 32GB RAM, and 18-hour battery.",
+    price: 44999,
+    stock: 15,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&auto=format&fit=crop",
+    store: "nexusstore",
+    storeName: "NexusStore",
+    storeUrl: "https://demo-shop-frontend.vercel.app",
+  },
+];
+
+export const SAMPLE_THREADVAULT_PRODUCTS = [
+  {
+    id: "thread-dap-player",
+    name: "Portable High-Resolution Audio Player (DAP)",
+    description: "Dual ESS SABRE ES9038Q2M DACs, native DSD512 decoding, balanced 4.4mm and 3.5mm outputs.",
+    price: 42999,
+    stock: 12,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600&auto=format&fit=crop",
+    store: "threadvault",
+    storeName: "ThreadVault",
+    storeUrl: "https://threadvault-frontend.vercel.app",
+  },
+  {
+    id: "thread-planar-headphones",
+    name: "Planar Magnetic Open-Back Audiophile Studio Headphones",
+    description: "Acoustically transparent open-back headphones with ultra-thin nanometer diaphragms for pure natural sound.",
+    price: 38999,
+    stock: 15,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop",
+    store: "threadvault",
+    storeName: "ThreadVault",
+    storeUrl: "https://threadvault-frontend.vercel.app",
+  },
+  {
+    id: "thread-cashmere-sweater",
+    name: "Mongolian Cashmere Mockneck Sweater",
+    description: "100% Grade-A Mongolian cashmere with ribbed trims and understated tailored silhouette in oatmeal melange.",
+    price: 14999,
+    stock: 35,
+    category: "Clothing",
+    imageUrl: "https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=600&auto=format&fit=crop",
+    store: "threadvault",
+    storeName: "ThreadVault",
+    storeUrl: "https://threadvault-frontend.vercel.app",
+  },
+  {
+    id: "thread-selvedge-denim-jacket",
+    name: "Japanese 14oz Selvedge Denim Jacket",
+    description: "Kuroki mills raw indigo selvedge denim with antique brass hardware and reinforced chain stitching.",
+    price: 18499,
+    stock: 25,
+    category: "Clothing",
+    imageUrl: "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&auto=format&fit=crop",
+    store: "threadvault",
+    storeName: "ThreadVault",
+    storeUrl: "https://threadvault-frontend.vercel.app",
+  },
+  {
+    id: "thread-supima-tee",
+    name: "Heavyweight Supima Cotton Boxy Tee",
+    description: "300 GSM American Supima cotton with drop-shoulder cut and high-density ribbed collar in chalk white.",
+    price: 3499,
+    stock: 80,
+    category: "Clothing",
+    imageUrl: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop",
+    store: "threadvault",
+    storeName: "ThreadVault",
+    storeUrl: "https://threadvault-frontend.vercel.app",
+  },
+  {
+    id: "thread-silk-camp-shirt",
+    name: "Raw Silk Camp Collar Shirt",
+    description: "Subtle slub textured raw mulberry silk short-sleeve shirt with vintage notched collar in washed ecru.",
+    price: 8999,
+    stock: 45,
+    category: "Clothing",
+    imageUrl: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop",
+    store: "threadvault",
+    storeName: "ThreadVault",
+    storeUrl: "https://threadvault-frontend.vercel.app",
+  },
+  {
+    id: "thread-silver-cable",
+    name: "Artisan Braided Silver Audio Cable (4.4mm)",
+    description: "8-core monocrystalline pure silver custom cable with rhodium-plated 4.4mm balanced connector.",
+    price: 6499,
+    stock: 50,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop",
+    store: "threadvault",
+    storeName: "ThreadVault",
+    storeUrl: "https://threadvault-frontend.vercel.app",
+  },
+];
+
+export const SAMPLE_PIXELMART_PRODUCTS = [
+  {
+    id: "px-apex-creator-laptop",
+    name: "Apex 16-Inch High-Performance Creator Gaming Laptop",
+    description: "NVIDIA GeForce RTX 4080 (175W), Intel Core i9-14900HX, 32GB DDR5, 2TB Gen4 SSD, 240Hz Mini-LED display.",
+    price: 54999,
+    stock: 10,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=600&auto=format&fit=crop",
+    store: "pixelmart",
+    storeName: "PixelMart",
+    storeUrl: "https://pixelmart-frontend.vercel.app",
+  },
+  {
+    id: "px-cyberdeck-portable-terminal",
+    name: "Cyberdeck Ultra-Portable Field Laptop & Terminal",
+    description: "Hardened Pelican-style chassis with mechanical ortholinear keyboard, 7-inch sunlight readable display, internal 20000mAh battery.",
+    price: 32999,
+    stock: 8,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=600&auto=format&fit=crop",
+    store: "pixelmart",
+    storeName: "PixelMart",
+    storeUrl: "https://pixelmart-frontend.vercel.app",
+  },
+  {
+    id: "px-4k-capture-card",
+    name: "4K60 Pro HDR Ultra-Low Latency Video Capture Card",
+    description: "PCIe and external USB 3.2 video capture interface capturing uncompressed 4K60 HDR10 with VRR passthrough.",
+    price: 17999,
+    stock: 28,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=600&auto=format&fit=crop",
+    store: "pixelmart",
+    storeName: "PixelMart",
+    storeUrl: "https://pixelmart-frontend.vercel.app",
+  },
+  {
+    id: "px-oled-stream-deck",
+    name: "15-Key Interactive OLED Stream Deck",
+    description: "Customizable tactile keys with full-color LCD screens, dual rotary encoders, and instant scene triggering.",
+    price: 14999,
+    stock: 40,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1612287233207-695e29a3a9ad?w=600&auto=format&fit=crop",
+    store: "pixelmart",
+    storeName: "PixelMart",
+    storeUrl: "https://pixelmart-frontend.vercel.app",
+  },
+  {
+    id: "px-8k-gaming-keyboard",
+    name: "Magnetic Hall-Effect 8K RGB Gaming Keyboard",
+    description: "Rapid-trigger analog hall-effect magnetic switches with 0.1mm actuation and per-key addressable RGB.",
+    price: 18999,
+    stock: 30,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&auto=format&fit=crop",
+    store: "pixelmart",
+    storeName: "PixelMart",
+    storeUrl: "https://pixelmart-frontend.vercel.app",
+  },
+  {
+    id: "px-neon-cyber-tee",
+    name: "Neon Cybernetic Oversized Graphic Tee",
+    description: "280 GSM combed cotton drop-shoulder tee featuring high-density neon ultraviolet reactive silkscreen.",
+    price: 2499,
+    stock: 100,
+    category: "Clothing",
+    imageUrl: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&auto=format&fit=crop",
+    store: "pixelmart",
+    storeName: "PixelMart",
+    storeUrl: "https://pixelmart-frontend.vercel.app",
+  },
+  {
+    id: "px-xlr-broadcast-mic",
+    name: "Broadcast XLR Dynamic Microphone with Boom Arm",
+    description: "Cardioid studio mic with built-in pop filter, internal air shockmount, and heavy duty aluminum boom stand.",
+    price: 21999,
+    stock: 25,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=600&auto=format&fit=crop",
+    store: "pixelmart",
+    storeName: "PixelMart",
+    storeUrl: "https://pixelmart-frontend.vercel.app",
+  },
 ];
 
 function matchesUniformCategory(product: any, query: string, requestedCategory?: string): boolean {
@@ -601,6 +822,31 @@ function matchesUniformCategory(product: any, query: string, requestedCategory?:
       desc.includes("acoustic");
 
     if (!isAudioProduct) return false;
+  }
+
+  // Laptop / Computer query check
+  const isComputerQuery =
+    q.includes("laptop") ||
+    q.includes("notebook") ||
+    q.includes("macbook") ||
+    q.includes("ultrabook") ||
+    q.includes("computer") ||
+    q.includes("pc");
+
+  if (isComputerQuery) {
+    const isComputerProduct =
+      name.includes("laptop") ||
+      name.includes("notebook") ||
+      name.includes("macbook") ||
+      name.includes("ultrabook") ||
+      name.includes("creator") ||
+      name.includes("deck") ||
+      name.includes("terminal") ||
+      desc.includes("laptop") ||
+      desc.includes("notebook") ||
+      desc.includes("touchscreen");
+
+    if (!isComputerProduct) return false;
   }
 
   // General Electronics query check
@@ -758,14 +1004,20 @@ export async function executeBridgeTool(
 
         const directPromises = targetStores.map(async (st) => {
           try {
-            if (st.id === "nexusstore") {
-              return SAMPLE_NEXUS_PRODUCTS;
-            }
+            if (st.id === "nexusstore") return SAMPLE_NEXUS_PRODUCTS;
+            if (st.id === "threadvault") return SAMPLE_THREADVAULT_PRODUCTS;
+            if (st.id === "pixelmart") return SAMPLE_PIXELMART_PRODUCTS;
+
             const searchParams = new URLSearchParams();
             if (search) searchParams.append("search", search);
             if (category) searchParams.append("category", category);
             const r = await fetch(`${st.baseUrl}/products?${searchParams.toString()}`, { signal: AbortSignal.timeout(1200) });
-            if (!r.ok) return [];
+            if (!r.ok) {
+              if (st.id === "nexusstore") return SAMPLE_NEXUS_PRODUCTS;
+              if (st.id === "threadvault") return SAMPLE_THREADVAULT_PRODUCTS;
+              if (st.id === "pixelmart") return SAMPLE_PIXELMART_PRODUCTS;
+              return [];
+            }
             const j = await r.json();
             const prods = j.data?.products || j.products || [];
             return prods.map((p: any) => ({
@@ -776,6 +1028,8 @@ export async function executeBridgeTool(
             }));
           } catch {
             if (st.id === "nexusstore") return SAMPLE_NEXUS_PRODUCTS;
+            if (st.id === "threadvault") return SAMPLE_THREADVAULT_PRODUCTS;
+            if (st.id === "pixelmart") return SAMPLE_PIXELMART_PRODUCTS;
             return [];
           }
         });
@@ -831,7 +1085,12 @@ export async function executeBridgeTool(
           });
           if (res.ok) {
             const json = await res.json();
-            const allKnown = [...SAMPLE_NEXUS_PRODUCTS, ...SAMPLE_EBAY_PRODUCTS];
+            const allKnown = [
+              ...SAMPLE_NEXUS_PRODUCTS,
+              ...SAMPLE_THREADVAULT_PRODUCTS,
+              ...SAMPLE_PIXELMART_PRODUCTS,
+              ...SAMPLE_EBAY_PRODUCTS,
+            ];
             const lookup = (pid: string) => allKnown.find((p) => p.id === pid);
             if (json.items && Array.isArray(json.items)) {
               json.items = json.items.map((it: any) => ({
@@ -846,7 +1105,12 @@ export async function executeBridgeTool(
         }
 
         // Resilient fallback: lookup known product details and return SUCCESS with enriched items
-        const allKnown = [...SAMPLE_NEXUS_PRODUCTS, ...SAMPLE_EBAY_PRODUCTS];
+        const allKnown = [
+          ...SAMPLE_NEXUS_PRODUCTS,
+          ...SAMPLE_THREADVAULT_PRODUCTS,
+          ...SAMPLE_PIXELMART_PRODUCTS,
+          ...SAMPLE_EBAY_PRODUCTS,
+        ];
         const matched = allKnown.find((p) => p.id === args.productId);
         return {
           status: "SUCCESS",
