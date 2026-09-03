@@ -12,6 +12,7 @@ export interface Message {
   text: string;
   products?: any[];
   receipt?: any;
+  cart?: any;
   toolExecutions?: Array<{
     tool: string;
     args: any;

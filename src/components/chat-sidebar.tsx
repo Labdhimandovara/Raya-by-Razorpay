@@ -16,6 +16,7 @@ import {
   Sparkles,
   ExternalLink,
 } from "lucide-react";
+import { CartItem } from "@/components/cart-drawer";
 
 export interface ChatSession {
   id: string;
@@ -29,21 +30,7 @@ export interface SavedCart {
   id: string;
   title: string;
   createdAt: number;
-  items: Array<{
-    id: string;
-    productId: string;
-    quantity: number;
-    price?: number;
-    store?: string;
-    product?: {
-      id: string;
-      name: string;
-      price: number;
-      store?: string;
-      storeName?: string;
-      imageUrl?: string;
-    };
-  }>;
+  items: CartItem[];
   total: number;
   status: "ACTIVE_DRAFT" | "PAID_ORDER";
   orderId?: string;
@@ -57,6 +44,7 @@ interface ChatSidebarProps {
   onSelectSession: (sessionId: string) => void;
   onNewChat: () => void;
   onDeleteSession: (sessionId: string) => void;
+  sessionCarts?: Record<string, CartItem[]>;
   savedCarts: SavedCart[];
   onRestoreCart: (cart: SavedCart) => void;
   onDeleteSavedCart: (cartId: string) => void;
@@ -70,6 +58,7 @@ export function ChatSidebar({
   onSelectSession,
   onNewChat,
   onDeleteSession,
+  sessionCarts = {},
   savedCarts,
   onRestoreCart,
   onDeleteSavedCart,
@@ -81,7 +70,7 @@ export function ChatSidebar({
     return (
       <button
         onClick={onToggle}
-        className="fixed top-3.5 left-3.5 z-50 p-2 rounded-xl bg-white border border-[#E6E0D6] text-[#172033] hover:text-[#0C8CE9] shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
+        className="fixed top-3.5 left-3.5 z-50 p-2 rounded-xl bg-white border border-[#E6E0D6] text-[#172033] hover:text-raya-blue shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
         title="Open Conversations & Past Carts Sidebar"
         aria-label="Open sidebar"
       >
@@ -91,59 +80,61 @@ export function ChatSidebar({
   }
 
   return (
-    <aside className="w-72 lg:w-80 h-[100dvh] bg-[#F7F5F0] border-r border-[#E6E0D6] flex flex-col shrink-0 z-40 transition-all shadow-lg select-none">
+    <aside className="w-68 sm:w-72 lg:w-76 h-[100dvh] bg-[#F7F5F0] border-r border-[#E6E0D6] flex flex-col shrink-0 z-40 transition-all shadow-sm select-none">
       {/* Top Header */}
-      <div className="p-3.5 border-b border-[#E6E0D6] flex items-center justify-between bg-white/80 backdrop-blur-xs">
+      <div className="p-3 border-b border-[#E6E0D6] flex items-center justify-between bg-white/80 backdrop-blur-xs shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-[#172033] text-white flex items-center justify-center font-black text-xs">
             R
           </div>
-          <span className="font-extrabold text-xs text-[#172033] tracking-tight">
-            RAYA SESSIONS
-          </span>
+          <div>
+            <span className="font-extrabold text-xs text-[#172033] tracking-tight block">
+              RAYA SESSIONS
+            </span>
+            <span className="text-[10px] text-raya-coolGray">Autonomous Shopper</span>
+          </div>
         </div>
 
         <button
           onClick={onToggle}
-          className="p-1.5 rounded-lg text-[#667085] hover:text-[#172033] hover:bg-[#F7F5F0] transition-all cursor-pointer"
-          title="Collapse sidebar"
+          className="p-1 rounded-lg hover:bg-slate-200/60 text-slate-500 hover:text-slate-900 transition-all cursor-pointer"
+          title="Collapse Sidebar"
         >
           <PanelLeftClose className="w-4 h-4" />
         </button>
       </div>
 
-      {/* New Chat Button */}
-      <div className="p-3">
+      {/* New Chat Primary Action */}
+      <div className="p-3 shrink-0">
         <button
           onClick={onNewChat}
-          className="w-full py-2.5 px-3.5 rounded-xl bg-[#172033] hover:bg-slate-800 active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+          className="w-full py-2.5 px-3 rounded-xl bg-[#172033] hover:bg-slate-800 active:scale-[0.98] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
         >
           <Plus className="w-4 h-4 text-emerald-400" />
-          <span>+ New Shopping Chat</span>
+          <span>New Shopping Chat</span>
         </button>
       </div>
 
-      {/* Mode Switcher Tabs */}
-      <div className="px-3 pb-2">
-        <div className="grid grid-cols-2 p-1 rounded-xl bg-white border border-[#E6E0D6] text-xs font-bold">
+      {/* Sub-Tabs: Chats vs Past Carts */}
+      <div className="px-3 pb-2 shrink-0">
+        <div className="grid grid-cols-2 p-1 bg-[#EBE7DF] rounded-xl text-xs font-semibold">
           <button
             onClick={() => setActiveTab("conversations")}
-            className={`py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            className={`py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === "conversations"
-                ? "bg-[#172033] text-white shadow-2xs"
-                : "text-[#667085] hover:text-[#172033]"
+                ? "bg-white text-[#172033] shadow-xs font-bold"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
             <span>Chats ({sessions.length})</span>
           </button>
-
           <button
             onClick={() => setActiveTab("carts")}
-            className={`py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            className={`py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === "carts"
-                ? "bg-[#172033] text-white shadow-2xs"
-                : "text-[#667085] hover:text-[#172033]"
+                ? "bg-white text-[#172033] shadow-xs font-bold"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5" />
@@ -152,169 +143,166 @@ export function ChatSidebar({
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto px-3 space-y-2 py-1">
-        {/* Tab 1: Conversations List */}
-        {activeTab === "conversations" && (
-          <div className="space-y-1.5">
-            {sessions.length === 0 ? (
-              <div className="p-6 text-center text-xs text-[#667085] space-y-2">
-                <MessageSquare className="w-6 h-6 mx-auto text-[#667085]/50" />
-                <p>No past conversations yet.</p>
-                <p className="text-[11px]">Start asking Raya about headphones, techwear, or eBay chess sets!</p>
-              </div>
-            ) : (
-              sessions.map((s) => {
-                const isActive = s.id === activeSessionId;
-                return (
-                  <div
-                    key={s.id}
-                    onClick={() => onSelectSession(s.id)}
-                    className={`group p-2.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-2 text-xs ${
-                      isActive
-                        ? "bg-white border-[#0C8CE9] shadow-2xs ring-1 ring-[#0C8CE9]/20"
-                        : "bg-white/60 hover:bg-white border-[#E6E0D6] hover:border-slate-300"
-                    }`}
-                  >
-                    <div className="min-w-0 flex-1 space-y-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-extrabold text-[#172033] truncate text-[11px]">
-                          {s.title}
-                        </span>
-                        {isActive && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#0C8CE9] shrink-0" />
-                        )}
-                      </div>
-                      <p className="text-[10px] text-[#667085] truncate">
-                        {s.previewText}
-                      </p>
-                      <div className="text-[9px] text-[#667085]/80 flex items-center gap-1 pt-0.5">
-                        <Clock className="w-2.5 h-2.5" />
-                        <span>{new Date(s.createdAt).toLocaleDateString([], { month: "short", day: "numeric" })}</span>
-                        <span>•</span>
-                        <span>{s.messageCount} msg{s.messageCount !== 1 ? "s" : ""}</span>
-                      </div>
+      {/* Body List */}
+      <div className="flex-1 overflow-y-auto px-3 py-1 space-y-2">
+        {activeTab === "conversations" ? (
+          /* CONVERSATIONS LIST */
+          sessions.length === 0 ? (
+            <div className="text-center py-10 text-slate-400 text-xs">
+              No conversations yet. Start a new shopping chat!
+            </div>
+          ) : (
+            sessions.map((session) => {
+              const isActive = session.id === activeSessionId;
+              const cart = sessionCarts[session.id] || [];
+              const cartItemCount = cart.reduce((acc, it) => acc + (it.quantity || 1), 0);
+              const cartTotal = cart.reduce((acc, it) => acc + ((it.price || it.product?.price || 0) * (it.quantity || 1)), 0);
+
+              return (
+                <div
+                  key={session.id}
+                  onClick={() => onSelectSession(session.id)}
+                  className={`group relative p-2.5 rounded-xl border transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-white border-raya-blue shadow-xs ring-1 ring-raya-blue/30"
+                      : "bg-white/60 hover:bg-white border-[#E6E0D6] hover:border-slate-300"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${isActive ? "bg-raya-blue" : "bg-slate-300"}`} />
+                      <h4 className={`text-xs font-bold truncate ${isActive ? "text-[#172033]" : "text-slate-700"}`}>
+                        {session.title}
+                      </h4>
                     </div>
 
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onDeleteSession(s.id);
+                        onDeleteSession(session.id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-[#667085] hover:text-rose-600 transition-all rounded hover:bg-rose-50 cursor-pointer"
-                      title="Delete chat session"
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded transition-all shrink-0"
+                      title="Delete chat & dedicated cart"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                );
-              })
-            )}
-          </div>
-        )}
 
-        {/* Tab 2: Saved & Past Carts */}
-        {activeTab === "carts" && (
-          <div className="space-y-2">
-            <div className="text-[10px] font-bold text-[#667085] uppercase tracking-wider px-1">
-              View & Restore Cart Snapshots
+                  <p className="text-[11px] text-raya-coolGray truncate mt-1">
+                    {session.previewText || "Start shopping conversation..."}
+                  </p>
+
+                  <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[10px] text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {new Date(session.createdAt).toLocaleDateString([], { month: "short", day: "numeric" })}
+                    </span>
+
+                    {/* Dedicated Cart Badge */}
+                    {cartItemCount > 0 ? (
+                      <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-md">
+                        🛒 {cartItemCount} item{cartItemCount > 1 ? "s" : ""} • ₹{cartTotal.toLocaleString()}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">Cart Empty</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )
+        ) : (
+          /* SAVED & PAST CARTS LIST */
+          savedCarts.length === 0 ? (
+            <div className="text-center py-10 text-slate-400 text-xs">
+              No saved carts or past orders recorded yet.
             </div>
+          ) : (
+            savedCarts.map((c) => {
+              const isExpanded = expandedCartId === c.id;
+              const itemCount = c.items.reduce((acc, it) => acc + (it.quantity || 1), 0);
 
-            {savedCarts.length === 0 ? (
-              <div className="p-6 text-center text-xs text-[#667085] space-y-2">
-                <ShoppingBag className="w-6 h-6 mx-auto text-[#667085]/50" />
-                <p>No saved or past carts found.</p>
-                <p className="text-[11px]">Any items placed in your cart or ordered will appear here so you can re-order anytime.</p>
-              </div>
-            ) : (
-              savedCarts.map((cart) => {
-                const isExpanded = expandedCartId === cart.id;
-                return (
-                  <div
-                    key={cart.id}
-                    className="p-3 rounded-xl bg-white border border-[#E6E0D6] shadow-2xs space-y-2 text-xs"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-extrabold text-[#172033] text-[11px]">
-                            {cart.title}
-                          </span>
-                          {cart.status === "PAID_ORDER" ? (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              PAID
-                            </span>
-                          ) : (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-[#0C8CE9] border border-blue-200">
-                              SAVED
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[10px] text-[#667085] flex items-center gap-1 mt-0.5">
-                          <span>{cart.items.length} item{cart.items.length !== 1 ? "s" : ""}</span>
-                          <span>•</span>
-                          <span className="font-bold text-[#172033]">₹{cart.total.toLocaleString()}</span>
-                        </div>
+              return (
+                <div
+                  key={c.id}
+                  className="bg-white rounded-xl border border-[#E6E0D6] p-2.5 shadow-2xs hover:border-raya-blue/30 transition-all space-y-2"
+                >
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded ${
+                          c.status === "PAID_ORDER"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-blue-50 text-raya-blue border border-blue-200"
+                        }`}>
+                          {c.status === "PAID_ORDER" ? "Paid Order" : "Saved Cart"}
+                        </span>
                       </div>
-
-                      <button
-                        onClick={() => onDeleteSavedCart(cart.id)}
-                        className="p-1 text-[#667085] hover:text-rose-600 transition-all rounded hover:bg-rose-50 cursor-pointer"
-                        title="Remove cart"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
+                      <h4 className="text-xs font-bold text-[#172033] truncate">{c.title}</h4>
+                      <p className="text-[11px] font-black text-raya-blue mt-0.5">
+                        ₹{c.total.toLocaleString()} • {itemCount} item{itemCount > 1 ? "s" : ""}
+                      </p>
                     </div>
 
-                    {/* Expand/Collapse Item List */}
-                    <div className="pt-1 border-t border-[#E6E0D6]/60">
-                      <button
-                        onClick={() => setExpandedCartId(isExpanded ? null : cart.id)}
-                        className="text-[10px] font-bold text-[#667085] hover:text-[#172033] flex items-center gap-1 cursor-pointer w-full justify-between"
-                      >
-                        <span>{isExpanded ? "Hide item details" : "View items preview"}</span>
-                        <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
-                      </button>
-
-                      {isExpanded && (
-                        <div className="mt-1.5 space-y-1.5 bg-[#F7F5F0] p-2 rounded-lg border border-[#E6E0D6]">
-                          {cart.items.map((item, idx) => (
-                            <div key={idx} className="flex items-center justify-between text-[11px] gap-2">
-                              <span className="truncate text-[#172033] font-medium">
-                                {item.product?.name || item.productId} (x{item.quantity})
-                              </span>
-                              <span className="font-mono text-[10px] text-[#667085] shrink-0">
-                                ₹{((item.product?.price || item.price || 0) * item.quantity).toLocaleString()}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Restore Cart Action Button */}
                     <button
-                      onClick={() => onRestoreCart(cart)}
-                      className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                      onClick={() => onDeleteSavedCart(c.id)}
+                      className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded transition-all shrink-0"
+                      title="Remove saved snapshot"
                     >
-                      <ShoppingBag className="w-3 h-3" />
-                      <span>Restore to Active Cart</span>
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                );
-              })
-            )}
-          </div>
+
+                  <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <button
+                      onClick={() => setExpandedCartId(isExpanded ? null : c.id)}
+                      className="text-[10px] text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
+                    >
+                      {isExpanded ? "Hide items" : "View items"}
+                    </button>
+
+                    <button
+                      onClick={() => onRestoreCart(c)}
+                      className="px-2 py-1 rounded-lg bg-raya-blue hover:bg-blue-600 text-white text-[10.5px] font-bold transition-all shadow-2xs active:scale-95 cursor-pointer flex items-center gap-1"
+                    >
+                      <span>Restore</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="p-2 bg-[#F7F5F0] rounded-lg text-[10.5px] space-y-1 mt-1.5 border border-[#E6E0D6]">
+                      {c.items.map((it, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-slate-700">
+                          <span className="truncate max-w-[140px]">
+                            {it.quantity}x {it.product?.name || it.name || it.productId}
+                          </span>
+                          <span className="font-mono font-bold">
+                            ₹{((it.price || it.product?.price || 0) * (it.quantity || 1)).toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )
         )}
       </div>
 
-      {/* Footer Info */}
-      <div className="p-3 border-t border-[#E6E0D6] bg-white/80 text-[10px] text-[#667085] flex items-center justify-between">
-        <span className="flex items-center gap-1 font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Autonomous Multi-Store Ready</span>
-        </span>
-        <span className="font-mono font-bold text-[#172033]">v2.4 Fast</span>
+      {/* Footer */}
+      <div className="p-3 border-t border-[#E6E0D6] bg-white/70 text-[11px] text-slate-500 shrink-0">
+        <a
+          href="/merchant"
+          className="w-full py-2 px-2.5 rounded-xl border border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50 transition-all font-bold text-slate-700 flex items-center justify-between text-xs cursor-pointer shadow-2xs"
+        >
+          <span className="flex items-center gap-1.5">
+            <span>🏪</span>
+            <span>Bazaar Growth Control Room</span>
+          </span>
+          <ExternalLink className="w-3 h-3 text-slate-400" />
+        </a>
       </div>
     </aside>
   );

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { RayaHeader } from "@/components/raya-header";
 import { RayaChat, Message } from "@/components/raya-chat";
 import { RayaInput } from "@/components/raya-input";
-import { CartDrawer } from "@/components/cart-drawer";
+import { CartDrawer, BasketPanel, CartItem } from "@/components/cart-drawer";
 import { ChatSidebar, ChatSession, SavedCart } from "@/components/chat-sidebar";
 import { CONNECTED_STORES, SAMPLE_NEXUS_PRODUCTS, SAMPLE_EBAY_PRODUCTS } from "@/lib/gemini";
 import { Layers } from "lucide-react";
@@ -28,14 +28,24 @@ I am connected to live merchant stores and marketplaces across the Bazaar ecosys
 Try asking me:
 • "Show me headphones under ₹5,000"
 • "Find luxury clothing from ThreadVault and gaming gear from PixelMart"
-• "Show me certified refurbished tech deals on eBay"
+• "Show me laptops across all stores"
 • Or click one of the store pills below to start browsing!`,
 };
+
+function generateCleanTitle(prompt: string): string {
+  let cleaned = prompt
+    .replace(/^(show me|find me|find|i want|looking for|search for|get me|can you find|display)s+/i, "")
+    .trim();
+  if (!cleaned) cleaned = "Shopping Chat";
+  // Capitalize first character
+  cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  return cleaned.length > 34 ? cleaned.slice(0, 32) + "..." : cleaned;
+}
 
 export default function RayaHome() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeSessionId, setActiveSessionId] = useState<string>("session_default");
-  
+
   const [sessions, setSessions] = useState<ChatSession[]>([
     {
       id: "session_default",
@@ -54,15 +64,20 @@ export default function RayaHome() {
     session_default: [],
   });
 
+  // Dedicated per-chat cart isolation
+  const [sessionCarts, setSessionCarts] = useState<Record<string, CartItem[]>>({
+    session_default: [],
+  });
+
   const messages = sessionMessages[activeSessionId] || [DEFAULT_WELCOME_MESSAGE];
   const history = sessionHistories[activeSessionId] || [];
+  const cartItems = sessionCarts[activeSessionId] || [];
 
   const [loading, setLoading] = useState(false);
-  const [cartItems, setCartItems] = useState<any[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [budget, setBudget] = useState<number | null>(null);
 
-  // Seed initial past carts for instant re-order/restoration demo
+  // Saved/past carts archive
   const [savedCarts, setSavedCarts] = useState<SavedCart[]>([
     {
       id: "cart_seed_1",
@@ -79,117 +94,85 @@ export default function RayaHome() {
           price: 42999,
           store: "threadvault",
           product: {
-            id: "thread-dap-player",
             name: "Portable High-Resolution Audio Player (DAP)",
             price: 42999,
             store: "threadvault",
-            storeName: "ThreadVault",
             imageUrl: "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600&auto=format&fit=crop",
-          },
-        },
-      ],
-    },
-    {
-      id: "cart_seed_2",
-      title: "Nexus Techwear Companion Basket",
-      createdAt: Date.now() - 86400000 * 2,
-      total: 10198,
-      status: "ACTIVE_DRAFT",
-      items: [
-        {
-          id: "cart_seed_jacket",
-          productId: "nx-smart-heated-techwear-jacket",
-          quantity: 1,
-          price: 7999,
-          store: "nexusstore",
-          product: {
-            id: "nx-smart-heated-techwear-jacket",
-            name: "Nexus Smart Heated Techwear Bomber Jacket",
-            price: 7999,
-            store: "nexusstore",
-            storeName: "NexusStore",
-            imageUrl: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop",
-          },
-        },
-        {
-          id: "cart_seed_pwb",
-          productId: "nx-magnetic-fast-charge-powerbank",
-          quantity: 1,
-          price: 2199,
-          store: "nexusstore",
-          product: {
-            id: "nx-magnetic-fast-charge-powerbank",
-            name: "Nexus MagVolt 10000mAh Magnetic Powerbank",
-            price: 2199,
-            store: "nexusstore",
-            storeName: "NexusStore",
-            imageUrl: "https://images.unsplash.com/photo-1586253634026-8cb574908d1e?w=600&auto=format&fit=crop",
           },
         },
       ],
     },
   ]);
 
-  // Load saved state from localStorage if present
+  // Load saved sessions, messages, and dedicated carts from localStorage
   useEffect(() => {
     try {
-      const storedSessions = localStorage.getItem("raya_sessions");
+      const storedSessions = localStorage.getItem("raya_sessions_v2");
       if (storedSessions) {
         const parsed = JSON.parse(storedSessions);
-        if (Array.isArray(parsed) && parsed.length > 0) setSessions(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSessions(parsed);
+          setActiveSessionId(parsed[0].id);
+        }
       }
-      const storedCarts = localStorage.getItem("raya_saved_carts");
+
+      const storedMessages = localStorage.getItem("raya_messages_v2");
+      if (storedMessages) {
+        setSessionMessages(JSON.parse(storedMessages));
+      }
+
+      const storedCarts = localStorage.getItem("raya_session_carts_v2");
       if (storedCarts) {
-        const parsed = JSON.parse(storedCarts);
-        if (Array.isArray(parsed) && parsed.length > 0) setSavedCarts(parsed);
+        setSessionCarts(JSON.parse(storedCarts));
       }
-    } catch {}
+
+      const storedSavedCarts = localStorage.getItem("raya_saved_carts_v2");
+      if (storedSavedCarts) {
+        setSavedCarts(JSON.parse(storedSavedCarts));
+      }
+    } catch (err) {
+      console.warn("Could not load stored Raya state from localStorage:", err);
+    }
   }, []);
 
-  // Save changes to localStorage
   const persistSessions = (newSessions: ChatSession[]) => {
     setSessions(newSessions);
     try {
-      localStorage.setItem("raya_sessions", JSON.stringify(newSessions));
-    } catch {}
+      localStorage.setItem("raya_sessions_v2", JSON.stringify(newSessions));
+    } catch (e) {}
   };
 
-  const persistCarts = (newCarts: SavedCart[]) => {
-    setSavedCarts(newCarts);
+  const persistMessages = (newMessagesMap: Record<string, Message[]>) => {
+    setSessionMessages(newMessagesMap);
     try {
-      localStorage.setItem("raya_saved_carts", JSON.stringify(newCarts));
-    } catch {}
+      localStorage.setItem("raya_messages_v2", JSON.stringify(newMessagesMap));
+    } catch (e) {}
   };
 
-  const cartTotal = cartItems.reduce((acc, item) => {
-    const productMeta = item.product || lookupProduct(item.productId);
-    const price = productMeta?.price || item.price || 0;
-    const qty = item.quantity || 1;
-    return acc + price * qty;
-  }, 0);
+  const persistSessionCarts = (newCartsMap: Record<string, CartItem[]>) => {
+    setSessionCarts(newCartsMap);
+    try {
+      localStorage.setItem("raya_session_carts_v2", JSON.stringify(newCartsMap));
+    } catch (e) {}
+  };
 
-  // Automatically record a cart snapshot when items are added
-  useEffect(() => {
-    if (cartItems.length > 0) {
-      const currentCartSnap: SavedCart = {
-        id: `cart_active_${activeSessionId}`,
-        title: cartItems[0]?.product?.name
-          ? `${cartItems[0].product.name.slice(0, 24)}... (${cartItems.length} items)`
-          : `Active Cart (${cartItems.length} items)`,
-        createdAt: Date.now(),
-        items: cartItems,
-        total: cartTotal,
-        status: "ACTIVE_DRAFT",
-      };
+  const persistSavedCarts = (newSaved: SavedCart[]) => {
+    setSavedCarts(newSaved);
+    try {
+      localStorage.setItem("raya_saved_carts_v2", JSON.stringify(newSaved));
+    } catch (e) {}
+  };
 
-      persistCarts([
-        currentCartSnap,
-        ...savedCarts.filter((c) => c.id !== `cart_active_${activeSessionId}`),
-      ]);
-    }
-  }, [cartItems, cartTotal, activeSessionId]);
+  // Update cart for active session
+  const updateActiveCart = (newItems: CartItem[]) => {
+    const updated = {
+      ...sessionCarts,
+      [activeSessionId]: newItems,
+    };
+    persistSessionCarts(updated);
+  };
 
-  // Handle + New Chat Session
+  // Handle creating a clean new conversation session with its own empty cart
   const handleNewChat = () => {
     const newId = `session_${Date.now()}`;
     const newSession: ChatSession = {
@@ -197,148 +180,170 @@ export default function RayaHome() {
       title: "New Shopping Chat",
       createdAt: Date.now(),
       messageCount: 1,
-      previewText: "Starting new search session...",
+      previewText: "Start a fresh shopping inquiry...",
     };
 
     const updatedSessions = [newSession, ...sessions];
     persistSessions(updatedSessions);
 
-    setSessionMessages((prev) => ({
-      ...prev,
-      [newId]: [DEFAULT_WELCOME_MESSAGE],
-    }));
+    const updatedMessages = {
+      ...sessionMessages,
+      [newId]: [
+        {
+          id: `welcome-${newId}`,
+          role: "assistant" as const,
+          text: "What would you like to shop for today? I can discover products across NexusStore, ThreadVault, PixelMart, and eBay.",
+        },
+      ],
+    };
+    persistMessages(updatedMessages);
 
-    setSessionHistories((prev) => ({
-      ...prev,
+    setSessionHistories((prev) => ({ ...prev, [newId]: [] }));
+
+    // Isolate new session with a clean, empty cart
+    const updatedCarts = {
+      ...sessionCarts,
       [newId]: [],
-    }));
+    };
+    persistSessionCarts(updatedCarts);
 
     setActiveSessionId(newId);
+    setBudget(null);
   };
 
-  // Handle Select Session
   const handleSelectSession = (sessionId: string) => {
     setActiveSessionId(sessionId);
-    if (!sessionMessages[sessionId]) {
-      setSessionMessages((prev) => ({
-        ...prev,
-        [sessionId]: [DEFAULT_WELCOME_MESSAGE],
-      }));
-    }
   };
 
-  // Handle Delete Session
   const handleDeleteSession = (sessionId: string) => {
-    const filtered = sessions.filter((s) => s.id !== sessionId);
-    persistSessions(filtered);
+    const filteredSessions = sessions.filter((s) => s.id !== sessionId);
+    persistSessions(filteredSessions);
+
+    const updatedMessages = { ...sessionMessages };
+    delete updatedMessages[sessionId];
+    persistMessages(updatedMessages);
+
+    const updatedHistories = { ...sessionHistories };
+    delete updatedHistories[sessionId];
+    setSessionHistories(updatedHistories);
+
+    // Delete dedicated cart for this session permanently
+    const updatedCarts = { ...sessionCarts };
+    delete updatedCarts[sessionId];
+    persistSessionCarts(updatedCarts);
+
     if (activeSessionId === sessionId) {
-      if (filtered.length > 0) {
-        setActiveSessionId(filtered[0].id);
+      if (filteredSessions.length > 0) {
+        setActiveSessionId(filteredSessions[0].id);
       } else {
         handleNewChat();
       }
     }
   };
 
-  // Handle Restore Past Cart
-  const handleRestoreCart = (cart: SavedCart) => {
-    setCartItems(cart.items);
+  const handleRestoreCart = (saved: SavedCart) => {
+    updateActiveCart(saved.items);
     setCartOpen(true);
-
-    // Append notification in chat
-    const noticeMsg: Message = {
-      id: `notice-${Date.now()}`,
+    const notifMsg: Message = {
+      id: `restore-notif-${Date.now()}`,
       role: "assistant",
-      text: `🛒 Restored "${cart.title}" (${cart.items.length} items, ₹${cart.total.toLocaleString()}) to your active cart. You can now adjust quantities, add new items, or proceed to checkout.`,
+      text: `Restored past cart "${saved.title}" (${saved.items.length} items totaling ₹${saved.total.toLocaleString()}) into your active session basket.`,
     };
-
-    setSessionMessages((prev) => ({
-      ...prev,
-      [activeSessionId]: [...(prev[activeSessionId] || []), noticeMsg],
-    }));
+    const updatedMessages = {
+      ...sessionMessages,
+      [activeSessionId]: [...messages, notifMsg],
+    };
+    persistMessages(updatedMessages);
   };
 
-  // Handle Delete Saved Cart
   const handleDeleteSavedCart = (cartId: string) => {
     const filtered = savedCarts.filter((c) => c.id !== cartId);
-    persistCarts(filtered);
+    persistSavedCarts(filtered);
   };
 
-  const handleSendMessage = async (userText: string) => {
-    if (!userText.trim() || loading) return;
+  // Chat message sending with dynamic title auto-generation
+  const handleSendMessage = async (textToSend: string) => {
+    if (!textToSend.trim() || loading) return;
 
-    // Detect dynamic budget constraints
-    const budgetMatch = userText.match(
-      /(?:under|below|less than|budget)\s*(?:₹|rs\.?|inr)?\s*(\d+(?:,\d+)*(?:\.\d+)?|\d+k)/i
+    // Detect explicit user budget in prompt
+    const budgetMatch = textToSend.match(
+      /(?:under|below|budget|less than|max)s*(?:₹|rs.?|inr)?s*(d+(?:,d+)*(?:.d+)?|d+k)/i
     );
     if (budgetMatch) {
-      let rawVal = budgetMatch[1].toLowerCase().replace(/,/g, "");
-      let parsedBudget = rawVal.endsWith("k") ? parseFloat(rawVal) * 1000 : parseFloat(rawVal);
-      if (!isNaN(parsedBudget) && parsedBudget > 0) {
-        setBudget(parsedBudget);
+      const rawVal = budgetMatch[1].toLowerCase().replace(/,/g, "");
+      const parsed = rawVal.endsWith("k") ? parseFloat(rawVal) * 1000 : parseFloat(rawVal);
+      if (!isNaN(parsed) && parsed > 0) {
+        setBudget(parsed);
       }
     }
 
-    const userMsgId = `user-${Date.now()}`;
-    const newMsg: Message = {
-      id: userMsgId,
+    const userMsg: Message = {
+      id: `user-${Date.now()}`,
       role: "user",
-      text: userText,
+      text: textToSend,
     };
 
-    // Update session title if this is the first user message
-    const currentSession = sessions.find((s) => s.id === activeSessionId);
-    if (currentSession && (currentSession.title === "New Shopping Chat" || currentSession.messageCount <= 1)) {
+    const currentMessages = sessionMessages[activeSessionId] || [];
+    const newMessagesList = [...currentMessages, userMsg];
+
+    // Auto-update conversation title from first user prompt
+    const isFirstUserMessage = !currentMessages.some((m) => m.role === "user");
+    if (isFirstUserMessage) {
+      const newTitle = generateCleanTitle(textToSend);
       const updatedSessions = sessions.map((s) =>
         s.id === activeSessionId
-          ? {
-              ...s,
-              title: userText.slice(0, 30) + (userText.length > 30 ? "..." : ""),
-              previewText: userText,
-              messageCount: s.messageCount + 1,
-            }
+          ? { ...s, title: newTitle, previewText: textToSend.slice(0, 48) }
+          : s
+      );
+      persistSessions(updatedSessions);
+    } else {
+      const updatedSessions = sessions.map((s) =>
+        s.id === activeSessionId
+          ? { ...s, previewText: textToSend.slice(0, 48) }
           : s
       );
       persistSessions(updatedSessions);
     }
 
-    setSessionMessages((prev) => ({
-      ...prev,
-      [activeSessionId]: [...(prev[activeSessionId] || []), newMsg],
-    }));
+    const updatedMessagesMap = {
+      ...sessionMessages,
+      [activeSessionId]: newMessagesList,
+    };
+    persistMessages(updatedMessagesMap);
+
     setLoading(true);
 
     try {
-      const currentHist = sessionHistories[activeSessionId] || [];
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userText,
-          history: currentHist,
+          message: textToSend,
+          history,
         }),
       });
 
       if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || `HTTP ${res.status}`);
+        throw new Error(`Request failed with status ${res.status}`);
       }
 
       const data = await res.json();
 
       const assistantMsg: Message = {
-        id: `ast-${Date.now()}`,
+        id: `assistant-${Date.now()}`,
         role: "assistant",
-        text: data.text || "Here are the details from the connected stores.",
-        products: data.products,
-        receipt: data.receipt,
+        text: data.text || "I found several options across the connected stores:",
         toolExecutions: data.toolExecutions,
+        products: data.products,
+        cart: data.cart,
+        receipt: data.receipt,
       };
 
-      setSessionMessages((prev) => ({
-        ...prev,
-        [activeSessionId]: [...(prev[activeSessionId] || []), assistantMsg],
-      }));
+      const finalMessagesList = [...newMessagesList, assistantMsg];
+      persistMessages({
+        ...sessionMessages,
+        [activeSessionId]: finalMessagesList,
+      });
 
       if (data.history) {
         setSessionHistories((prev) => ({
@@ -347,73 +352,54 @@ export default function RayaHome() {
         }));
       }
 
-      // Update cart state if modified
+      // Sync backend cart response if returned
       if (data.cart?.items && Array.isArray(data.cart.items)) {
-        setCartItems((prev) => {
-          return data.cart.items.map((newItem: any) => {
-            const prevItem = prev.find(
-              (p) => p.productId === newItem.productId || p.id === newItem.id
-            );
-            const product =
-              newItem.product || prevItem?.product || lookupProduct(newItem.productId);
-
-            return {
-              ...newItem,
-              id: newItem.id || prevItem?.id || `cart-${newItem.productId}`,
-              product,
-              store: newItem.store || prevItem?.store || product?.store || "nexusstore",
-            };
-          });
-        });
-      } else if (data.receipt) {
-        // Save as paid order in savedCarts
-        const paidSnap: SavedCart = {
-          id: `order_${Date.now()}`,
-          title: `Completed Order (${cartItems.length} items)`,
-          createdAt: Date.now(),
-          items: [...cartItems],
-          total: cartTotal,
-          status: "PAID_ORDER",
-          orderId: data.receipt.orderId || `order_${Math.random().toString(36).substring(2, 9)}`,
-        };
-        persistCarts([paidSnap, ...savedCarts]);
-        setCartItems([]);
+        updateActiveCart(data.cart.items);
       }
     } catch (err: any) {
-      console.error("Chat request failed:", err);
-      setSessionMessages((prev) => ({
-        ...prev,
-        [activeSessionId]: [
-          ...(prev[activeSessionId] || []),
-          {
-            id: `err-${Date.now()}`,
-            role: "assistant",
-            text: `⚠️ Error: ${err.message || "Unable to reach Raya agent service. Please check your AI API key and store bridge connection."}`,
-          },
-        ],
-      }));
+      console.error("Chat error:", err);
+      const errorMsg: Message = {
+        id: `err-${Date.now()}`,
+        role: "assistant",
+        text: "I encountered an error retrieving data across the stores. Please try your search again.",
+      };
+      persistMessages({
+        ...sessionMessages,
+        [activeSessionId]: [...newMessagesList, errorMsg],
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  // Cart operations
   const handleAddToCartFromCard = (product: any) => {
     const store = product.store || "nexusstore";
-    setCartItems((prev) => {
-      const existing = prev.find((i) => i.productId === product.id);
-      if (existing) {
-        return prev.map((i) =>
-          i.productId === product.id ? { ...i, quantity: i.quantity + 1, product: i.product || product } : i
-        );
-      }
-      return [...prev, { id: `cart-${Date.now()}`, productId: product.id, quantity: 1, store, product }];
-    });
-
-    handleSendMessage(`Add product "${product.name}" (ID: ${product.id}) from ${store} to my cart`);
+    const existing = cartItems.find((i) => i.productId === product.id);
+    let updated: CartItem[];
+    if (existing) {
+      updated = cartItems.map((i) =>
+        i.productId === product.id ? { ...i, quantity: i.quantity + 1, product: i.product || product } : i
+      );
+    } else {
+      updated = [
+        ...cartItems,
+        {
+          id: `cart-${Date.now()}`,
+          productId: product.id,
+          quantity: 1,
+          price: product.price,
+          store,
+          product,
+        },
+      ];
+    }
+    updateActiveCart(updated);
   };
 
   const handleRemoveFromCart = (productId: string) => {
-    setCartItems((prev) => prev.filter((i) => i.productId !== productId && i.id !== productId));
+    const updated = cartItems.filter((i) => i.productId !== productId && i.id !== productId);
+    updateActiveCart(updated);
   };
 
   const handleUpdateQuantity = (productId: string, newQuantity: number) => {
@@ -421,17 +407,16 @@ export default function RayaHome() {
       handleRemoveFromCart(productId);
       return;
     }
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item.productId === productId || item.id === productId
-          ? { ...item, quantity: newQuantity }
-          : item
-      )
+    const updated = cartItems.map((item) =>
+      item.productId === productId || item.id === productId
+        ? { ...item, quantity: newQuantity }
+        : item
     );
+    updateActiveCart(updated);
   };
 
   const handleClearCart = () => {
-    setCartItems([]);
+    updateActiveCart([]);
   };
 
   const handleCheckoutFromDrawer = () => {
@@ -440,18 +425,25 @@ export default function RayaHome() {
     );
   };
 
+  const cartTotalCount = cartItems.reduce((acc, it) => acc + (it.quantity || 1), 0);
+  const cartTotalAmount = cartItems.reduce((sum, item) => {
+    const p = item.price || item.product?.price || 0;
+    return sum + p * (item.quantity || 1);
+  }, 0);
+
   const storeButtons = [
-    { label: "🎧 Headphones under ₹5,000", query: "Show me headphones and audio electronics from all stores and eBay under 5000" },
-    { label: "🌐 All Stores", query: "Show me the top recommended products across all stores and eBay" },
-    { label: "⚡ NexusStore", query: "Show me smart apparel and electronics from NexusStore" },
+    { label: "🎧 Headphones under ₹5,000", query: "Show me headphones and audio electronics from all stores under 5000" },
+    { label: "💻 Laptops", query: "Show me laptops across all stores" },
+    { label: "🌐 All Stores", query: "Show me top recommended products across all stores" },
+    { label: "⚡ NexusStore", query: "Show me smart apparel and tech from NexusStore" },
     { label: "🧵 ThreadVault", query: "Show me luxury clothing and acoustic gear from ThreadVault" },
-    { label: "🎮 PixelMart", query: "Show me cyberpunk streetwear and creator gear from PixelMart" },
-    { label: "🛍️ eBay", query: "Show me certified tech deals and items on eBay" },
+    { label: "🎮 PixelMart", query: "Show me creator gaming rigs and cyberpunk gear from PixelMart" },
+    { label: "🛍️ eBay", query: "Show me certified refurbished tech deals on eBay" },
   ];
 
   return (
-    <div className="flex h-[100dvh] w-full bg-raya-cloud bg-brand-pattern-light overflow-hidden font-sans">
-      {/* ChatGPT / Antigravity Style Left Sidebar */}
+    <div className="flex h-[100dvh] w-full bg-white overflow-hidden font-sans">
+      {/* 1. LEFT COLUMN: ChatGPT-Style Conversation History Sidebar */}
       <ChatSidebar
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -460,16 +452,17 @@ export default function RayaHome() {
         onSelectSession={handleSelectSession}
         onNewChat={handleNewChat}
         onDeleteSession={handleDeleteSession}
+        sessionCarts={sessionCarts}
         savedCarts={savedCarts}
         onRestoreCart={handleRestoreCart}
         onDeleteSavedCart={handleDeleteSavedCart}
       />
 
-      {/* Main Chat Workspace */}
-      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+      {/* 2. CENTER COLUMN: Main Raya Chat Workspace */}
+      <div className="flex-1 flex flex-col h-full min-w-0 bg-raya-softWhite overflow-hidden relative">
         {/* Top Navbar */}
         <RayaHeader
-          cartCount={cartItems.length}
+          cartCount={cartTotalCount}
           onOpenCart={() => setCartOpen(true)}
           budget={budget}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
@@ -500,7 +493,7 @@ export default function RayaHome() {
           ))}
         </div>
 
-        {/* Main Chat Flow */}
+        {/* Main Conversation Stream */}
         <main className="flex-1 flex flex-col justify-between max-w-5xl w-full mx-auto relative overflow-hidden px-2 sm:px-4">
           <div className="flex-1 overflow-y-auto">
             <RayaChat
@@ -514,13 +507,14 @@ export default function RayaHome() {
             <RayaInput onSend={handleSendMessage} loading={loading} />
           </div>
         </main>
+      </div>
 
-        {/* Slide-out Cart Drawer */}
-        <CartDrawer
-          isOpen={cartOpen}
-          onClose={() => setCartOpen(false)}
+      {/* 3. RIGHT COLUMN: Permanent Fixed Basket on Desktop (xl: screens) */}
+      <div className="hidden xl:flex h-full shrink-0">
+        <BasketPanel
           items={cartItems}
-          total={cartTotal}
+          total={cartTotalAmount}
+          budget={budget}
           onCheckout={handleCheckoutFromDrawer}
           onRemoveItem={handleRemoveFromCart}
           onUpdateQuantity={handleUpdateQuantity}
@@ -532,19 +526,48 @@ export default function RayaHome() {
               title: `Paid Order (${cartItems.length} items)`,
               createdAt: Date.now(),
               items: [...cartItems],
-              total: cartTotal,
+              total: cartTotalAmount,
               status: "PAID_ORDER",
               orderId,
             };
-            persistCarts([paidCart, ...savedCarts]);
-            setCartItems([]);
+            persistSavedCarts([paidCart, ...savedCarts]);
+            updateActiveCart([]);
             handleSendMessage(
               `Payment completed successfully via Razorpay Test Mode! Razorpay Payment ID: ${paymentId}, Order ID: ${orderId}. Please confirm my receipt and tracking.`
             );
           }}
-          budget={budget}
         />
       </div>
+
+      {/* Mobile/Tablet Slide-out Cart Drawer (< xl: screens) */}
+      <CartDrawer
+        isOpen={cartOpen}
+        onClose={() => setCartOpen(false)}
+        items={cartItems}
+        total={cartTotalAmount}
+        onCheckout={handleCheckoutFromDrawer}
+        onRemoveItem={handleRemoveFromCart}
+        onUpdateQuantity={handleUpdateQuantity}
+        onClearCart={handleClearCart}
+        onAddToCart={handleAddToCartFromCard}
+        onPaymentSuccess={({ orderId, paymentId }) => {
+          const paidCart: SavedCart = {
+            id: `order_paid_${Date.now()}`,
+            title: `Paid Order (${cartItems.length} items)`,
+            createdAt: Date.now(),
+            items: [...cartItems],
+            total: cartTotalAmount,
+            status: "PAID_ORDER",
+            orderId,
+          };
+          persistSavedCarts([paidCart, ...savedCarts]);
+          updateActiveCart([]);
+          handleSendMessage(
+            `Payment completed successfully via Razorpay Test Mode! Razorpay Payment ID: ${paymentId}, Order ID: ${orderId}. Please confirm my receipt and tracking.`
+          );
+        }}
+        budget={budget}
+      />
     </div>
   );
 }
