@@ -44,6 +44,7 @@ function generateCleanTitle(prompt: string): string {
 
 export default function RayaHome() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [moreStoresOpen, setMoreStoresOpen] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string>("session_default");
 
   const [sessions, setSessions] = useState<ChatSession[]>([
@@ -468,30 +469,84 @@ export default function RayaHome() {
           budget={budget}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           sidebarOpen={sidebarOpen}
-          onSelectStore={(storeId) => {
-            const store = CONNECTED_STORES[storeId];
-            if (store) {
-              handleSendMessage(`Show me the featured products from ${store.name}`);
-            }
-          }}
+          onNewChat={handleNewChat}
         />
 
-        {/* Store Quick Filter Bar */}
-        <div className="w-full max-w-5xl mx-auto px-3.5 sm:px-6 pt-2 pb-1 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
-          <span className="text-[11px] font-bold text-raya-coolGray uppercase tracking-wider shrink-0 flex items-center gap-1">
-            <Layers className="w-3.5 h-3.5 text-raya-blue" />
-            <span>Explore:</span>
-          </span>
-          {storeButtons.map((btn, idx) => (
+        {/* Compact Explore Row: 3 Focus Suggestions + More Dropdown */}
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-3 pb-1 flex items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+            <span className="text-[11px] font-bold text-[#667085] uppercase tracking-wider shrink-0 flex items-center gap-1">
+              <Layers className="w-3.5 h-3.5 text-[#0A63FF]" />
+              <span>Explore:</span>
+            </span>
+
             <button
-              key={idx}
-              onClick={() => handleSendMessage(btn.query)}
+              onClick={() => handleSendMessage("Show me headphones and audio electronics from all stores under 5000")}
               disabled={loading}
-              className="px-3 py-1 rounded-full bg-white hover:bg-raya-softWhite active:scale-95 border border-raya-lightGray text-raya-navy text-xs font-semibold whitespace-nowrap shadow-2xs hover:border-raya-blue/50 transition-all cursor-pointer disabled:opacity-50"
+              className="px-3 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs hover:border-[#0A63FF]/50 transition-all cursor-pointer disabled:opacity-50"
             >
-              {btn.label}
+              🎧 Headphones under ₹5,000
             </button>
-          ))}
+
+            <button
+              onClick={() => handleSendMessage("Show me laptops across all stores")}
+              disabled={loading}
+              className="px-3 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs hover:border-[#0A63FF]/50 transition-all cursor-pointer disabled:opacity-50"
+            >
+              💻 Laptops
+            </button>
+
+            <button
+              onClick={() => handleSendMessage("Show me top recommended products across all stores")}
+              disabled={loading}
+              className="px-3 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs hover:border-[#0A63FF]/50 transition-all cursor-pointer disabled:opacity-50"
+            >
+              🌐 All Stores
+            </button>
+
+            {/* More Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setMoreStoresOpen(!moreStoresOpen)}
+                className="px-3 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#667085] hover:text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs transition-all cursor-pointer flex items-center gap-1"
+              >
+                <span>More</span>
+                <span className="text-[9px]">▾</span>
+              </button>
+
+              {moreStoresOpen && (
+                <div
+                  className="absolute left-0 top-full mt-1.5 z-30 w-48 bg-white border border-[#E6E0D6] rounded-xl shadow-lg p-1.5 space-y-1 animate-in fade-in"
+                  onClick={() => setMoreStoresOpen(false)}
+                >
+                  <button
+                    onClick={() => handleSendMessage("Show me smart apparel and tech from NexusStore")}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#172033] hover:bg-[#F7F5F0] flex items-center gap-2"
+                  >
+                    <span>⚡ NexusStore</span>
+                  </button>
+                  <button
+                    onClick={() => handleSendMessage("Show me luxury clothing and acoustic gear from ThreadVault")}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#172033] hover:bg-[#F7F5F0] flex items-center gap-2"
+                  >
+                    <span>🧵 ThreadVault</span>
+                  </button>
+                  <button
+                    onClick={() => handleSendMessage("Show me creator gaming rigs and cyberpunk gear from PixelMart")}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#172033] hover:bg-[#F7F5F0] flex items-center gap-2"
+                  >
+                    <span>🎮 PixelMart</span>
+                  </button>
+                  <button
+                    onClick={() => handleSendMessage("Show me certified refurbished tech deals on eBay")}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#172033] hover:bg-[#F7F5F0] flex items-center gap-2"
+                  >
+                    <span>🛍️ eBay (Global)</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Main Conversation Stream */}

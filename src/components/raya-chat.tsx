@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { User, Sparkles, CheckCircle2, Bot } from "lucide-react";
 import { RayaLogo } from "./raya-logo";
 import { ProductGrid } from "./product-grid";
@@ -134,6 +132,68 @@ function FormattedChatText({ text, isUser }: { text: string; isUser: boolean }) 
   return <div className="space-y-0.5">{elements}</div>;
 }
 
+function formatToolSummary(toolName: string): string {
+  switch (toolName) {
+    case "listConnectedStores":
+      return "Connected stores verified";
+    case "listProducts":
+      return "Catalog searched across stores";
+    case "searchEbayRefurbished":
+      return "eBay live marketplace queried";
+    case "viewCart":
+      return "Active basket verified";
+    case "addToCart":
+      return "Item added to basket";
+    case "checkoutOrder":
+      return "Checkout initiated";
+    default:
+      return toolName;
+  }
+}
+
+function ToolActivityDisclosure({
+  executions,
+}: {
+  executions: Array<{ tool: string; args?: any }>;
+}) {
+  const [open, setOpen] = useState(false);
+
+  // Deduplicate tools so we never show repeated listConnectedStores() or viewCart()
+  const uniqueTools = Array.from(new Set(executions.map((e) => e.tool)));
+  const primarySummary = uniqueTools.map(formatToolSummary).slice(0, 2).join(" • ");
+
+  return (
+    <div className="mb-1 text-xs">
+      <button
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F7F5F0] hover:bg-slate-100 border border-[#E6E0D6] text-[#667085] hover:text-[#172033] text-[11px] font-medium transition-all cursor-pointer shadow-2xs"
+        title="Click to view technical execution details"
+      >
+        <Sparkles className="w-3 h-3 text-[#0A63FF]" />
+        <span>{primarySummary}</span>
+        <span className="text-[9px] text-slate-400 ml-0.5">{open ? "▴" : "▾"}</span>
+      </button>
+
+      {open && (
+        <div className="mt-1 p-2.5 rounded-xl bg-white border border-[#E6E0D6] text-[10px] font-mono text-[#667085] space-y-1 shadow-xs">
+          <span className="font-bold text-[#172033] block">Debug Execution Ledger:</span>
+          {executions.map((t, idx) => (
+            <div key={idx} className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+              <span className="font-bold text-[#172033]">{t.tool}()</span>
+              {t.args && Object.keys(t.args).length > 0 && (
+                <span className="text-slate-400 truncate max-w-xs">
+                  {JSON.stringify(t.args)}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function RayaChat({ messages, loading, onAddToCart }: RayaChatProps) {
   const scrollEndRef = useRef<HTMLDivElement>(null);
 
@@ -166,20 +226,9 @@ export function RayaChat({ messages, loading, onAddToCart }: RayaChatProps) {
                 isUser ? "items-end" : "items-start"
               }`}
             >
-              {/* Tool Execution Badges */}
+              {/* Single Compact Tool Activity Disclosure */}
               {!isUser && m.toolExecutions && m.toolExecutions.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-1">
-                  {m.toolExecutions.map((t, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-raya-softWhite border border-raya-lightGray text-raya-blue text-[11px] font-mono font-bold shadow-2xs"
-                    >
-                      <Sparkles className="w-3 h-3 text-raya-accent" />
-                      <span>{t.tool}()</span>
-                      <CheckCircle2 className="w-3 h-3 text-raya-success" />
-                    </span>
-                  ))}
-                </div>
+                <ToolActivityDisclosure executions={m.toolExecutions} />
               )}
 
               {/* Text Bubble */}

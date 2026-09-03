@@ -2,9 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { ShoppingBag, ShieldCheck, ExternalLink, Store } from "lucide-react";
+import { ShoppingBag, PanelLeft, Plus, Store, User } from "lucide-react";
 import { RayaLogo } from "./raya-logo";
-import { CONNECTED_STORES } from "@/lib/gemini";
 
 interface RayaHeaderProps {
   cartCount: number;
@@ -13,88 +12,96 @@ interface RayaHeaderProps {
   onSelectStore?: (storeId: string) => void;
   onToggleSidebar?: () => void;
   sidebarOpen?: boolean;
+  onNewChat?: () => void;
 }
 
 export function RayaHeader({
   cartCount,
   onOpenCart,
   budget = null,
-  onSelectStore,
   onToggleSidebar,
   sidebarOpen,
+  onNewChat,
 }: RayaHeaderProps) {
-  const stores = Object.values(CONNECTED_STORES);
-
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-raya-lightGray/60 shadow-xs px-3.5 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between transition-all">
-      {/* Brand Identity & Sidebar Trigger */}
-      <div className="flex items-center gap-2.5">
+    <header className="sticky top-0 z-40 w-full bg-[#FFFFFF]/90 backdrop-blur-md border-b border-[#E6E0D6] shadow-xs px-4 sm:px-6 py-2.5 flex items-center justify-between transition-all">
+      {/* LEFT: Sidebar Toggle & Minimal Brand Identity */}
+      <div className="flex items-center gap-3">
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
-            className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-[#0C8CE9] transition-all cursor-pointer shadow-2xs active:scale-95"
-            title="Toggle Sessions & Past Carts Sidebar"
+            className="p-2 rounded-xl text-[#667085] hover:text-[#172033] hover:bg-[#F7F5F0] border border-transparent hover:border-[#E6E0D6] transition-all cursor-pointer"
+            title="Toggle Chat Sidebar"
             aria-label="Toggle sidebar"
           >
-            <span className="text-sm leading-none">☰</span>
+            <PanelLeft className="w-4 h-4" />
           </button>
         )}
-        <RayaLogo variant="light" size="sm" />
-        <div className="hidden xl:flex items-center gap-2 pl-2 border-l border-raya-lightGray/80">
-          <span className="text-[11px] font-medium text-raya-coolGray">
-            Autonomous Multi-Store Commerce Bridge
-          </span>
+
+        <div className="flex items-center gap-2.5">
+          <RayaLogo variant="light" size="sm" />
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className="font-extrabold text-sm tracking-tight text-[#172033]">
+                Raya
+              </span>
+              <span className="px-1.5 py-0.2 rounded bg-slate-100 text-[#667085] text-[9px] font-bold uppercase tracking-wider">
+                Agent
+              </span>
+            </div>
+            <span className="text-[10px] text-[#667085] font-medium hidden xs:inline">
+              Autonomous Commerce Agent
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Connected 3 Stores Live Badges */}
-      <div className="hidden md:flex items-center gap-2">
-        {stores.map((s) => (
+      {/* RIGHT: New Chat, Merchant Link, Cart Icon with Badge, Profile */}
+      <div className="flex items-center gap-2 sm:gap-2.5">
+        {onNewChat && (
           <button
-            key={s.id}
-            onClick={() => onSelectStore && onSelectStore(s.id)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-raya-lightGray hover:border-raya-blue/50 text-raya-navy text-[11px] font-semibold transition-all shadow-2xs hover:scale-102 cursor-pointer"
-            title={`${s.name}: ${s.vibe}`}
+            onClick={onNewChat}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#F7F5F0] border border-[#E6E0D6] text-[#172033] text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+            title="Start New Chat Session"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>{s.icon} {s.name}</span>
+            <Plus className="w-3.5 h-3.5 text-[#0A63FF]" />
+            <span>New Chat</span>
           </button>
-        ))}
+        )}
 
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-raya-softWhite border border-raya-lightGray text-raya-stone text-xs font-semibold ml-1">
-          <ShieldCheck className="w-3.5 h-3.5 text-raya-blue" />
-          <span>
-            {budget !== null && budget !== undefined ? `₹${budget.toLocaleString()} Cap` : "Policy Guard Active"}
-          </span>
-        </div>
-      </div>
-
-      {/* Cart & Merchant Console Link */}
-      <div className="flex items-center gap-2">
         <Link
           href="/merchant"
-          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 border border-slate-200 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
-          title="Open Bazaar Multi-Store Merchant Console"
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white hover:bg-[#F7F5F0] border border-[#E6E0D6] text-[#172033] text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+          title="Open Bazaar Merchant Growth Control Room"
         >
-          <span>🏪</span>
-          <span className="hidden sm:inline">Merchant Console</span>
+          <Store className="w-3.5 h-3.5 text-[#0A63FF]" />
+          <span className="hidden md:inline">Merchant Room</span>
         </Link>
 
+        {/* Cart Icon with Item Count */}
         <button
           onClick={onOpenCart}
-          className="relative flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-raya-navy hover:bg-raya-slate active:scale-95 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
-          aria-label="View Shopping Cart"
+          className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#172033] hover:bg-slate-800 active:scale-95 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+          aria-label="View Shopping Basket"
         >
-          <ShoppingBag className="w-4 h-4 text-raya-sky" />
+          <ShoppingBag className="w-3.5 h-3.5 text-sky-400" />
           <span className="hidden xs:inline">Cart</span>
           {cartCount > 0 ? (
-            <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-raya-blue text-white text-[10px] font-extrabold animate-bounce">
+            <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-[#0A63FF] text-white text-[10px] font-black">
               {cartCount}
             </span>
           ) : (
-            <span className="text-[10px] text-raya-coolGray hidden sm:inline">0</span>
+            <span className="text-[10px] text-slate-400">0</span>
           )}
         </button>
+
+        {/* Profile Pill */}
+        <div
+          className="w-8 h-8 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6] flex items-center justify-center text-[#172033] shadow-2xs"
+          title="Jane Doe (Buyer Account)"
+        >
+          <User className="w-3.5 h-3.5 text-[#667085]" />
+        </div>
       </div>
     </header>
   );
