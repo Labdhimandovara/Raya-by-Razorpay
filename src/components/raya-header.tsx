@@ -40,16 +40,8 @@ export function RayaHeader({
 
         <div className="flex items-center gap-2.5">
           <RayaLogo variant="light" size="sm" />
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-sm tracking-tight text-[#172033]">
-                Raya
-              </span>
-              <span className="px-1.5 py-0.2 rounded bg-slate-100 text-[#667085] text-[9px] font-bold uppercase tracking-wider">
-                Agent
-              </span>
-            </div>
-            <span className="text-[10px] text-[#667085] font-medium hidden xs:inline">
+          <div className="hidden xl:flex items-center gap-2 pl-2 border-l border-slate-200">
+            <span className="text-[11px] font-medium text-[#667085]">
               Autonomous Commerce Agent
             </span>
           </div>

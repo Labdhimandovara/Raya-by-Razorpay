@@ -433,15 +433,6 @@ export default function RayaHome() {
     return sum + p * (item.quantity || 1);
   }, 0);
 
-  const storeButtons = [
-    { label: "🎧 Headphones under ₹5,000", query: "Show me headphones and audio electronics from all stores under 5000" },
-    { label: "💻 Laptops", query: "Show me laptops across all stores" },
-    { label: "🌐 All Stores", query: "Show me top recommended products across all stores" },
-    { label: "⚡ NexusStore", query: "Show me smart apparel and tech from NexusStore" },
-    { label: "🧵 ThreadVault", query: "Show me luxury clothing and acoustic gear from ThreadVault" },
-    { label: "🎮 PixelMart", query: "Show me creator gaming rigs and cyberpunk gear from PixelMart" },
-    { label: "🛍️ eBay", query: "Show me certified refurbished tech deals on eBay" },
-  ];
 
   return (
     <div className="flex h-[100dvh] w-full bg-white overflow-hidden font-sans">
@@ -472,7 +463,7 @@ export default function RayaHome() {
           onNewChat={handleNewChat}
         />
 
-        {/* Compact Explore Row: 3 Focus Suggestions + More Dropdown */}
+        {/* Compact Explore Row: All Stores + Dynamic Stores Dropdown */}
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-3 pb-1 flex items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
             <span className="text-[11px] font-bold text-[#667085] uppercase tracking-wider shrink-0 flex items-center gap-1">
@@ -481,68 +472,52 @@ export default function RayaHome() {
             </span>
 
             <button
-              onClick={() => handleSendMessage("Show me headphones and audio electronics from all stores under 5000")}
-              disabled={loading}
-              className="px-3 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs hover:border-[#0A63FF]/50 transition-all cursor-pointer disabled:opacity-50"
-            >
-              🎧 Headphones under ₹5,000
-            </button>
-
-            <button
-              onClick={() => handleSendMessage("Show me laptops across all stores")}
-              disabled={loading}
-              className="px-3 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs hover:border-[#0A63FF]/50 transition-all cursor-pointer disabled:opacity-50"
-            >
-              💻 Laptops
-            </button>
-
-            <button
               onClick={() => handleSendMessage("Show me top recommended products across all stores")}
               disabled={loading}
-              className="px-3 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs hover:border-[#0A63FF]/50 transition-all cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs hover:border-[#0A63FF]/50 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
             >
-              🌐 All Stores
+              <span>🌐</span>
+              <span>All Stores</span>
             </button>
 
-            {/* More Dropdown */}
+            {/* Dynamic More Stores Dropdown (3 Connected Stores + eBay) */}
             <div className="relative">
               <button
                 onClick={() => setMoreStoresOpen(!moreStoresOpen)}
                 className="px-3 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#667085] hover:text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs transition-all cursor-pointer flex items-center gap-1"
+                title="Choose from connected merchant stores and eBay"
               >
-                <span>More</span>
+                <span>Stores</span>
                 <span className="text-[9px]">▾</span>
               </button>
 
               {moreStoresOpen && (
                 <div
-                  className="absolute left-0 top-full mt-1.5 z-30 w-48 bg-white border border-[#E6E0D6] rounded-xl shadow-lg p-1.5 space-y-1 animate-in fade-in"
+                  className="absolute left-0 top-full mt-1.5 z-30 w-52 bg-white border border-[#E6E0D6] rounded-xl shadow-lg p-1.5 space-y-1 animate-in fade-in"
                   onClick={() => setMoreStoresOpen(false)}
                 >
-                  <button
-                    onClick={() => handleSendMessage("Show me smart apparel and tech from NexusStore")}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#172033] hover:bg-[#F7F5F0] flex items-center gap-2"
-                  >
-                    <span>⚡ NexusStore</span>
-                  </button>
-                  <button
-                    onClick={() => handleSendMessage("Show me luxury clothing and acoustic gear from ThreadVault")}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#172033] hover:bg-[#F7F5F0] flex items-center gap-2"
-                  >
-                    <span>🧵 ThreadVault</span>
-                  </button>
-                  <button
-                    onClick={() => handleSendMessage("Show me creator gaming rigs and cyberpunk gear from PixelMart")}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#172033] hover:bg-[#F7F5F0] flex items-center gap-2"
-                  >
-                    <span>🎮 PixelMart</span>
-                  </button>
-                  <button
-                    onClick={() => handleSendMessage("Show me certified refurbished tech deals on eBay")}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#172033] hover:bg-[#F7F5F0] flex items-center gap-2"
-                  >
-                    <span>🛍️ eBay (Global)</span>
-                  </button>
+                  {Object.values(CONNECTED_STORES).map((store) => (
+                    <button
+                      key={store.id}
+                      onClick={() => {
+                        handleSendMessage(`Show me the featured products from ${store.name}`);
+                        setMoreStoresOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-[#172033] hover:bg-[#F7F5F0] flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <span className="text-sm">{store.icon}</span>
+                      <span className="truncate">{store.name}</span>
+                      {store.id === "ebay" ? (
+                        <span className="ml-auto text-[9px] font-mono px-1.5 py-0.2 rounded bg-blue-50 text-[#0A63FF] border border-blue-200">
+                          Global
+                        </span>
+                      ) : (
+                        <span className="ml-auto text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Connected
+                        </span>
+                      )}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
