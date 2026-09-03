@@ -19,17 +19,23 @@ interface MerchantAnalyticsChartsProps {
 // Function to compute a smooth cubic bezier spline curve
 function buildSmoothSpline(points: any[], getX: (i: number) => number, getYVal: (p: any) => number) {
   if (points.length === 0) return "";
+  if (points.length === 1) return `M ${getX(0)} ${getYVal(points[0])}`;
   let d = `M ${getX(0)} ${getYVal(points[0])}`;
   for (let i = 0; i < points.length - 1; i++) {
     const x0 = getX(i);
     const y0 = getYVal(points[i]);
     const x1 = getX(i + 1);
     const y1 = getYVal(points[i + 1]);
+
+    const prevY = i > 0 ? getYVal(points[i - 1]) : y0;
+    const nextY = i < points.length - 2 ? getYVal(points[i + 2]) : y1;
+
     const dx = x1 - x0;
-    const cpX1 = x0 + dx * 0.45;
-    const cpY1 = y0;
-    const cpX2 = x1 - dx * 0.45;
-    const cpY2 = y1;
+    const cpX1 = x0 + dx * 0.35;
+    const cpY1 = y0 + (y1 - prevY) * 0.22;
+    const cpX2 = x1 - dx * 0.35;
+    const cpY2 = y1 - (nextY - y0) * 0.22;
+
     d += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${x1} ${y1}`;
   }
   return d;

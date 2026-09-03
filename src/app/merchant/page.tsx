@@ -127,6 +127,8 @@ export default function MerchantGrowthControlRoom() {
   const [evidence, setEvidence] = useState<AttributionEvidence | null>(null);
   const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
   const [selectedStrategyForEvidence, setSelectedStrategyForEvidence] = useState<string>("laptop-audio-v1");
+  const [editingSpendCap, setEditingSpendCap] = useState(false);
+  const [updatingSpend, setUpdatingSpend] = useState(false);
 
   const [purchaseControl, setPurchaseControl] = useState<PurchaseControlConfig | null>(null);
   const [blockedActions, setBlockedActions] = useState<BlockedAction[]>([]);
@@ -187,6 +189,28 @@ export default function MerchantGrowthControlRoom() {
     loadRealData();
   }, [selectedStrategyForEvidence]);
 
+  // Update Maximum Spend Cap (e.g. for Laptops & High-Ticket Gear)
+  const handleUpdateMaxSpend = async (newLimit: number) => {
+    setUpdatingSpend(true);
+    try {
+      const res = await fetch("/api/merchant/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maxSpend: newLimit }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPurchaseControl(data.purchaseControl);
+        setEditingSpendCap(false);
+        loadRealData();
+      }
+    } catch (e) {
+      console.error("Failed to update max spend limit:", e);
+    } finally {
+      setUpdatingSpend(false);
+    }
+  };
+
   // Real Growth Strategy Activation Flow
   const handleToggleRule = async (identifier: string, currentActive: boolean) => {
     try {
@@ -222,15 +246,17 @@ export default function MerchantGrowthControlRoom() {
     setTestingSpendCap(true);
     setFailureDemoResult(null);
     try {
+      const activeLimit = purchaseControl?.maxSpend || 10000;
+      const simulatedCart = activeLimit + 15000; // Dynamically exceeds active limit
       const res = await fetch("/api/merchant/demo/blocked-purchase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: [
             { name: "Nexus Pro Studio ANC Headphones", price: 6799, quantity: 1 },
-            { name: "Apex Pro Creator High-Performance Laptop", price: 54999, quantity: 1 },
+            { name: "Apex Pro Creator High-Performance Laptop", price: simulatedCart - 6799, quantity: 1 },
           ],
-          maxSpend: purchaseControl?.maxSpend || 10000,
+          maxSpend: activeLimit,
         }),
       });
       const data = await res.json();
@@ -467,10 +493,7 @@ export default function MerchantGrowthControlRoom() {
                 Live autonomous execution pipeline moving money from Shopper Intent to Merchant Learning
               </p>
             </div>
-            <span className="px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#0A63FF] text-[10.5px] font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0A63FF] animate-ping" />
-              <span>Closed Loop Active</span>
-            </span>
+            
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 text-center text-[10.5px]">
@@ -529,10 +552,7 @@ export default function MerchantGrowthControlRoom() {
                 Observed merchant baseline compared against AI-assisted commerce sessions
               </p>
             </div>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Data Provenance Verified</span>
-            </span>
+            
           </div>
 
           {!beforeAfter ? (
@@ -631,10 +651,7 @@ export default function MerchantGrowthControlRoom() {
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
               <span>Bazaar Safety & Gated Commerce Safeguards</span>
             </h3>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>8/8 Implemented & Gated</span>
-            </span>
+            
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-[11px]">
@@ -1040,15 +1057,65 @@ export default function MerchantGrowthControlRoom() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div className="p-3.5 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6] space-y-1">
+                <div className="p-4 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6] space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-xs text-[#172033]">Gate 01: Maximum Spend Cap</span>
                     <span className="text-emerald-600 font-bold text-[10px]">ENFORCED</span>
                   </div>
-                  <p className="text-[11px] text-[#667085]">
-                    Current Limit: <strong className="font-bold text-[#172033]">₹{purchaseControl?.maxSpend.toLocaleString() || "10,000"}</strong>
-                  </p>
-                  <span className="text-[10px] text-slate-400 block">Orders exceeding this cap are blocked without initiating Razorpay payment.</span>
+                  
+                  <div className="flex items-center justify-between pt-0.5">
+                    <div>
+                      <span className="text-[10px] text-[#667085] block font-medium">Policy Spend Ceiling</span>
+                      <strong className="font-bold text-base text-[#172033]">
+                        ₹{purchaseControl?.maxSpend.toLocaleString() || "10,000"}
+                      </strong>
+                    </div>
+                    <button
+                      onClick={() => setEditingSpendCap(!editingSpendCap)}
+                      className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-[#0A63FF] hover:text-[#0052CC] text-[11px] font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+                    >
+                      {editingSpendCap ? "✕ Close" : "⚙️ Increase Limit"}
+                    </button>
+                  </div>
+
+                  {/* Interactive Spend Limit Selector */}
+                  {editingSpendCap && (
+                    <div className="pt-2 border-t border-[#E6E0D6] space-y-2 animate-in fade-in">
+                      <span className="text-[10px] text-slate-500 font-semibold block">
+                        Select spend policy ceiling (Required for high-ticket laptops):
+                      </span>
+                      <div className="grid grid-cols-2 gap-1.5 text-[10px] font-bold">
+                        {[
+                          { label: "₹10,000 (Low-Ticket)", val: 10000 },
+                          { label: "₹50,000 (Mid-Tier)", val: 50000 },
+                          { label: "₹1,00,000 (Laptops & Rigs)", val: 100000 },
+                          { label: "₹2,50,000 (Enterprise)", val: 250000 },
+                        ].map((preset) => (
+                          <button
+                            key={preset.val}
+                            disabled={updatingSpend}
+                            onClick={() => handleUpdateMaxSpend(preset.val)}
+                            className={`p-1.5 rounded-lg border text-center transition-all cursor-pointer ${
+                              purchaseControl?.maxSpend === preset.val
+                                ? "bg-[#0A63FF] text-white border-[#0A63FF] shadow-xs"
+                                : "bg-white text-slate-700 hover:bg-slate-100 border-slate-200"
+                            }`}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[9.5px] text-slate-500 leading-tight">
+                        💡 Setting limit to ₹1,00,000 allows laptops & computing hardware (₹45,000–₹85,000) to checkout autonomously.
+                      </p>
+                    </div>
+                  )}
+
+                  {!editingSpendCap && (
+                    <span className="text-[10px] text-slate-400 block pt-0.5">
+                      Orders exceeding this cap are blocked server-side before Razorpay payment initiation.
+                    </span>
+                  )}
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6] space-y-1">
@@ -1125,7 +1192,7 @@ export default function MerchantGrowthControlRoom() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-rose-50/50 border border-rose-200 space-y-2.5">
                   <span className="font-extrabold text-xs text-rose-900 block">
-                    Failure A: Spend Cap Exceeded (₹61,798 &gt; ₹10,000)
+                    Failure A: Spend Cap Exceeded (Simulated Cart &gt; Active Policy Limit)
                   </span>
                   <p className="text-[11px] text-rose-800 leading-snug">
                     Simulates a cart exceeding the merchant spend cap. Proves that Razorpay order creation is blocked server-side before gateway invocation.
@@ -1416,7 +1483,7 @@ export default function MerchantGrowthControlRoom() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-extrabold text-base text-[#172033] tracking-tight">
-                      Incremental GMV Evidence
+                      Incremental GMV Evidence & Attribution Chain
                     </h3>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9.5px] font-bold flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
