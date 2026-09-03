@@ -8,6 +8,8 @@ import { CartDrawer, BasketPanel, CartItem } from "@/components/cart-drawer";
 import { ChatSidebar, ChatSession, SavedCart } from "@/components/chat-sidebar";
 import { CONNECTED_STORES, SAMPLE_NEXUS_PRODUCTS, SAMPLE_EBAY_PRODUCTS } from "@/lib/gemini";
 import { Layers } from "lucide-react";
+import { triggerRazorpayPayment } from "@/lib/razorpay";
+import { MerchantFloatingDrawer } from "@/components/merchant-floating-drawer";
 
 function lookupProduct(productId: string) {
   const all = [...SAMPLE_NEXUS_PRODUCTS, ...SAMPLE_EBAY_PRODUCTS];
@@ -331,6 +333,8 @@ export default function RayaHome() {
 
       const data = await res.json();
 
+      const isCheckoutIntent = /\b(checkout|check out|pay|payment|proceed to (?:pay|checkout)|buy now|place order|my cart|my basket|view cart|do for me|order for me|buy for me)\b/i.test(textToSend);
+
       const assistantMsg: Message = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
@@ -339,6 +343,7 @@ export default function RayaHome() {
         products: data.products,
         cart: data.cart,
         receipt: data.receipt,
+        checkoutBasket: data.checkoutBasket || (isCheckoutIntent && cartItems.length > 0 ? cartItems : undefined),
       };
 
       const finalMessagesList = [...newMessagesList, assistantMsg];
@@ -425,6 +430,85 @@ export default function RayaHome() {
     handleSendMessage(
       "Please checkout my active cart with paymentMethod: card for recipient: Jane Doe, 100 Broadway, New York, USA, 10005"
     );
+  };
+
+  const handleTriggerCheckout = async (itemsToCheckout?: CartItem[]) => {
+    const targetItems = itemsToCheckout && itemsToCheckout.length > 0 ? itemsToCheckout : cartItems;
+    if (targetItems.length === 0) return;
+
+    const totalAmount = targetItems.reduce((sum, item) => {
+      const p = item.price || item.product?.price || 0;
+      return sum + p * (item.quantity || 1);
+    }, 0);
+
+    try {
+      const res = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: totalAmount,
+          currency: "INR",
+          receipt: `rcpt_raya_${Date.now()}`,
+          notes: {
+            itemCount: String(targetItems.length),
+            store: targetItems[0]?.store || "multi_store",
+          },
+        }),
+      });
+
+      const orderData = await res.json();
+
+      if (orderData.mode === "LIVE_TEST" && orderData.orderId && !orderData.orderId.startsWith("order_test_")) {
+        await triggerRazorpayPayment({
+          keyId: orderData.keyId,
+          orderId: orderData.orderId,
+          amount: orderData.amount,
+          currency: orderData.currency || "INR",
+          name: "Raya by Razorpay",
+          description: `Autonomous Multi-Store Checkout (${targetItems.length} items)`,
+          onSuccess: async (paymentResult) => {
+            await fetch("/api/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(paymentResult),
+            });
+
+            updateActiveCart([]);
+
+            const receiptMsg: Message = {
+              id: `receipt-${Date.now()}`,
+              role: "assistant",
+              text: `Payment successfully captured in Razorpay Test Mode! Your order has been placed autonomously across the connected stores.`,
+              receipt: {
+                orderId: paymentResult.razorpay_order_id,
+                paymentId: paymentResult.razorpay_payment_id,
+                amount: totalAmount,
+                currency: "INR",
+                items: targetItems.map((i) => ({
+                  name: i.name || i.product?.name || i.productId,
+                  price: i.price || i.product?.price || 0,
+                  quantity: i.quantity || 1,
+                  store: i.store || "Bazaar Store",
+                })),
+                status: "PAID",
+                timestamp: new Date().toISOString(),
+              },
+            };
+
+            const updatedMessages = {
+              ...sessionMessages,
+              [activeSessionId]: [...(sessionMessages[activeSessionId] || []), receiptMsg],
+            };
+            persistMessages(updatedMessages);
+          },
+          onFailure: (err) => {
+            console.warn("Payment dismissed or failed:", err);
+          },
+        });
+      }
+    } catch (err) {
+      console.error("Direct checkout failed:", err);
+    }
   };
 
   const cartTotalCount = cartItems.reduce((acc, it) => acc + (it.quantity || 1), 0);
@@ -531,6 +615,7 @@ export default function RayaHome() {
               messages={messages}
               loading={loading}
               onAddToCart={handleAddToCartFromCard}
+              onTriggerCheckout={handleTriggerCheckout}
             />
           </div>
 
@@ -599,6 +684,9 @@ export default function RayaHome() {
         }}
         budget={budget}
       />
+
+      {/* 4. Floating Merchant Intelligence Copilot & Telemetry Drawer */}
+      <MerchantFloatingDrawer />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { User, Sparkles, CheckCircle2, Bot } from "lucide-react";
+import { User, Sparkles, CheckCircle2, Bot, CreditCard, ShoppingBag, ShieldCheck, ArrowRight } from "lucide-react";
 import { RayaLogo } from "./raya-logo";
 import { ProductGrid } from "./product-grid";
 import { OrderReceipt } from "./order-receipt";
@@ -11,6 +11,7 @@ export interface Message {
   products?: any[];
   receipt?: any;
   cart?: any;
+  checkoutBasket?: any[];
   toolExecutions?: Array<{
     tool: string;
     args: any;
@@ -22,6 +23,7 @@ interface RayaChatProps {
   messages: Message[];
   loading: boolean;
   onAddToCart: (product: any) => void;
+  onTriggerCheckout?: (items: any[]) => void;
 }
 
 function renderInlineContent(text: string, isUser: boolean) {
@@ -194,7 +196,92 @@ function ToolActivityDisclosure({
   );
 }
 
-export function RayaChat({ messages, loading, onAddToCart }: RayaChatProps) {
+function ConversationalCheckoutCard({
+  items,
+  onPay,
+}: {
+  items: any[];
+  onPay?: () => void;
+}) {
+  const totalAmount = items.reduce((sum, it) => {
+    const p = it.price || it.product?.price || 0;
+    return sum + p * (it.quantity || 1);
+  }, 0);
+
+  return (
+    <div className="w-full max-w-lg mt-2 p-4 rounded-2xl bg-white border border-[#E6E0D6] shadow-sm space-y-3 font-sans animate-in fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2 border-b border-[#E6E0D6]">
+        <div className="flex items-center gap-2">
+          <ShoppingBag className="w-4 h-4 text-[#0A63FF]" />
+          <span className="font-extrabold text-xs text-[#172033] uppercase tracking-wider">
+            Active Basket ({items.length} {items.length === 1 ? "item" : "items"})
+          </span>
+        </div>
+        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+          Ready for Payment
+        </span>
+      </div>
+
+      {/* Items List */}
+      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+        {items.map((item, idx) => {
+          const name = item.name || item.product?.name || `Product (${item.productId || idx})`;
+          const price = item.price || item.product?.price || 0;
+          const qty = item.quantity || 1;
+          const storeName = item.store || item.product?.store || "NexusStore";
+
+          return (
+            <div
+              key={idx}
+              className="p-2.5 rounded-xl bg-[#F7F5F0]/70 border border-[#E6E0D6]/80 flex items-center justify-between gap-3 text-xs"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-200 text-slate-800">
+                    {storeName}
+                  </span>
+                  <span className="text-[10px] text-[#667085] font-semibold">Qty: {qty}</span>
+                </div>
+                <h5 className="font-bold text-[#172033] truncate" title={name}>
+                  {name}
+                </h5>
+              </div>
+              <span className="font-black text-[#172033] shrink-0">
+                ₹{(price * qty).toLocaleString()}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Purchase Control Tag */}
+      <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[10.5px] text-emerald-800 flex items-center gap-1.5">
+        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+        <span>Purchase Control: All 6 Gates Passed • Strict INR Domestic Settlement</span>
+      </div>
+
+      {/* Total & Pay Button */}
+      <div className="pt-2 border-t border-[#E6E0D6] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <span className="text-[10px] font-bold text-[#667085] block">Total Amount</span>
+          <span className="text-lg font-black text-[#172033]">₹{totalAmount.toLocaleString()}</span>
+        </div>
+
+        <button
+          onClick={onPay}
+          className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#0A63FF] hover:bg-blue-600 active:scale-95 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm shadow-blue-200"
+        >
+          <CreditCard className="w-4 h-4" />
+          <span>Pay ₹{totalAmount.toLocaleString()} • Razorpay Test Mode</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function RayaChat({ messages, loading, onAddToCart, onTriggerCheckout }: RayaChatProps) {
   const scrollEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -247,6 +334,14 @@ export function RayaChat({ messages, loading, onAddToCart }: RayaChatProps) {
               {/* Generative UI: Products Grid */}
               {!isUser && m.products && m.products.length > 0 && (
                 <ProductGrid products={m.products} onAddToCart={onAddToCart} />
+              )}
+
+              {/* Generative UI: Conversational In-Chat Checkout Card */}
+              {!isUser && m.checkoutBasket && m.checkoutBasket.length > 0 && !m.receipt && (
+                <ConversationalCheckoutCard
+                  items={m.checkoutBasket}
+                  onPay={() => onTriggerCheckout && onTriggerCheckout(m.checkoutBasket!)}
+                />
               )}
 
               {/* Generative UI: Order Confirmation Card */}

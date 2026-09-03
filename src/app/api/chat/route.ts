@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
 
-    const isCheckoutOrCartQuery = /\b(checkout|check out|pay|payment|proceed to (?:pay|checkout)|buy now|place order|my cart|my basket|view cart)\b/i.test(message);
+    const isCheckoutOrCartQuery = /\b(checkout|check out|pay|payment|proceed to (?:pay|checkout)|buy now|place order|my cart|my basket|view cart|do for me|order for me|buy for me|complete (?:order|purchase|checkout))\b/i.test(message);
 
     // Read Gemini API key dynamically (supports both uppercase and lowercase)
     const geminiKey = (
@@ -362,12 +362,15 @@ export async function POST(req: NextRequest) {
       extractedProducts = undefined;
     }
 
+    const checkoutBasket = isCheckoutOrCartQuery && Array.isArray(currentCart) && currentCart.length > 0 ? currentCart : undefined;
+
     return NextResponse.json({
       text: sanitizeHumanReadableText(finalText) || "I have processed your request across the connected stores.",
       toolExecutions,
       products: extractedProducts,
       cart: extractedCart,
       receipt: extractedReceipt,
+      checkoutBasket,
       history: clientHistory,
     });
   } catch (error: any) {
