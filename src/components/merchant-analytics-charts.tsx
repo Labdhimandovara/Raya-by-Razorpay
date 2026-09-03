@@ -96,12 +96,6 @@ export function MerchantAnalyticsCharts({ orders, metrics, stores }: MerchantAna
             Real-time attribution curves derived from {orders.length > 0 ? orders.length : 25} settled Razorpay transactions
           </p>
         </div>
-
-        {/* Live Pulse Indicator (No 7D/30D filter pills) */}
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Real Razorpay Telemetry Connected</span>
-        </div>
       </div>
 
       {/* CHARTS CONTAINER GRID */}

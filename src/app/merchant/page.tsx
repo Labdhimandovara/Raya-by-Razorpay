@@ -275,24 +275,11 @@ export default function MerchantGrowthControlRoom() {
                 Merchant Control Room
               </span>
             </div>
-            <p className="text-[11px] text-[#667085]">
-              Autonomous Commerce Intelligence & Incremental Revenue Engine
-            </p>
           </div>
         </div>
 
-        {/* Right Header: Connected Store & Razorpay Badge */}
+        {/* Right Header: Refresh Action */}
         <div className="flex items-center gap-2.5 sm:gap-3">
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6] text-xs font-semibold text-[#172033]">
-            <Store className="w-3.5 h-3.5 text-[#0A63FF]" />
-            <span>Multi-Store Network (4 Connected)</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
-            <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="font-mono text-[10.5px]">Razorpay Test Mode</span>
-          </div>
-
           <button
             onClick={loadRealData}
             disabled={refreshing}
