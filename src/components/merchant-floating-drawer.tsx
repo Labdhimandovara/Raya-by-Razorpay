@@ -172,6 +172,16 @@ export function MerchantFloatingDrawer() {
     }
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
   return (
     <>
       {/* 1. FLOATING ACTION PILL (BOTTOM CORNER TRIGGER) */}
@@ -188,8 +198,14 @@ export function MerchantFloatingDrawer() {
 
       {/* 2. SLIDE-OVER SHEET / DRAWER */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/30 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between border-l border-slate-200 animate-in slide-in-from-right duration-200">
+        <div
+          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-in fade-in duration-150"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between border-l border-slate-200 animate-in slide-in-from-right duration-200"
+          >
             {/* Clean Drawer Header — No 'Control Room' at top */}
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -204,11 +220,11 @@ export function MerchantFloatingDrawer() {
                 </div>
               </div>
 
-              {/* Clean Close Button */}
+              {/* Prominent Clean Close Button */}
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                title="Close"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-90 text-slate-600 hover:text-slate-900 border border-slate-200 flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                title="Close (ESC)"
               >
                 <X className="w-4 h-4" />
               </button>
