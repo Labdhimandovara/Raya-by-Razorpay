@@ -315,16 +315,26 @@ export default function RayaHome() {
 
     setLoading(true);
 
-    // If the shopper commands the AI buyer to place the order
+    // 1. Check if the shopper confirms an order review waiting for approval
+    const isYesConfirmation = /^(?:yes|confirm|proceed|place it|go ahead|do it|ok|okay|sure|confirm order|place order now)\b/i.test(textToSend.trim());
+    const currentMsgs = sessionMessages[activeSessionId] || [];
+    const lastMsg = currentMsgs[currentMsgs.length - 1];
+    const isWaitingConfirmation = lastMsg && lastMsg.checkoutBasket && lastMsg.checkoutBasket.length > 0 && !lastMsg.receipt;
+
+    if (isYesConfirmation && isWaitingConfirmation && cartItems.length > 0) {
+      await handleExecuteConfirmedOrder(cartItems);
+      setLoading(false);
+      return;
+    }
+
+    // 2. If the shopper commands checkout / AI buyer order: share and confirm details first!
     if (
       textToSend === "⚡ Place order as AI buyer" ||
-      /^(?:place order as ai buyer|order placed|buy with ai buyer|place order for me|buy for me as ai buyer)/i.test(textToSend.trim())
+      /^(?:place order as ai buyer|order placed|buy with ai buyer|place order for me|buy for me|checkout|check out|pay for me|do for me)/i.test(textToSend.trim())
     ) {
-      if (cartItems.length > 0) {
-        await handleAutonomousAiBuyerOrder(cartItems);
-        setLoading(false);
-        return;
-      }
+      handlePresentOrderReview(cartItems);
+      setLoading(false);
+      return;
     }
 
     try {
@@ -522,19 +532,46 @@ export default function RayaHome() {
     }
   };
 
-  const handleAutonomousAiBuyerOrder = async (itemsToCheckout?: CartItem[]) => {
+  // Step 1: Share and confirm order details, asking once before placement
+  const handlePresentOrderReview = (itemsToCheckout?: CartItem[]) => {
     const targetItems = itemsToCheckout && itemsToCheckout.length > 0 ? itemsToCheckout : cartItems;
     if (targetItems.length === 0) {
-      handleSendMessage("My cart is empty. Please find some products first!");
+      const emptyMsg: Message = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        text: "Your cart is currently empty! Please search and add items first, and I will prepare your order for confirmation.",
+      };
+      persistMessages({
+        ...sessionMessages,
+        [activeSessionId]: [...(sessionMessages[activeSessionId] || []), emptyMsg],
+      });
       return;
     }
+
+    const reviewMsg: Message = {
+      id: `review-${Date.now()}`,
+      role: "assistant",
+      text: "Here are your complete order details for review across the connected stores. Please confirm below if you would like me to proceed and place this order autonomously for you:",
+      checkoutBasket: targetItems,
+    };
+
+    persistMessages({
+      ...sessionMessages,
+      [activeSessionId]: [...(sessionMessages[activeSessionId] || []), reviewMsg],
+    });
+  };
+
+  // Step 2: Once confirmed, execute autonomous placement and show Order Successful receipt
+  const handleExecuteConfirmedOrder = async (itemsToCheckout?: CartItem[]) => {
+    const targetItems = itemsToCheckout && itemsToCheckout.length > 0 ? itemsToCheckout : cartItems;
+    if (targetItems.length === 0) return;
 
     const totalAmount = targetItems.reduce((sum, item) => {
       const p = item.price || item.product?.price || 0;
       return sum + p * (item.quantity || 1);
     }, 0);
 
-    const finalOrderId = `order_ai_buyer_${Date.now()}`;
+    const finalOrderId = `order_raya_${Date.now()}`;
     const finalPaymentId = `pay_ai_buyer_${Math.random().toString(36).substring(2, 10)}`;
 
     try {
@@ -578,11 +615,11 @@ export default function RayaHome() {
       persistSavedCarts([paidCart, ...savedCarts]);
       updateActiveCart([]);
 
-      // Append confirmation receipt in chat
+      // Append Order Successful receipt in chat
       const receiptMsg: Message = {
         id: `receipt-${Date.now()}`,
         role: "assistant",
-        text: `🎉 Order Placed by Autonomous AI Buyer! I have executed the purchase across the connected stores with Razorpay Test Mode settlement.`,
+        text: `🎉 Order Placed Successfully! Your order #${finalOrderId} has been confirmed and settled via Razorpay Test Mode. All items are queued for dispatch!`,
         receipt: {
           orderId: finalOrderId,
           paymentId: finalPaymentId,
@@ -722,7 +759,7 @@ export default function RayaHome() {
               loading={loading}
               onAddToCart={handleAddToCartFromCard}
               onTriggerCheckout={handleTriggerCheckout}
-              onAutonomousOrder={handleAutonomousAiBuyerOrder}
+              onAutonomousOrder={handleExecuteConfirmedOrder}
             />
           </div>
 

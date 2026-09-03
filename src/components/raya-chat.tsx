@@ -212,18 +212,44 @@ function ConversationalCheckoutCard({
   }, 0);
 
   return (
-    <div className="w-full max-w-lg mt-2 p-4 rounded-2xl bg-white border border-[#E6E0D6] shadow-sm space-y-3 font-sans animate-in fade-in">
+    <div className="w-full max-w-lg mt-2 p-4 sm:p-5 rounded-2xl bg-white border-2 border-[#0A63FF]/30 shadow-md space-y-3.5 font-sans animate-in fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-[#E6E0D6]">
+      <div className="flex items-center justify-between pb-3 border-b border-[#E6E0D6]">
         <div className="flex items-center gap-2">
-          <ShoppingBag className="w-4 h-4 text-[#0A63FF]" />
-          <span className="font-extrabold text-xs text-[#172033] uppercase tracking-wider">
-            Active Basket ({items.length} {items.length === 1 ? "item" : "items"})
-          </span>
+          <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#0A63FF] flex items-center justify-center font-bold">
+            <ShoppingBag className="w-4 h-4" />
+          </div>
+          <div>
+            <h4 className="font-extrabold text-xs text-[#172033] uppercase tracking-wider">
+              Order Review & Confirmation
+            </h4>
+            <p className="text-[10px] text-[#667085]">
+              {items.length} {items.length === 1 ? "item" : "items"} ready for autonomous placement
+            </p>
+          </div>
         </div>
-        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-          Ready for Payment
+        <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+          Review & Confirm
         </span>
+      </div>
+
+      {/* Delivery & Payment Details Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+        <div className="p-2.5 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6]">
+          <span className="text-[10px] font-bold text-[#667085] uppercase tracking-wider block mb-0.5">
+            📍 Delivery Destination
+          </span>
+          <p className="font-bold text-[#172033]">Autonomous Shopper</p>
+          <p className="text-[11px] text-[#667085] truncate">42 Commerce Blvd, Bengaluru (560001)</p>
+        </div>
+
+        <div className="p-2.5 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6]">
+          <span className="text-[10px] font-bold text-[#667085] uppercase tracking-wider block mb-0.5">
+            💳 Settlement Method
+          </span>
+          <p className="font-bold text-[#172033]">Razorpay Test Mode</p>
+          <p className="text-[11px] text-emerald-700 font-semibold">Instant INR Authorization</p>
+        </div>
       </div>
 
       {/* Items List */}
@@ -264,21 +290,27 @@ function ConversationalCheckoutCard({
         <span>Purchase Control: All 6 Gates Passed • Strict INR Domestic Settlement</span>
       </div>
 
+      {/* Explicit Confirmation Question Box */}
+      <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200 text-xs text-blue-950 font-medium">
+        👉 <strong>Confirmation Required:</strong> Would you like me to proceed and place this order for you now?
+      </div>
+
       {/* Total & Action Buttons */}
       <div className="pt-2 border-t border-[#E6E0D6] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <span className="text-[10px] font-bold text-[#667085] block">Total Amount</span>
-          <span className="text-lg font-black text-[#172033]">₹{totalAmount.toLocaleString()}</span>
+          <span className="text-[10px] font-bold text-[#667085] block">Total to Authorize</span>
+          <span className="text-xl font-black text-[#172033]">₹{totalAmount.toLocaleString()}</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {onAutonomousOrder && (
             <button
               onClick={onAutonomousOrder}
-              className="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-200"
-              title="Autonomous AI Buyer instantly executes verified order placement"
+              className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-200"
+              title="Confirm and let Autonomous AI Buyer place this order now"
             >
-              <span>⚡ Place Order (AI Buyer)</span>
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Yes, Confirm & Place Order</span>
             </button>
           )}
 
