@@ -111,17 +111,17 @@ CRITICAL PRODUCT POLICIES:
      - 'isBestMatch': Set to true for the #1 top recommendation.
      - 'matchReason': A clear, concise 1-sentence reason why you recommend this specific item.
 
-4. Autonomous Purchase Guard & Spending Limit Blocking:
-   - The user has an active safety spending limit (default ₹15,000, or user's stated limit like ₹5,000).
-   - Any order or checkout that exceeds this spending limit is BLOCKED by Razorpay autonomous purchase guard. Always warn the user if an action would exceed their policy limit.
+4. Dynamic Spending Limit (NO DEFAULT LIMIT):
+   - By default, there is NO spending limit (unlimited) UNLESS the user explicitly set a budget (e.g. "under 5000", "below 10k").
+   - NEVER invent or warn about a default limit of ₹15,000. If the user did NOT set a budget limit, any product (even ₹42,999 or ₹89,999) can be purchased without any warnings or blocks.
+   - ONLY warn or enforce if the user explicitly commanded a spending cap.
 
 Tone & Output Formatting:
-- Provide clean, beautifully structured, human-readable answers.
-- DO NOT output raw markdown asterisks (never use '**' or '*').
-- Use clean plain text headers, neat bullet points ('•'), and clear line breaks.
-- Fast, concise, highly authoritative, and helpful.
-- Mention which store each recommended item comes from (e.g., "From NexusStore: ...", "From eBay: ...").
-- Format prices in ₹ (INR) and emphasize that all items comply with the requested budget.
+- Keep text responses SHORT, PUNCHY, AND INFORMATIVE (max 2 to 4 concise bullet points or 1 short paragraph, under 80 words).
+- Do NOT output repetitive walls of text (do NOT repeat "Buyer Match Score: X", "Match Reason: Y", "Price: Z" for every item) because the interactive UI product cards already display the image, price, store pill, and match score!
+- Focus ONLY on the user's CURRENT prompt. If the user moves to a new category (e.g. from chess to audio or cart), DO NOT repeat or continue talking about the old category. Switch immediately and cleanly to the current request.
+- Provide clean, beautifully structured, human-readable answers without raw markdown asterisks (never use '**' or '*').
+- Fast, concise, highly authoritative, and easy to read so users don't ignore it.
 - Never show internal database sync errors or stack traces to the user; always handle cart actions smoothly.
 `;
 
@@ -870,11 +870,11 @@ export async function executeBridgeTool(
 
       case "checkoutOrder": {
         const store = args?.store || "nexusstore";
-        const budgetLimit = args.budgetLimit || 15000;
+        const budgetLimit = args.budgetLimit;
         const totalAmount = args.total || args.amount;
 
-        // Policy Limit Enforcement
-        if (totalAmount && totalAmount > budgetLimit) {
+        // Policy Limit Enforcement (ONLY if user explicitly set a budget limit)
+        if (budgetLimit && totalAmount && totalAmount > budgetLimit) {
           return {
             status: "FAILED",
             data: {

@@ -169,9 +169,15 @@ export async function POST(req: NextRequest) {
     const contents: any[] = [];
 
     // Map existing history into Gemini roles ("user" | "model")
-    for (const h of history) {
+    // Keep only the most recent 4 turns to keep context sharp and prevent old topics (e.g. previous searches) from polluting new queries
+    const recentHistory = history.slice(-4);
+    for (const h of recentHistory) {
       const role = h.role === "assistant" ? "model" : "user";
-      const textContent = h.content || h.text || "";
+      let textContent = (h.content || h.text || "").trim();
+      // If previous model message was a huge product dump, summarize/truncate it to keep focus on new prompt
+      if (role === "model" && textContent.length > 300) {
+        textContent = textContent.substring(0, 200) + "... [Previous recommendations displayed in UI]";
+      }
       if (textContent) {
         contents.push({
           role,
