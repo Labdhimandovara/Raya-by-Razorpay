@@ -10,10 +10,21 @@ import {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+let cachedCandidateModels: string[] | null = null;
+let cachedModelsTimestamp = 0;
+
 async function getGeminiCandidateModels(geminiKey: string): Promise<string[]> {
+  if (cachedCandidateModels && Date.now() - cachedModelsTimestamp < 3600000) {
+    return cachedCandidateModels;
+  }
+
+  // Fast default list avoiding initial roundtrip
+  const fastDefaults = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-exp"];
+
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(geminiKey)}`
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(geminiKey)}`,
+      { signal: AbortSignal.timeout(2000) }
     );
     if (res.ok) {
       const data = await res.json();
@@ -22,17 +33,12 @@ async function getGeminiCandidateModels(geminiKey: string): Promise<string[]> {
         .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent"))
         .map((m: any) => m.name.replace("models/", ""));
 
-      console.log("[Raya Gemini Supported Models]:", supported);
-
       const preferred = [
-        "gemini-3.6-flash",
-        "gemini-3.6-pro",
         "gemini-2.0-flash",
-        "gemini-2.0-flash-exp",
         "gemini-1.5-flash",
+        "gemini-2.0-flash-exp",
         "gemini-1.5-flash-latest",
         "gemini-1.5-flash-8b",
-        "gemini-1.5-pro",
       ];
 
       const sorted: string[] = [];
@@ -44,12 +50,18 @@ async function getGeminiCandidateModels(geminiKey: string): Promise<string[]> {
           sorted.push(s);
         }
       }
-      if (sorted.length > 0) return sorted;
+      if (sorted.length > 0) {
+        cachedCandidateModels = sorted;
+        cachedModelsTimestamp = Date.now();
+        return sorted;
+      }
     }
   } catch (e) {
     console.warn("[Raya Gemini] ListModels error:", e);
   }
-  return ["gemini-3.6-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+  cachedCandidateModels = fastDefaults;
+  cachedModelsTimestamp = Date.now();
+  return fastDefaults;
 }
 
 // Native function declarations for Google Gemini

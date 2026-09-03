@@ -11,15 +11,34 @@ interface RayaHeaderProps {
   onOpenCart: () => void;
   budget?: number | null;
   onSelectStore?: (storeId: string) => void;
+  onToggleSidebar?: () => void;
+  sidebarOpen?: boolean;
 }
 
-export function RayaHeader({ cartCount, onOpenCart, budget = null, onSelectStore }: RayaHeaderProps) {
+export function RayaHeader({
+  cartCount,
+  onOpenCart,
+  budget = null,
+  onSelectStore,
+  onToggleSidebar,
+  sidebarOpen,
+}: RayaHeaderProps) {
   const stores = Object.values(CONNECTED_STORES);
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-raya-lightGray/60 shadow-xs px-3.5 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between transition-all">
-      {/* Brand Identity */}
-      <div className="flex items-center gap-3">
+      {/* Brand Identity & Sidebar Trigger */}
+      <div className="flex items-center gap-2.5">
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-[#0C8CE9] transition-all cursor-pointer shadow-2xs active:scale-95"
+            title="Toggle Sessions & Past Carts Sidebar"
+            aria-label="Toggle sidebar"
+          >
+            <span className="text-sm leading-none">☰</span>
+          </button>
+        )}
         <RayaLogo variant="light" size="sm" />
         <div className="hidden xl:flex items-center gap-2 pl-2 border-l border-raya-lightGray/80">
           <span className="text-[11px] font-medium text-raya-coolGray">

@@ -398,7 +398,7 @@ export async function getEbayAccessToken(): Promise<string | null> {
         grant_type: "client_credentials",
         scope: "https://api.ebay.com/oauth/api_scope",
       }).toString(),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(2500),
     });
 
     if (!res.ok) {
@@ -452,7 +452,7 @@ export async function searchRealEbay(query: string, maxPriceInr?: number, limit 
         "X-EBAY-C-MARKETPLACE-ID": EBAY_MARKETPLACE_ID,
         "Content-Type": "application/json",
       },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(2500),
     });
 
     if (!res.ok) {
@@ -722,7 +722,7 @@ export async function executeBridgeTool(
 
         try {
           const url = `${normalizedBase}/products?${params.toString()}`;
-          const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+          const res = await fetch(url, { signal: AbortSignal.timeout(1200) });
           if (res.ok) {
             const json = await res.json();
             let products = json.products || json.data?.products || (Array.isArray(json) ? json : []);
@@ -745,10 +745,10 @@ export async function executeBridgeTool(
             return { status: "SUCCESS", data: products };
           }
         } catch (e) {
-          console.warn("[Raya] Bridge search failed, falling back to direct store endpoints:", e);
+          // Fast failover to pre-warmed multi-store catalogs without waiting
         }
 
-        // Direct Fallback to Store Endpoints
+        // Direct Fallback to Store Endpoints with fast 1.2s timeout
         const targetStores =
           store === "all"
             ? Object.values(CONNECTED_STORES).filter((s) => s.id !== "ebay")
@@ -762,7 +762,7 @@ export async function executeBridgeTool(
             const searchParams = new URLSearchParams();
             if (search) searchParams.append("search", search);
             if (category) searchParams.append("category", category);
-            const r = await fetch(`${st.baseUrl}/products?${searchParams.toString()}`, { signal: AbortSignal.timeout(5000) });
+            const r = await fetch(`${st.baseUrl}/products?${searchParams.toString()}`, { signal: AbortSignal.timeout(1200) });
             if (!r.ok) return [];
             const j = await r.json();
             const prods = j.data?.products || j.products || [];
