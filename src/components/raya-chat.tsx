@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { User, Sparkles, CheckCircle2, Bot, CreditCard, ShoppingBag, ShieldCheck, ArrowRight } from "lucide-react";
+import { User, Activity, CheckCircle2, CreditCard, ShoppingBag, ShieldCheck, ArrowRight } from "lucide-react";
 import { RayaLogo } from "./raya-logo";
 import { ProductGrid } from "./product-grid";
 import { OrderReceipt } from "./order-receipt";
@@ -172,7 +172,7 @@ function ToolActivityDisclosure({
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F7F5F0] hover:bg-slate-100 border border-[#E6E0D6] text-[#667085] hover:text-[#172033] text-[11px] font-medium transition-all cursor-pointer shadow-2xs"
         title="Click to view technical execution details"
       >
-        <Sparkles className="w-3 h-3 text-[#0A63FF]" />
+        <Activity className="w-3 h-3 text-[#0A63FF]" />
         <span>{primarySummary}</span>
         <span className="text-[9px] text-slate-400 ml-0.5">{open ? "▴" : "▾"}</span>
       </button>
@@ -407,7 +407,7 @@ export function RayaChat({ messages, loading, onAddToCart, onTriggerCheckout, on
             <RayaLogo variant="icon" size="sm" />
           </div>
           <div className="px-4 py-2.5 rounded-2xl bg-white border border-raya-lightGray shadow-xs flex items-center gap-2.5 text-xs font-medium text-raya-stone">
-            <span className="w-2 h-2 rounded-full bg-raya-blue animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-raya-blue animate-pulse" />
             <span>Raya is consulting multi-store catalog & live inventory...</span>
           </div>
         </div>

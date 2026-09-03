@@ -13,7 +13,6 @@ import {
   PanelLeftOpen,
   CheckCircle2,
   Layers,
-  Sparkles,
   ExternalLink,
 } from "lucide-react";
 import { CartItem } from "@/components/cart-drawer";

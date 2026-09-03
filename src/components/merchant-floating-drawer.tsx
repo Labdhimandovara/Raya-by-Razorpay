@@ -5,59 +5,18 @@ import {
   X,
   Send,
   Loader2,
-  Zap,
+  TrendingUp,
+  Activity,
+  MessageSquare,
 } from "lucide-react";
 
-// Iridescent Swirling AI Assistant Orb matching user design
-function AiSwirlOrb({ className = "w-7 h-7" }: { className?: string }) {
+// Professional Commerce Assistant Badge
+function MerchantAssistantBadge({ className = "w-7 h-7" }: { className?: string }) {
   return (
-    <div className={`relative flex items-center justify-center shrink-0 ${className}`}>
-      <svg
-        viewBox="0 0 40 40"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full drop-shadow-xs"
-      >
-        <defs>
-          <radialGradient id="aiOrbBase" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#80E9FF" />
-            <stop offset="35%" stopColor="#00E5FF" />
-            <stop offset="70%" stopColor="#00A3FF" />
-            <stop offset="100%" stopColor="#0066FF" />
-          </radialGradient>
-          <radialGradient id="aiOrbHighlight" cx="35%" cy="30%" r="65%">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.85" />
-            <stop offset="40%" stopColor="#38BDF8" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
-          </radialGradient>
-          <filter id="swirlBlur" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="0.8" />
-          </filter>
-        </defs>
-
-        {/* Outer glowing sphere */}
-        <circle cx="20" cy="20" r="19" fill="url(#aiOrbBase)" />
-
-        {/* Internal Swirling Petals / Vortex Aperture */}
-        <g filter="url(#swirlBlur)" opacity="0.95">
-          <path
-            d="M20 6C23 12 19 18 13 19C7 20 5 15 8 10C10 6 15 4 20 6Z"
-            fill="#38BDF8"
-          />
-          <path
-            d="M34 21C28 24 23 20 22 14C21 8 26 6 30 9C34 11 36 16 34 21Z"
-            fill="#00F0FF"
-          />
-          <path
-            d="M16 34C13 28 17 23 23 22C29 21 31 26 29 30C27 34 21 36 16 34Z"
-            fill="#0077FF"
-          />
-        </g>
-
-        {/* Center core light */}
-        <circle cx="20" cy="20" r="18" fill="url(#aiOrbHighlight)" />
-        <circle cx="20" cy="20" r="3.5" fill="#FFFFFF" opacity="0.9" filter="url(#swirlBlur)" />
-      </svg>
+    <div
+      className={`rounded-full bg-[#172033] text-white flex items-center justify-center shrink-0 shadow-xs ${className}`}
+    >
+      <Activity className="w-3.5 h-3.5 text-blue-400" />
     </div>
   );
 }
@@ -71,7 +30,7 @@ export function MerchantFloatingDrawer() {
   const [messages, setMessages] = useState<Array<{ role: "user" | "copilot"; text: string; time: string; action?: any }>>([
     {
       role: "copilot",
-      text: "👋 Hi! I am Bazaar Merchant Copilot. I analyze your live Razorpay orders and AI commerce activity. Ask me anything about your revenue, cross-sell conversion, or guardrails!",
+      text: "Bazaar Merchant Assistant: Query live Razorpay order telemetry, strategy performance, conversion lift, or purchase guardrails.",
       time: "Live",
     },
   ]);
@@ -190,7 +149,7 @@ export function MerchantFloatingDrawer() {
         className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 bg-white hover:bg-[#FBFBFB] border border-slate-200/90 shadow-md hover:shadow-lg rounded-full pl-2 pr-4 sm:pr-5 py-1.5 sm:py-2 flex items-center gap-2.5 sm:gap-3 cursor-pointer transition-all active:scale-95 group select-none"
         title="Tap to ask Merchant Assistant & inspect live store metrics"
       >
-        <AiSwirlOrb className="w-7 h-7 sm:w-8 sm:h-8 group-hover:scale-105 transition-transform" />
+        <MerchantAssistantBadge className="w-7 h-7 sm:w-8 sm:h-8 group-hover:scale-105 transition-transform" />
         <span className="text-xs sm:text-[13px] font-semibold text-[#172033] tracking-tight whitespace-nowrap">
           Ask any questions
         </span>
@@ -209,7 +168,7 @@ export function MerchantFloatingDrawer() {
             {/* Clean Drawer Header — No 'Control Room' at top */}
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <AiSwirlOrb className="w-8 h-8" />
+                <MerchantAssistantBadge className="w-8 h-8" />
                 <div>
                   <h3 className="font-bold text-sm text-[#172033] tracking-tight">
                     Merchant Assistant
@@ -291,7 +250,7 @@ export function MerchantFloatingDrawer() {
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3 text-[9.5px] text-slate-400">
-                      <span className="font-semibold">{m.role === "user" ? "You" : "Merchant Copilot"}</span>
+                      <span className="font-semibold">{m.role === "user" ? "You" : "Merchant Assistant"}</span>
                       <span>{m.time}</span>
                     </div>
                     <p className="whitespace-pre-wrap">{m.text}</p>
@@ -302,7 +261,7 @@ export function MerchantFloatingDrawer() {
                           onClick={() => handleToggleRule(m.action.ruleId, false)}
                           className="px-3 py-1.5 rounded-lg bg-[#0A63FF] text-white font-bold text-[10px] flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                         >
-                          <Zap className="w-3 h-3 text-amber-300" />
+                          <TrendingUp className="w-3 h-3 text-white" />
                           <span>Activate Strategy</span>
                         </button>
                       </div>

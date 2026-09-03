@@ -13,7 +13,6 @@ import {
   Minus,
   Smartphone,
   CheckCircle2,
-  Sparkles,
   ChevronDown,
   ChevronUp,
   FileText,
@@ -510,8 +509,8 @@ export function BasketView({
         {items.length > 0 && recommendedAddons.length > 0 && (
           <div className="pt-2 border-t border-dashed border-raya-lightGray space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 text-xs font-bold text-raya-navy">
-                <Sparkles className="w-3 h-3 text-amber-500" />
+              <div className="flex items-center gap-1.5 text-xs font-bold text-raya-navy">
+                <ShoppingBag className="w-3.5 h-3.5 text-raya-blue" />
                 <span>Frequently Bought Together</span>
               </div>
             </div>

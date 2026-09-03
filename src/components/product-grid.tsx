@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Check, Tag, ExternalLink, Sparkles, X, ShieldCheck } from "lucide-react";
+import { Plus, Check, Tag, ExternalLink, Info, X, ShieldCheck } from "lucide-react";
 import { CONNECTED_STORES, StoreInfo } from "@/lib/gemini";
 
 export interface Product {
@@ -141,14 +141,14 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                   </p>
                 )}
 
-                {/* "Why did Bazaar recommend this?" Explainability Trigger */}
+                {/* Explainability Trigger */}
                 <button
                   type="button"
                   onClick={() => setExplainProduct(p)}
-                  className="mt-2 text-[10.5px] font-bold text-raya-blue hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer"
+                  className="mt-2 text-[10.5px] font-bold text-raya-blue hover:text-blue-700 flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <Sparkles className="w-3 h-3 text-raya-blue" />
-                  <span>Why did Bazaar recommend this?</span>
+                  <Info className="w-3.5 h-3.5 text-raya-blue shrink-0" />
+                  <span>Why Bazaar recommended this</span>
                 </button>
               </div>
 
@@ -220,7 +220,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
 
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-xl bg-blue-50 text-raya-blue flex items-center justify-center font-bold text-sm">
-                🔍
+                <ShieldCheck className="w-4 h-4 text-raya-blue" />
               </div>
               <div>
                 <span className="text-[10px] font-bold text-raya-coolGray uppercase tracking-wider">

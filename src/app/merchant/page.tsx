@@ -12,13 +12,10 @@ import {
   Send,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
   TrendingUp,
   Sliders,
   Store,
   ExternalLink,
-  Bot,
-  Zap,
   Loader2,
   AlertTriangle,
   XCircle,
@@ -384,7 +381,7 @@ export default function MerchantGrowthControlRoom() {
             <div className="p-5 rounded-2xl bg-[#FFFFFF] border border-[#E6E0D6] shadow-xs hover:shadow-sm transition-all space-y-1.5">
               <div className="flex items-center justify-between text-xs font-bold text-[#667085]">
                 <span>AI-ATTRIBUTED GMV</span>
-                <Sparkles className="w-4 h-4 text-[#0A63FF]" />
+                <TrendingUp className="w-4 h-4 text-[#0A63FF]" />
               </div>
               <div className="text-2xl sm:text-3xl font-black text-[#172033] tracking-tight">
                 {loading ? (
@@ -593,9 +590,8 @@ export default function MerchantGrowthControlRoom() {
                   <span className="text-[10.5px] font-extrabold uppercase text-[#0A63FF] tracking-wider block">
                     With Bazaar AI
                   </span>
-                  <span className="px-2 py-0.5 rounded-md bg-blue-100 text-[#0A63FF] text-[9px] font-bold flex items-center gap-1">
-                    <Sparkles className="w-2.5 h-2.5" />
-                    <span>AI Activated</span>
+                  <span className="px-2 py-0.5 rounded-md bg-blue-100 text-[#0A63FF] text-[9.5px] font-bold">
+                    Optimized Cart
                   </span>
                 </div>
                 <div className="space-y-2 text-xs">
@@ -734,7 +730,7 @@ export default function MerchantGrowthControlRoom() {
                 : "bg-white text-[#667085] hover:bg-[#F7F5F0] border border-[#E6E0D6]"
             }`}
           >
-            <Zap className="w-3.5 h-3.5 text-amber-400" />
+            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
             <span>AI Growth Agent ({opportunities.filter((o) => o.isActive).length} Active)</span>
           </button>
 
