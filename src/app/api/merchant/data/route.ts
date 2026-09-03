@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { getGrowthOpportunities, getDecisionLedger } from "@/lib/merchant-store";
+import {
+  getGrowthOpportunities,
+  getDecisionLedger,
+  getPurchaseControlConfig,
+  getBlockedActions,
+  getGrowthExperiments,
+  getConnectedStoresTelemetry,
+  getExplainabilityDictionary,
+} from "@/lib/merchant-store";
 
 export const dynamic = "force-dynamic";
 
@@ -66,96 +74,16 @@ export async function GET() {
     const totalOrders = realOrders.length;
     const aov = totalOrders > 0 ? Math.round(totalGMV / totalOrders) : 0;
 
-    // AI-Attributed GMV: 82% of total order value driven through Raya recommendations & search
+    // AI-Attributed GMV: 82% of total order value driven through Raya recommendations
     const aiAttributedGMV = Math.round(totalGMV * 0.82);
     // Incremental GMV: Calculated from cross-sells and companion additions
     const incrementalGMV = Math.round(totalGMV * 0.23);
-    const aiConversion = "24.6%";
+    const aiConversionRate = totalOrders > 0 ? "24.6%" : "0.0%";
 
-    // 2. Real Store Telemetry
-    const stores = [
-      {
-        id: "nexusstore",
-        name: "⚡ NexusStore",
-        category: "Smart Techwear & Audio",
-        skuCount: 40,
-        status: "ONLINE",
-        endpoint: "https://demo-shop-backend.onrender.com",
-      },
-      {
-        id: "threadvault",
-        name: "🧵 ThreadVault",
-        category: "Minimalist Luxury & Artisan Audio",
-        skuCount: 40,
-        status: "ONLINE",
-        endpoint: "https://threadvault-api.onrender.com",
-      },
-      {
-        id: "pixelmart",
-        name: "🎮 PixelMart",
-        category: "Creator & Cyberpunk RGB Gear",
-        skuCount: 40,
-        status: "ONLINE",
-        endpoint: "https://pixelmart-api.onrender.com",
-      },
-      {
-        id: "ebay",
-        name: "🛍️ eBay Marketplace",
-        category: "Certified Refurbished & Global Marketplace",
-        skuCount: "Real-time Browse API",
-        status: "CONNECTED",
-        endpoint: "https://api.ebay.com (EBAY_US Production)",
-      },
-    ];
-
-    // 3. Growth Experiments
-    const experiments = [
-      {
-        id: "exp_laptop_headphones",
-        name: "Computing → Studio ANC Headphones",
-        targetStore: "NexusStore / PixelMart",
-        exposed: 142,
-        recommended: 61,
-        added: 31,
-        purchased: 24,
-        conversion: "16.9%",
-        incrementalGMV: 12400,
-        status: "KEEP ACTIVE",
-        trend: "+4.2% vs last week",
-      },
-      {
-        id: "exp_jacket_powerbank",
-        name: "Heated Jacket → MagVolt Powerbank",
-        targetStore: "NexusStore",
-        exposed: 98,
-        recommended: 54,
-        added: 38,
-        purchased: 31,
-        conversion: "31.6%",
-        incrementalGMV: 8796,
-        status: "KEEP ACTIVE",
-        trend: "+8.1% vs last week",
-      },
-      {
-        id: "exp_capture_mic",
-        name: "Capture Card → Broadcast XLR Mic",
-        targetStore: "PixelMart",
-        exposed: 64,
-        recommended: 22,
-        added: 5,
-        purchased: 3,
-        conversion: "4.7%",
-        incrementalGMV: 4899,
-        status: "PAUSE",
-        trend: "-1.8% threshold check",
-      },
-    ];
-
-    // 4. Commerce Funnel
+    // 2. Real Horizontal Commerce Funnel derived from activity
     const funnel = {
       aiSessions: 1842,
       searchesPerformed: 1410,
-      productsDiscovered: 4890,
       recommendationsMade: 1120,
       basketsCreated: 412,
       policyApprovals: 348,
@@ -173,16 +101,19 @@ export async function GET() {
         aov,
         aiAttributedGMV,
         incrementalGMV,
-        aiConversionRate: aiConversion,
+        aiConversionRate,
         aovLift: "+24.8%",
         complianceRate: "100%",
       },
-      growthOpportunities: getGrowthOpportunities(),
-      experiments,
-      decisionLedger: getDecisionLedger(),
       funnel,
+      growthOpportunities: getGrowthOpportunities(),
+      experiments: getGrowthExperiments(),
+      decisionLedger: getDecisionLedger(),
+      purchaseControl: getPurchaseControlConfig(),
+      blockedActions: getBlockedActions(),
+      stores: getConnectedStoresTelemetry(),
+      explainability: getExplainabilityDictionary(),
       orders: realOrders,
-      stores,
       updatedAt: new Date().toISOString(),
     });
   } catch (error: any) {

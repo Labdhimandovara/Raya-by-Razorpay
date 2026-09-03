@@ -1,5 +1,5 @@
-// Merchant Growth & Decision Ledger Store
-// Maintains merchant configuration, active growth rules, and the chronological Decision Ledger
+// Merchant Growth & Commerce Intelligence System
+// Server-side state, CommerceEvents, Purchase Guardrails, and telemetry
 
 export interface GrowthOpportunity {
   id: string;
@@ -47,7 +47,39 @@ export interface GrowthExperiment {
   trend: string;
 }
 
-// Initial state of Growth Opportunities
+export interface PurchaseControlConfig {
+  maxSpend: number;
+  quantityLimit: number;
+  priceValidation: boolean;
+  currency: string;
+  merchantAuthorization: boolean;
+  approvalExpiryMinutes: number;
+}
+
+export interface BlockedAction {
+  id: string;
+  code: string;
+  title: string;
+  reason: string;
+  requestedAmount: number;
+  allowedLimit: number;
+  paymentInitiated: boolean;
+  timestamp: string;
+  source: string;
+}
+
+export interface ConnectedStoreTelemetry {
+  id: string;
+  name: string;
+  category: string;
+  skuCount: number | string;
+  status: "ONLINE" | "CONNECTED" | "DEGRADED";
+  endpoint: string;
+  recentActivity: string;
+  isMarketplace?: boolean;
+}
+
+// 1. Server-side Growth Opportunities
 let growthOpportunities: GrowthOpportunity[] = [
   {
     id: "opp_laptop_headphones",
@@ -101,11 +133,11 @@ let growthOpportunities: GrowthOpportunity[] = [
     recommendedAction: "Auto-suggest studio XLR microphone when video capture card is placed in basket.",
     triggerCategory: "capture card",
     crossSellProduct: {
-      id: "nx-sport-active-earbuds",
-      name: "Nexus Pulse Sport Waterproof Wireless Earbuds",
-      price: 2999,
-      store: "nexusstore",
-      storeName: "NexusStore",
+      id: "pixel-xlr-mic",
+      name: "Broadcast Dynamic XLR Boom Microphone",
+      price: 9499,
+      store: "pixelmart",
+      storeName: "PixelMart",
       imageUrl: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop",
       badge: "🎙️ Streamer Favorite",
     },
@@ -133,7 +165,7 @@ let growthOpportunities: GrowthOpportunity[] = [
   },
 ];
 
-// Chronological Decision Ledger Seed (Real events trace)
+// 2. Chronological Decision Ledger Seed (Real events trace)
 let decisionLedger: DecisionLedgerEvent[] = [
   {
     id: "evt_10",
@@ -278,6 +310,187 @@ let decisionLedger: DecisionLedgerEvent[] = [
   },
 ];
 
+// 3. Purchase Control Configuration (The 6 Gates)
+let purchaseControlConfig: PurchaseControlConfig = {
+  maxSpend: 10000,
+  quantityLimit: 5,
+  priceValidation: true,
+  currency: "INR",
+  merchantAuthorization: true,
+  approvalExpiryMinutes: 15,
+};
+
+// 4. Server-side Blocked Actions Incident Log
+let blockedActions: BlockedAction[] = [
+  {
+    id: "block_incident_01",
+    code: "PURCHASE_BLOCKED",
+    title: "Max Spend Cap Exceeded (Gate 01)",
+    reason: "Requested cart ₹61,798 exceeds merchant policy spending cap of ₹10,000.",
+    requestedAmount: 61798,
+    allowedLimit: 10000,
+    paymentInitiated: false,
+    timestamp: "32 mins ago",
+    source: "Shopper Agent (Raya) Checkout",
+  },
+  {
+    id: "block_incident_02",
+    code: "APPROVAL_INVALIDATED",
+    title: "Price Volatility Rejection (Gate 03)",
+    reason: "Catalog price shifted from ₹6,799 to ₹7,199 before order signature capture.",
+    requestedAmount: 7199,
+    allowedLimit: 6799,
+    paymentInitiated: false,
+    timestamp: "1 hour ago",
+    source: "Pre-Payment Validation Guard",
+  },
+];
+
+// 5. Growth Experiments Seed
+let growthExperiments: GrowthExperiment[] = [
+  {
+    id: "exp_laptop_headphones",
+    name: "Computing → Studio ANC Headphones",
+    targetStore: "NexusStore / PixelMart",
+    exposed: 142,
+    recommended: 61,
+    added: 31,
+    purchased: 24,
+    conversion: "16.9%",
+    incrementalGMV: 12400,
+    status: "KEEP ACTIVE",
+    trend: "+4.2% vs baseline",
+  },
+  {
+    id: "exp_jacket_powerbank",
+    name: "Heated Jacket → MagVolt Powerbank",
+    targetStore: "NexusStore",
+    exposed: 98,
+    recommended: 54,
+    added: 38,
+    purchased: 31,
+    conversion: "31.6%",
+    incrementalGMV: 8796,
+    status: "KEEP ACTIVE",
+    trend: "+8.1% vs baseline",
+  },
+  {
+    id: "exp_capture_mic",
+    name: "Capture Card → Broadcast XLR Mic",
+    targetStore: "PixelMart",
+    exposed: 64,
+    recommended: 22,
+    added: 5,
+    purchased: 3,
+    conversion: "4.7%",
+    incrementalGMV: 4899,
+    status: "PAUSE",
+    trend: "-1.8% threshold check",
+  },
+];
+
+// 6. Connected Stores Telemetry
+const connectedStoresTelemetry: ConnectedStoreTelemetry[] = [
+  {
+    id: "nexusstore",
+    name: "NexusStore",
+    category: "Smart Techwear & Daily Tech",
+    skuCount: 40,
+    status: "ONLINE",
+    endpoint: "https://demo-shop-backend.onrender.com",
+    recentActivity: "Order order_TXa8ET3XESs2vF settled",
+  },
+  {
+    id: "threadvault",
+    name: "ThreadVault",
+    category: "Curated Luxury & Artisan Audio",
+    skuCount: 40,
+    status: "ONLINE",
+    endpoint: "https://threadvault-api.onrender.com",
+    recentActivity: "DAP Audiophile Player discovered",
+  },
+  {
+    id: "pixelmart",
+    name: "PixelMart",
+    category: "Cyberpunk Creator Equipment",
+    skuCount: 40,
+    status: "ONLINE",
+    endpoint: "https://pixelmart-api.onrender.com",
+    recentActivity: "Apex Gaming Laptop queried",
+  },
+  {
+    id: "ebay",
+    name: "eBay — Live Marketplace",
+    category: "Certified Refurbished & Global Marketplace",
+    skuCount: "Real-time Browse API",
+    status: "CONNECTED",
+    endpoint: "https://api.ebay.com/buy/browse/v1",
+    recentActivity: "Live USD catalog converted with INR approx",
+    isMarketplace: true,
+  },
+];
+
+// 7. Server-side Explainability Dictionary
+const explainabilityDictionary: Record<string, any> = {
+  "nx-wireless-anc-headphones": {
+    name: "Nexus Pro Wireless ANC Studio Headphones",
+    price: 4899,
+    store: "NexusStore",
+    badge: "⚡ Best Overall Match",
+    buyerFit: 96,
+    budgetFit: 94,
+    quality: 92,
+    delivery: 90,
+    merchantFit: 95,
+    whyReason: "Selected because it best matched the buyer's budget, delivery requirement and quality preference.",
+    tradeoff: "₹400 more than the cheapest option, but higher customer rating (4.8★ vs 4.1★) and 2-day faster delivery.",
+    fitDetails: "Matched keywords 'studio', 'anc', 'wireless'. 40mm neodymium drivers with active noise cancelling.",
+  },
+  "nx-smart-heated-techwear-jacket": {
+    name: "Nexus Smart Heated Techwear Bomber Jacket",
+    price: 7999,
+    store: "NexusStore",
+    badge: "🔥 Top Trending",
+    buyerFit: 95,
+    budgetFit: 91,
+    quality: 96,
+    delivery: 88,
+    merchantFit: 94,
+    whyReason: "Selected as the highest-rated smart garment satisfying technical warmth & water-resistant criteria.",
+    tradeoff: "Requires 10,000mAh magnetic powerbank for active heating; recommended as in-cart companion bundle.",
+    fitDetails: "Three temperature zones (35°C–55°C) with carbon fiber heating elements and graphene lining.",
+  },
+  "pixel-4k-capture-card": {
+    name: "4K60 Pro HDR Ultra-Low Latency Capture Card",
+    price: 17999,
+    store: "PixelMart",
+    badge: "🎮 Pro Creator Pick",
+    buyerFit: 98,
+    budgetFit: 90,
+    quality: 97,
+    delivery: 92,
+    merchantFit: 96,
+    whyReason: "Selected for broadcast-grade 4K60 HDR passthrough with sub-1ms ultra-low latency playback.",
+    tradeoff: "Higher initial hardware investment, but zero frame skipping and multi-app video feed capture.",
+    fitDetails: "PCIe Gen2 x4 interface, full HDR10 capture, instant gameview preview for dual-PC setups.",
+  },
+  "thread-dap-player": {
+    name: "Portable High-Resolution Audio Player (DAP)",
+    price: 42999,
+    store: "ThreadVault",
+    badge: "🧵 Artisan Audio Flagship",
+    buyerFit: 94,
+    budgetFit: 88,
+    quality: 99,
+    delivery: 94,
+    merchantFit: 97,
+    whyReason: "Selected for audiophile uncompressed FLAC/DSD native playback with balanced 4.4mm output.",
+    tradeoff: "High-ticket investment, but replaces standalone DAC and verified 100% compliant with Merchant Policy Guard.",
+    fitDetails: "Dual ESS SABRE ES9038Q2M DACs, 32-bit/768kHz PCM resolution, CNC aluminum chassis.",
+  },
+};
+
+// Exported Service Methods
 export function getGrowthOpportunities(): GrowthOpportunity[] {
   return growthOpportunities;
 }
@@ -324,4 +537,45 @@ export function addDecisionEvent(event: DecisionLedgerEvent) {
 
 export function getActiveCrossSells(): GrowthOpportunity[] {
   return growthOpportunities.filter((o) => o.isActive);
+}
+
+export function getPurchaseControlConfig(): PurchaseControlConfig {
+  return purchaseControlConfig;
+}
+
+export function updatePurchaseControlConfig(partial: Partial<PurchaseControlConfig>): PurchaseControlConfig {
+  purchaseControlConfig = { ...purchaseControlConfig, ...partial };
+
+  // Log update in Decision Ledger
+  addDecisionEvent({
+    id: `evt_guard_${Date.now()}`,
+    step: "POLICY_UPDATED",
+    title: "Merchant Policy Guardrails Configured",
+    timestamp: "Just now",
+    status: "SUCCESS",
+    summary: `Merchant updated Purchase Control: Max Spend ₹${purchaseControlConfig.maxSpend.toLocaleString()}, Quantity Limit ${purchaseControlConfig.quantityLimit}`,
+    details: purchaseControlConfig,
+  });
+
+  return purchaseControlConfig;
+}
+
+export function getBlockedActions(): BlockedAction[] {
+  return blockedActions;
+}
+
+export function addBlockedAction(action: BlockedAction) {
+  blockedActions.unshift(action);
+}
+
+export function getGrowthExperiments(): GrowthExperiment[] {
+  return growthExperiments;
+}
+
+export function getConnectedStoresTelemetry(): ConnectedStoreTelemetry[] {
+  return connectedStoresTelemetry;
+}
+
+export function getExplainabilityDictionary(): Record<string, any> {
+  return explainabilityDictionary;
 }
