@@ -105,6 +105,7 @@ CRITICAL OPERATIONAL RULES:
 
 3. MULTI-STORE BALANCED RESULTS (DO NOT DEFAULT TO ONLY EBAY):
    - UNLESS the user explicitly names a single store (e.g. "under eBay", "from eBay", "on ThreadVault", "from NexusStore"), you MUST search across ALL stores ('store: all') and present items from NexusStore, ThreadVault, PixelMart, and eBay side-by-side!
+   - In your summary text, highlight the multi-store variety (e.g. "Here are top options from NexusStore, PixelMart, and eBay").
    - NEVER show only eBay items when the user did not choose a specific store. Show the multi-store variety.
    - ONLY restrict results to eBay if the user explicitly commanded "under ebay", "from ebay", or "only ebay".
 
