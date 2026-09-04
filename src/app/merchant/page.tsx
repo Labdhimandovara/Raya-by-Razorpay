@@ -48,6 +48,8 @@ import {
 } from "@/lib/merchant-store";
 import { MerchantAnalyticsCharts } from "@/components/merchant-analytics-charts";
 import { MerchantFloatingDrawer } from "@/components/merchant-floating-drawer";
+import { useLocale } from "@/lib/locale-context";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 interface MerchantMetrics {
   totalGMV: number;
@@ -109,6 +111,7 @@ interface MerchantOrder {
 }
 
 export default function MerchantGrowthControlRoom() {
+  const { locale, t } = useLocale();
   const [activeTab, setActiveTab] = useState<
     "growth" | "funnel" | "experiments" | "ledger" | "control" | "blocked" | "orders" | "stores"
   >("growth");
@@ -316,14 +319,15 @@ export default function MerchantGrowthControlRoom() {
                 BAZAAR AI
               </h1>
               <span className="px-2 py-0.5 rounded-md bg-[#172033] text-white text-[10px] font-bold tracking-wider uppercase">
-                Merchant Control Room
+                {t("merchant.controlRoom")}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Right Header: Refresh Action */}
+        {/* Right Header: Language Switcher + Refresh Action */}
         <div className="flex items-center gap-2.5 sm:gap-3">
+          <LanguageSwitcher />
           <button
             onClick={loadRealData}
             disabled={refreshing}
@@ -331,7 +335,7 @@ export default function MerchantGrowthControlRoom() {
             title="Synchronize live orders from Razorpay"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-[#0A63FF]" : "text-[#667085]"}`} />
-            <span>Refresh Data</span>
+            <span>{t("common.retry")}</span>
           </button>
         </div>
       </header>
@@ -347,7 +351,7 @@ export default function MerchantGrowthControlRoom() {
             onClick={loadRealData}
             className="underline font-bold hover:text-rose-950 cursor-pointer"
           >
-            Retry Sync
+            {t("common.retry")}
           </button>
         </div>
       )}
@@ -359,10 +363,10 @@ export default function MerchantGrowthControlRoom() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
               <h2 className="text-xs font-extrabold uppercase tracking-wider text-[#667085]">
-                Section 1 — Verified Business Impact
+                {t("merchant.revenueImpact")}
               </h2>
               <span className="text-[11px] text-[#667085]">
-                Incremental revenue attributed through verified CommerceEvent chains
+                {t("merchant.subtitle")}
               </span>
             </div>
 
@@ -380,7 +384,7 @@ export default function MerchantGrowthControlRoom() {
             {/* KPI 1: AI-Attributed GMV */}
             <div className="p-5 rounded-2xl bg-[#FFFFFF] border border-[#E6E0D6] shadow-xs hover:shadow-sm transition-all space-y-1.5">
               <div className="flex items-center justify-between text-xs font-bold text-[#667085]">
-                <span>AI-ATTRIBUTED GMV</span>
+                <span>{t("merchant.aiGmv")}</span>
                 <TrendingUp className="w-4 h-4 text-[#0A63FF]" />
               </div>
               <div className="text-2xl sm:text-3xl font-black text-[#172033] tracking-tight">
@@ -404,7 +408,7 @@ export default function MerchantGrowthControlRoom() {
             {/* KPI 2: Incremental GMV */}
             <div className="p-5 rounded-2xl bg-[#FFFFFF] border border-[#E6E0D6] shadow-xs hover:shadow-sm transition-all space-y-1.5 relative overflow-hidden group">
               <div className="flex items-center justify-between text-xs font-bold text-[#667085]">
-                <span>INCREMENTAL GMV</span>
+                <span>{t("merchant.incrementalGmv")}</span>
                 <TrendingUp className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
               </div>
               <div className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tight">
@@ -433,7 +437,7 @@ export default function MerchantGrowthControlRoom() {
             {/* KPI 3: AI Conversion */}
             <div className="p-5 rounded-2xl bg-[#FFFFFF] border border-[#E6E0D6] shadow-xs hover:shadow-sm transition-all space-y-1.5">
               <div className="flex items-center justify-between text-xs font-bold text-[#667085]">
-                <span>AI CONVERSION RATE</span>
+                <span>{t("merchant.conversion")}</span>
                 <Percent className="w-4 h-4 text-purple-600" />
               </div>
               <div className="text-2xl sm:text-3xl font-black text-[#172033] tracking-tight">
@@ -456,7 +460,7 @@ export default function MerchantGrowthControlRoom() {
             {/* KPI 4: Average Order Value (AOV) */}
             <div className="p-5 rounded-2xl bg-[#FFFFFF] border border-[#E6E0D6] shadow-xs hover:shadow-sm transition-all space-y-1.5">
               <div className="flex items-center justify-between text-xs font-bold text-[#667085]">
-                <span>AVERAGE ORDER VALUE</span>
+                <span>{t("merchant.aov")}</span>
                 <Layers className="w-4 h-4 text-[#0A63FF]" />
               </div>
               <div className="text-2xl sm:text-3xl font-black text-[#172033] tracking-tight">
@@ -731,7 +735,7 @@ export default function MerchantGrowthControlRoom() {
             }`}
           >
             <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-            <span>AI Growth Agent ({opportunities.filter((o) => o.isActive).length} Active)</span>
+            <span>{t("growth.agentTitle")} ({opportunities.filter((o) => o.isActive).length} {t("common.active")})</span>
           </button>
 
           <button
@@ -743,7 +747,7 @@ export default function MerchantGrowthControlRoom() {
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Purchase Control (6 Gates)</span>
+            <span>{t("safeguards.title")}</span>
           </button>
 
           <button
@@ -755,7 +759,7 @@ export default function MerchantGrowthControlRoom() {
             }`}
           >
             <XCircle className="w-3.5 h-3.5 text-rose-500" />
-            <span>Blocked Safeguards ({blockedActions.length})</span>
+            <span>{t("ledger.blocked")} ({blockedActions.length})</span>
           </button>
 
           <button
@@ -767,7 +771,7 @@ export default function MerchantGrowthControlRoom() {
             }`}
           >
             <Clock className="w-3.5 h-3.5 text-[#0A63FF]" />
-            <span>Decision Ledger ({decisionLedger.length})</span>
+            <span>{t("ledger.title")} ({decisionLedger.length})</span>
           </button>
 
           <button
@@ -779,7 +783,7 @@ export default function MerchantGrowthControlRoom() {
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-500" />
-            <span>Growth Experiments ({experiments.length})</span>
+            <span>{t("merchant.growthExperiments")} ({experiments.length})</span>
           </button>
 
           <button
@@ -791,7 +795,7 @@ export default function MerchantGrowthControlRoom() {
             }`}
           >
             <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Live Orders ({orders.length})</span>
+            <span>{t("merchant.liveOrders")} ({orders.length})</span>
           </button>
 
           <button
@@ -803,7 +807,7 @@ export default function MerchantGrowthControlRoom() {
             }`}
           >
             <Store className="w-3.5 h-3.5 text-[#0A63FF]" />
-            <span>Connected Commerce</span>
+            <span>{t("merchant.connectedCommerce")}</span>
           </button>
         </div>
 
@@ -813,15 +817,15 @@ export default function MerchantGrowthControlRoom() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-extrabold text-sm text-[#172033]">
-                  Autonomous Growth Strategies & Opportunities
+                  {t("growth.opportunity")}
                 </h3>
                 <p className="text-xs text-[#667085] mt-0.5">
-                  Real strategies that dynamically modify Raya recommendation behavior when activated
+                  {t("growth.agentSubtitle")}
                 </p>
               </div>
               <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{opportunities.filter((o) => o.isActive).length} Strategies Actively Serving</span>
+                <span>{opportunities.filter((o) => o.isActive).length} {t("common.active")}</span>
               </span>
             </div>
 
@@ -842,11 +846,11 @@ export default function MerchantGrowthControlRoom() {
                         {opp.isActive ? (
                           <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.2 rounded-full flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>ACTIVE • Serving to eligible buyers</span>
+                            <span>{t("growth.strategyActive")} • {t("growth.servingBuyers")}</span>
                           </span>
                         ) : (
                           <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.2 rounded-full">
-                            INACTIVE
+                            {t("growth.strategyInactive")}
                           </span>
                         )}
                       </div>
@@ -865,20 +869,20 @@ export default function MerchantGrowthControlRoom() {
                   {/* "Why this strategy?" Evidence Box */}
                   <div className="p-3 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6] space-y-1.5 text-xs">
                     <span className="font-bold text-[10px] uppercase tracking-wider text-[#667085] block">
-                      Why this strategy?
+                      {t("growth.whyThisStrategy")}
                     </span>
                     <p className="text-[11px] text-[#172033]">{opp.evidence}</p>
                     <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#E6E0D6]/60 text-[10px]">
                       <div>
-                        <span className="text-[#667085] block">Eligible Sessions:</span>
+                        <span className="text-[#667085] block">{t("growth.eligibleSessions")}:</span>
                         <span className="font-bold">{opp.evidenceDetails?.eligibleSessions || 18}</span>
                       </div>
                       <div>
-                        <span className="text-[#667085] block">Attach Rate:</span>
+                        <span className="text-[#667085] block">{t("merchant.attachRate")}:</span>
                         <span className="font-bold text-amber-700">{opp.evidenceDetails?.currentAttachRate || "7.1%"}</span>
                       </div>
                       <div>
-                        <span className="text-[#667085] block">Conversion Lift:</span>
+                        <span className="text-[#667085] block">{t("merchant.conversion")}:</span>
                         <span className="font-bold text-emerald-700">{opp.conversionLift}</span>
                       </div>
                     </div>
@@ -893,7 +897,7 @@ export default function MerchantGrowthControlRoom() {
                     />
                     <div className="min-w-0 flex-1">
                       <span className="text-[9px] font-bold text-[#0A63FF] uppercase block">
-                        Target Companion Item
+                        {t("growth.companionProduct")}
                       </span>
                       <h5 className="font-bold text-xs text-[#172033] truncate">
                         {opp.crossSellProduct.name}
@@ -922,7 +926,7 @@ export default function MerchantGrowthControlRoom() {
                           : "bg-[#0A63FF] hover:bg-[#0052CC] text-white"
                       }`}
                     >
-                      {opp.isActive ? "Deactivate Strategy" : "ACTIVATE STRATEGY"}
+                      {opp.isActive ? t("growth.deactivateStrategy") : t("growth.activateStrategy")}
                     </button>
                   </div>
                 </div>
@@ -1188,14 +1192,15 @@ export default function MerchantGrowthControlRoom() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-rose-50/50 border border-rose-200 space-y-2.5">
                   <span className="font-extrabold text-xs text-rose-900 block">
-                    Failure A: Spend Cap Exceeded (Simulated Cart &gt; Active Policy Limit)
+                    {t("safeguards.demoSpendCapTitle")}
                   </span>
                   <p className="text-[11px] text-rose-800 leading-snug">
-                    Simulates a cart exceeding the merchant spend cap. Proves that Razorpay order creation is blocked server-side before gateway invocation.
+                    {t("safeguards.demoSpendCapDesc")}
                   </p>
                   <button
                     onClick={handleTestSpendCapDemo}
                     disabled={testingSpendCap}
+                    title="Trigger Spend Cap Exceeded Demo"
                     className="w-full py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
                   >
                     {testingSpendCap ? (
@@ -1203,20 +1208,21 @@ export default function MerchantGrowthControlRoom() {
                     ) : (
                       <ShieldCheck className="w-3.5 h-3.5" />
                     )}
-                    <span>Trigger Spend Cap Exceeded Demo</span>
+                    <span>{t("safeguards.triggerDemo")} (Spend Cap)</span>
                   </button>
                 </div>
 
                 <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200 space-y-2.5">
                   <span className="font-extrabold text-xs text-amber-900 block">
-                    Failure B: Price Volatility (Shifted from ₹6,799 to ₹7,199)
+                    {t("safeguards.demoPriceSpikeTitle")}
                   </span>
                   <p className="text-[11px] text-amber-800 leading-snug">
-                    Simulates a catalog price shift after shopper approval. Proves that approval is invalidated and payment is never captured with stale pricing.
+                    {t("safeguards.demoPriceSpikeDesc")}
                   </p>
                   <button
                     onClick={handleTestPriceSpikeDemo}
                     disabled={testingPriceSpike}
+                    title="Trigger Price Volatility Demo"
                     className="w-full py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
                   >
                     {testingPriceSpike ? (
@@ -1224,7 +1230,7 @@ export default function MerchantGrowthControlRoom() {
                     ) : (
                       <AlertTriangle className="w-3.5 h-3.5" />
                     )}
-                    <span>Trigger Price Volatility Demo</span>
+                    <span>{t("safeguards.triggerDemo")} (Price Volatility)</span>
                   </button>
                 </div>
               </div>

@@ -9,28 +9,32 @@ import { ChatSidebar, ChatSession, SavedCart } from "@/components/chat-sidebar";
 import { CONNECTED_STORES, SAMPLE_NEXUS_PRODUCTS, SAMPLE_EBAY_PRODUCTS } from "@/lib/gemini";
 import { Layers } from "lucide-react";
 import { triggerRazorpayPayment } from "@/lib/razorpay";
+import { useLocale, Locale } from "@/lib/locale-context";
 
 function lookupProduct(productId: string) {
   const all = [...SAMPLE_NEXUS_PRODUCTS, ...SAMPLE_EBAY_PRODUCTS];
   return all.find((p) => p.id === productId);
 }
 
+function getWelcomeMessage(locale: Locale): string {
+  switch (locale) {
+    case "hi":
+      return `👋 नमस्ते! मैं Raya हूँ, Razorpay द्वारा आपका स्वायत्त खरीदारी एजेंट।\n\nमैं बाज़ार इकोसिस्टम के सभी लाइव मर्चेंट स्टोर्स और मार्केटप्लेस से जुड़ा हुआ हूँ:\n• ⚡ NexusStore: स्मार्ट वियरेबल्स और हाई-परफॉर्मेंस टेक\n• 🧵 ThreadVault: मिनिमलिस्ट लक्ज़री फैशन, कश्मीरी वस्त्र और ऑडीओफाइल उपकरण\n• 🎮 PixelMart: साइबरपंक क्रिएटर उपकरण और RGB हार्डवेयर\n• 🛍️ eBay: प्रमाणित रीफर्बिश्ड इलेक्ट्रॉनिक्स और वैश्विक मार्केटप्लेस\n\nमुझसे पूछें:\n• "₹5,000 के अंदर हेडफ़ोन दिखाएं"\n• "ThreadVault से कपड़े और PixelMart से गेमिंग गियर खोजें"\n• "सभी स्टोर्स में लैपटॉप दिखाएं"`;
+    case "mr":
+      return `👋 नमस्कार! मी Raya आहे, Razorpay द्वारे तुमचा स्वायत्त खरेदी सहाय्यक.\n\nमी बाझार इकोसिस्टममधील लाइव्ह मर्चंट स्टोअर्सशी जोडलेला आहे:\n• ⚡ NexusStore: स्मार्ट पोशाख आणि हाय-परफॉर्मन्स टेक\n• 🧵 ThreadVault: क्युरेट केलेले लक्झरी फॅशन आणि ऑडिओफाइल उपकरणे\n• 🎮 PixelMart: सायबरपंक क्रिएटर उपकरणे आणि RGB हार्डवेअर\n• 🛍️ eBay: प्रमाणित नूतनीकरण केलेले इलेक्ट्रॉनिक्स आणि जागतिक बाजारपेठ\n\nमला विचारा:\n• "₹5,000 च्या आत हेडफोन्स दाखवा"\n• "सर्व स्टोअर्समधील लॅपटॉप्स शोधा"`;
+    case "ta":
+      return `👋 வணக்கம்! நான் Raya, Razorpay-ன் தன்னாட்சி ஷாப்பிங் உதவியாளர்.\n\nநான் நேரடி வணிக கடைகளுடன் இணைக்கப்பட்டுள்ளேன்:\n• ⚡ NexusStore: ஸ்மார்ட் ஆடைகள் மற்றும் உயர் செயல்திறன் மின்னணுவியல்\n• 🧵 ThreadVault: மினிமலிஸ்ட் ஆடம்பர ஃபேஷன் மற்றும் உயர்தர ஆடியோ\n• 🎮 PixelMart: சைபர்பங்க் கிரியேட்டர் சாதனங்கள் மற்றும் RGB வன்பொருள்\n• 🛍️ eBay: உலகளாவிய சந்தை மற்றும் புதுப்பிக்கப்பட்ட பொருட்கள்\n\nஎன்னிடம் கேளுங்கள்:\n• "₹5,000-க்குள் ஹெட்ஃபோன்களைக் காட்டுங்கள்"\n• "அனைத்து கடைகளிலும் லேப்டாப்களைத் தேடுங்கள்"`;
+    case "bn":
+      return `👋 নমস্কার! আমি Raya, Razorpay দ্বারা তৈরি আপনার স্বায়ত্তশাসিত শপিং এজেন্ট।\n\nআমি লাইভ মার্চেন্ট স্টোরের সাথে সংযুক্ত:\n• ⚡ NexusStore: আধুনিক স্মার্ট পোশাক ও উন্নত প্রযুক্তি সামগ্রী\n• 🧵 ThreadVault: কিউরেটেড বিলাসবহুল ফ্যাশন ও প্রিমিয়াম অডিও\n• 🎮 PixelMart: সাইবারপাঙ্ক ক্রিয়েটর গিয়ার ও RGB হার্ডওয়্যার\n• 🛍️ eBay: বিশ্বব্যাপী মার্কেটপ্লেস ও সার্টিফাইড রিফার্বিশড প্রযুক্তি\n\nআমাকে জিজ্ঞাসা করুন:\n• "₹৫,০০০ এর মধ্যে হেডফোন দেখান"\n• "সব স্টোরে ল্যাপটপ খুঁজুন"`;
+    default:
+      return `👋 Hi! I am Raya, your autonomous shopping agent by Razorpay.\n\nI am connected to live merchant stores and marketplaces across the Bazaar ecosystem:\n• ⚡ NexusStore: Sleek high-performance smart apparel & tech electronics\n• 🧵 ThreadVault: Curated minimalist luxury fashion, cashmere & artisan audio\n• 🎮 PixelMart: Cyberpunk creator equipment, macro keypads & RGB hardware\n• 🛍️ eBay: Global marketplace with certified refurbished tech & direct listings\n\nTry asking me:\n• "Show me headphones under ₹5,000"\n• "Find luxury clothing from ThreadVault and gaming gear from PixelMart"\n• "Show me laptops across all stores"`;
+  }
+}
+
 const DEFAULT_WELCOME_MESSAGE: Message = {
   id: "intro-msg",
   role: "assistant",
-  text: `👋 Hi! I am Raya, your autonomous shopping agent by Razorpay.
-
-I am connected to live merchant stores and marketplaces across the Bazaar ecosystem:
-• ⚡ NexusStore: Sleek high-performance smart apparel & tech electronics
-• 🧵 ThreadVault: Curated minimalist luxury fashion, cashmere & artisan audio
-• 🎮 PixelMart: Cyberpunk creator equipment, macro keypads & RGB hardware
-• 🛍️ eBay: Global marketplace with certified refurbished tech & direct listings
-
-Try asking me:
-• "Show me headphones under ₹5,000"
-• "Find luxury clothing from ThreadVault and gaming gear from PixelMart"
-• "Show me laptops across all stores"
-• Or click one of the store pills below to start browsing!`,
+  text: getWelcomeMessage("en"),
 };
 
 function generateCleanTitle(prompt: string): string {
@@ -44,6 +48,7 @@ function generateCleanTitle(prompt: string): string {
 }
 
 export default function RayaHome() {
+  const { locale, t } = useLocale();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [moreStoresOpen, setMoreStoresOpen] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string>("session_default");
@@ -71,7 +76,10 @@ export default function RayaHome() {
     session_default: [],
   });
 
-  const messages = sessionMessages[activeSessionId] || [DEFAULT_WELCOME_MESSAGE];
+  const rawMessages = sessionMessages[activeSessionId] || [DEFAULT_WELCOME_MESSAGE];
+  const messages = rawMessages.map((m) =>
+    m.id === "intro-msg" ? { ...m, text: getWelcomeMessage(locale) } : m
+  );
   const history = sessionHistories[activeSessionId] || [];
   const cartItems = sessionCarts[activeSessionId] || [];
 
@@ -345,6 +353,7 @@ export default function RayaHome() {
           message: textToSend,
           history,
           currentCart: cartItems,
+          locale,
         }),
       });
 
@@ -695,7 +704,7 @@ export default function RayaHome() {
           <div className="flex items-center gap-2 overflow-visible">
             <span className="text-[11px] font-bold text-[#667085] uppercase tracking-wider shrink-0 flex items-center gap-1">
               <Layers className="w-3.5 h-3.5 text-[#0A63FF]" />
-              <span>Explore:</span>
+              <span>{t("nav.explore")}:</span>
             </span>
 
             <button
@@ -704,7 +713,7 @@ export default function RayaHome() {
               className="px-3.5 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs hover:border-[#0A63FF]/50 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
             >
               <span>🌐</span>
-              <span>All Stores</span>
+              <span>{t("nav.storesConnected")}</span>
             </button>
 
             {/* Dynamic More Stores Dropdown (3 Connected Stores + eBay) */}
@@ -720,7 +729,7 @@ export default function RayaHome() {
                 } text-xs font-semibold whitespace-nowrap shadow-2xs transition-all cursor-pointer flex items-center gap-1.5`}
                 title="Choose from connected merchant stores and eBay"
               >
-                <span>Stores</span>
+                <span>{t("nav.storesConnected")}</span>
                 <span className={`text-[10px] transition-transform duration-150 ${moreStoresOpen ? "rotate-180" : ""}`}>▾</span>
               </button>
 
@@ -733,7 +742,7 @@ export default function RayaHome() {
                   />
                   <div className="absolute left-0 top-full mt-2 z-50 w-64 bg-white border border-[#E6E0D6] rounded-2xl shadow-xl p-2 space-y-1 animate-in fade-in">
                     <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#667085] border-b border-slate-100 mb-1">
-                      Choose Store
+                      {t("nav.storesConnected")}
                     </div>
                     {Object.values(CONNECTED_STORES).map((store) => (
                       <button

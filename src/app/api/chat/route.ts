@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   RAYA_SYSTEM_INSTRUCTION,
+  getRayaSystemInstruction,
   GROQ_TOOLS,
   executeBridgeTool,
   ToolExecutionResult,
@@ -92,7 +93,8 @@ function sanitizeHumanReadableText(text: string): string {
 
 async function callNativeGemini(
   contents: any[],
-  geminiKey: string
+  geminiKey: string,
+  locale: string = "en"
 ): Promise<{ text?: string; functionCalls?: Array<{ name: string; args: any }>; rawContent?: any }> {
   let lastError = "Unknown Gemini error";
 
@@ -109,7 +111,7 @@ async function callNativeGemini(
 
       const payload = {
         system_instruction: {
-          parts: [{ text: RAYA_SYSTEM_INSTRUCTION }],
+          parts: [{ text: getRayaSystemInstruction(locale) }],
         },
         contents,
         tools: [
@@ -174,7 +176,7 @@ async function callNativeGemini(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { message, history = [], currentCart = [] } = body;
+    const { message, history = [], currentCart = [], locale = "en" } = body;
 
     if (!message || typeof message !== "string") {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
@@ -200,8 +202,15 @@ export async function POST(req: NextRequest) {
     ).trim();
 
     if (!geminiKey) {
+      const welcomeMessages: Record<string, string> = {
+        en: "👋 Welcome to Raya by Razorpay! Please configure your `gemini_api_key` in Vercel environment variables.",
+        hi: "👋 Raya by Razorpay में आपका स्वागत है! कृपया अपने Vercel वातावरण में `gemini_api_key` कॉन्फ़िगर करें।",
+        mr: "👋 Raya by Razorpay मध्ये आपले स्वागत आहे! कृपया आपल्या Vercel वातावरणात `gemini_api_key` कॉन्फिगर करा.",
+        ta: "👋 Raya by Razorpay-க்கு வரவேற்கிறோம்! உங்கள் Vercel சூழலில் `gemini_api_key`-ஐ கட்டமைக்கவும்.",
+        bn: "👋 Raya by Razorpay-এ আপনাকে স্বাগতম! অনুগ্রহ করে আপনার Vercel পরিবেশে `gemini_api_key` কনফিগার করুন।",
+      };
       return NextResponse.json({
-        text: "👋 Welcome to Raya by Razorpay! Please configure your `gemini_api_key` in Vercel environment variables.",
+        text: welcomeMessages[locale] || welcomeMessages.en,
         toolExecutions: [],
         history: [],
       });
@@ -260,7 +269,7 @@ export async function POST(req: NextRequest) {
     while (iterations < MAX_ITERATIONS) {
       iterations++;
 
-      const geminiResult = await callNativeGemini(contents, geminiKey);
+      const geminiResult = await callNativeGemini(contents, geminiKey, locale);
 
       // If Gemini called tools
       if (geminiResult.functionCalls && geminiResult.functionCalls.length > 0) {

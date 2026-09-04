@@ -135,20 +135,22 @@ function FormattedChatText({ text, isUser }: { text: string; isUser: boolean }) 
   return <div className="space-y-0.5">{elements}</div>;
 }
 
-function formatToolSummary(toolName: string): string {
+import { useLocale } from "@/lib/locale-context";
+
+function formatToolSummary(toolName: string, t: (key: string) => string): string {
   switch (toolName) {
     case "listConnectedStores":
-      return "Connected stores verified";
+      return t("nav.storesConnected");
     case "listProducts":
-      return "Catalog searched across stores";
+      return t("chat.searchingAcrossStores");
     case "searchEbayRefurbished":
-      return "eBay live marketplace queried";
+      return t("chat.searchingAcrossStores");
     case "viewCart":
-      return "Active basket verified";
+      return t("cart.title");
     case "addToCart":
-      return "Item added to basket";
+      return t("product.added");
     case "checkoutOrder":
-      return "Checkout initiated";
+      return t("checkout.orderPrepared");
     default:
       return toolName;
   }
@@ -160,17 +162,18 @@ function ToolActivityDisclosure({
   executions: Array<{ tool: string; args?: any }>;
 }) {
   const [open, setOpen] = useState(false);
+  const { t } = useLocale();
 
   // Deduplicate tools so we never show repeated listConnectedStores() or viewCart()
   const uniqueTools = Array.from(new Set(executions.map((e) => e.tool)));
-  const primarySummary = uniqueTools.map(formatToolSummary).slice(0, 2).join(" • ");
+  const primarySummary = uniqueTools.map((tool) => formatToolSummary(tool, t)).slice(0, 2).join(" • ");
 
   return (
     <div className="mb-1 text-xs">
       <button
         onClick={() => setOpen(!open)}
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F7F5F0] hover:bg-slate-100 border border-[#E6E0D6] text-[#667085] hover:text-[#172033] text-[11px] font-medium transition-all cursor-pointer shadow-2xs"
-        title="Click to view technical execution details"
+        title={t("common.details")}
       >
         <Activity className="w-3 h-3 text-[#0A63FF]" />
         <span>{primarySummary}</span>
@@ -179,14 +182,14 @@ function ToolActivityDisclosure({
 
       {open && (
         <div className="mt-1 p-2.5 rounded-xl bg-white border border-[#E6E0D6] text-[10px] font-mono text-[#667085] space-y-1 shadow-xs">
-          <span className="font-bold text-[#172033] block">Debug Execution Ledger:</span>
-          {executions.map((t, idx) => (
+          <span className="font-bold text-[#172033] block">{t("ledger.title")}:</span>
+          {executions.map((eItem, idx) => (
             <div key={idx} className="flex items-center gap-1.5">
               <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-              <span className="font-bold text-[#172033]">{t.tool}()</span>
-              {t.args && Object.keys(t.args).length > 0 && (
+              <span className="font-bold text-[#172033]">{eItem.tool}()</span>
+              {eItem.args && Object.keys(eItem.args).length > 0 && (
                 <span className="text-slate-400 truncate max-w-xs">
-                  {JSON.stringify(t.args)}
+                  {JSON.stringify(eItem.args)}
                 </span>
               )}
             </div>
@@ -206,6 +209,7 @@ function ConversationalCheckoutCard({
   onPay?: () => void;
   onAutonomousOrder?: () => void;
 }) {
+  const { t } = useLocale();
   const totalAmount = items.reduce((sum, it) => {
     const p = it.price || it.product?.price || 0;
     return sum + p * (it.quantity || 1);
@@ -221,15 +225,15 @@ function ConversationalCheckoutCard({
           </div>
           <div>
             <h4 className="font-extrabold text-xs text-[#172033] uppercase tracking-wider">
-              Order Review & Confirmation
+              {t("checkout.title")}
             </h4>
             <p className="text-[10px] text-[#667085]">
-              {items.length} {items.length === 1 ? "item" : "items"} ready for autonomous placement
+              {t("cart.itemsCount", { count: items.length })}
             </p>
           </div>
         </div>
         <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-          Review & Confirm
+          {t("checkout.approvalRequired")}
         </span>
       </div>
 
@@ -237,7 +241,7 @@ function ConversationalCheckoutCard({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
         <div className="p-2.5 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6]">
           <span className="text-[10px] font-bold text-[#667085] uppercase tracking-wider block mb-0.5">
-            📍 Delivery Destination
+            📍 {t("receipt.shippingAddress")}
           </span>
           <p className="font-bold text-[#172033]">Autonomous Shopper</p>
           <p className="text-[11px] text-[#667085] truncate">42 Commerce Blvd, Bengaluru (560001)</p>
@@ -245,10 +249,10 @@ function ConversationalCheckoutCard({
 
         <div className="p-2.5 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6]">
           <span className="text-[10px] font-bold text-[#667085] uppercase tracking-wider block mb-0.5">
-            💳 Settlement Method
+            💳 {t("checkout.payment")}
           </span>
-          <p className="font-bold text-[#172033]">Razorpay Test Mode</p>
-          <p className="text-[11px] text-emerald-700 font-semibold">Instant INR Authorization</p>
+          <p className="font-bold text-[#172033]">{t("nav.testMode")}</p>
+          <p className="text-[11px] text-emerald-700 font-semibold">{t("checkout.testModeNotice")}</p>
         </div>
       </div>
 
@@ -270,7 +274,7 @@ function ConversationalCheckoutCard({
                   <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-200 text-slate-800">
                     {storeName}
                   </span>
-                  <span className="text-[10px] text-[#667085] font-semibold">Qty: {qty}</span>
+                  <span className="text-[10px] text-[#667085] font-semibold">{t("cart.qty")}: {qty}</span>
                 </div>
                 <h5 className="font-bold text-[#172033] truncate" title={name}>
                   {name}
@@ -287,18 +291,18 @@ function ConversationalCheckoutCard({
       {/* Purchase Control Tag */}
       <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-[10.5px] text-emerald-800 flex items-center gap-1.5">
         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-        <span>Purchase Control: All 6 Gates Passed • Strict INR Domestic Settlement</span>
+        <span>{t("checkout.policyPassed")}</span>
       </div>
 
       {/* Explicit Confirmation Question Box */}
       <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200 text-xs text-blue-950 font-medium">
-        👉 <strong>Confirmation Required:</strong> Would you like me to proceed and place this order for you now?
+        👉 <strong>{t("checkout.approvalRequired")}:</strong> {t("checkout.approvalExplanation")}
       </div>
 
       {/* Total & Action Buttons */}
       <div className="pt-2 border-t border-[#E6E0D6] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <span className="text-[10px] font-bold text-[#667085] block">Total to Authorize</span>
+          <span className="text-[10px] font-bold text-[#667085] block">{t("checkout.total")}</span>
           <span className="text-xl font-black text-[#172033]">₹{totalAmount.toLocaleString()}</span>
         </div>
 
@@ -307,10 +311,10 @@ function ConversationalCheckoutCard({
             <button
               onClick={onAutonomousOrder}
               className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-200"
-              title="Confirm and let Autonomous AI Buyer place this order now"
+              title={t("checkout.approvePurchase")}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Yes, Confirm & Place Order</span>
+              <span>{t("checkout.approvePurchase")}</span>
             </button>
           )}
 
@@ -319,7 +323,7 @@ function ConversationalCheckoutCard({
             className="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-[#0A63FF] hover:bg-blue-600 active:scale-95 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-blue-200"
           >
             <CreditCard className="w-3.5 h-3.5" />
-            <span>Pay with Razorpay</span>
+            <span>{t("checkout.payWithRazorpay")}</span>
           </button>
         </div>
       </div>
@@ -329,6 +333,7 @@ function ConversationalCheckoutCard({
 
 export function RayaChat({ messages, loading, onAddToCart, onTriggerCheckout, onAutonomousOrder }: RayaChatProps) {
   const scrollEndRef = useRef<HTMLDivElement>(null);
+  const { t } = useLocale();
 
   useEffect(() => {
     scrollEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -408,7 +413,7 @@ export function RayaChat({ messages, loading, onAddToCart, onTriggerCheckout, on
           </div>
           <div className="px-4 py-2.5 rounded-2xl bg-white border border-raya-lightGray shadow-xs flex items-center gap-2.5 text-xs font-medium text-raya-stone">
             <span className="w-2 h-2 rounded-full bg-raya-blue animate-pulse" />
-            <span>Raya is consulting multi-store catalog & live inventory...</span>
+            <span>{t("chat.searchingAcrossStores")}</span>
           </div>
         </div>
       )}

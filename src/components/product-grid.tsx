@@ -24,6 +24,8 @@ export interface Product {
   matchReason?: string;
 }
 
+import { useLocale } from "@/lib/locale-context";
+
 interface ProductGridProps {
   products: Product[];
   onAddToCart: (product: Product) => void;
@@ -32,6 +34,7 @@ interface ProductGridProps {
 export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
   const [addedMap, setAddedMap] = useState<Record<string, boolean>>({});
   const [explainProduct, setExplainProduct] = useState<Product | null>(null);
+  const { t } = useLocale();
 
   if (!products || products.length === 0) return null;
 
@@ -53,7 +56,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold text-raya-coolGray uppercase tracking-wider">
           <Tag className="w-3.5 h-3.5 text-raya-blue" />
-          <span>Multi-Store & Marketplace Recommendations ({products.length})</span>
+          <span>{t("nav.storesConnected")} ({products.length})</span>
         </div>
       </div>
 
@@ -88,7 +91,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
               {p.isBestMatch && (
                 <div className="absolute -top-2.5 left-4 z-10 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[10px] font-extrabold uppercase tracking-wider shadow-sm flex items-center gap-1">
                   <span>⭐</span>
-                  <span>#1 Best Match</span>
+                  <span>{t("product.bestMatch")}</span>
                 </div>
               )}
 
@@ -108,7 +111,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
 
                   {/* Buyer Score Pill */}
                   <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-emerald-600/90 text-white text-[10px] font-extrabold shadow-xs backdrop-blur-xs flex items-center gap-1">
-                    <span>{score}% Score</span>
+                    <span>{score}% {t("product.matchScore")}</span>
                   </span>
                 </div>
 
@@ -130,7 +133,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                 {/* Match Reason */}
                 {p.matchReason && (
                   <div className="mt-1.5 px-2 py-1 rounded-md bg-amber-50/70 border border-amber-200/60 text-[10.5px] text-amber-900 leading-snug">
-                    <span className="font-bold text-amber-800">Why I recommend: </span>
+                    <span className="font-bold text-amber-800">{t("product.whyRecommended")}: </span>
                     <span className="italic">{p.matchReason}</span>
                   </div>
                 )}
@@ -148,14 +151,14 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                   className="mt-2 text-[10.5px] font-bold text-raya-blue hover:text-blue-700 flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Info className="w-3.5 h-3.5 text-raya-blue shrink-0" />
-                  <span>Why Bazaar recommended this</span>
+                  <span>{t("product.whyRecommended")}</span>
                 </button>
               </div>
 
               <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-raya-lightGray/60 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-raya-coolGray block font-medium uppercase">
-                    {isEbay ? "Price (USD / INR)" : "Price"}
+                    {t("checkout.total")}
                   </span>
                   <div className="flex flex-col">
                     <span className="text-sm sm:text-base font-extrabold text-raya-navy">
@@ -176,7 +179,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer bg-[#0064D2] hover:bg-[#0053b3] text-white"
                   >
-                    <span>View on eBay</span>
+                    <span>{t("product.viewOnEbay")}</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 ) : (
@@ -191,12 +194,12 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                     {isAdded ? (
                       <>
                         <Check className="w-3.5 h-3.5" />
-                        <span>Added</span>
+                        <span>{t("product.added")}</span>
                       </>
                     ) : (
                       <>
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Add to Basket</span>
+                        <span>{t("product.addToBasket")}</span>
                       </>
                     )}
                   </button>
@@ -224,10 +227,10 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
               </div>
               <div>
                 <span className="text-[10px] font-bold text-raya-coolGray uppercase tracking-wider">
-                  Deterministic Scoring Engine
+                  {t("common.bazaarAi")}
                 </span>
                 <h3 className="font-extrabold text-sm text-raya-navy">
-                  Why Bazaar Shortlisted This Item
+                  {t("product.whyRecommended")}
                 </h3>
               </div>
             </div>
@@ -237,14 +240,14 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                 {explainProduct.name}
               </p>
               <p className="text-[11px] text-raya-coolGray">
-                {explainProduct.matchReason || "Selected because it best matched the buyer's budget, quality and delivery requirements."}
+                {explainProduct.matchReason || t("product.whyRecommended")}
               </p>
             </div>
 
             {/* 5 Deterministic Score Factors */}
             <div className="space-y-2.5 mb-4">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-600">Buyer Fit</span>
+                <span className="font-medium text-slate-600">{t("product.matchScore")}</span>
                 <span className="font-bold text-slate-900">{explainProduct.buyerScore || 96}%</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -252,7 +255,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
               </div>
 
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-600">Budget Fit</span>
+                <span className="font-medium text-slate-600">{t("cart.subtotal")}</span>
                 <span className="font-bold text-slate-900">98%</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -260,7 +263,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
               </div>
 
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-600">Quality & Specifications</span>
+                <span className="font-medium text-slate-600">{t("product.specs")}</span>
                 <span className="font-bold text-slate-900">95%</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -268,7 +271,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
               </div>
 
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-600">Delivery Speed</span>
+                <span className="font-medium text-slate-600">{t("cart.shipping")}</span>
                 <span className="font-bold text-slate-900">94%</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -276,7 +279,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
               </div>
 
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-600">Merchant Authorization Fit</span>
+                <span className="font-medium text-slate-600">{t("checkout.policyStatus")}</span>
                 <span className="font-bold text-slate-900">92%</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -284,17 +287,11 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
               </div>
             </div>
 
-            {/* Trade-off Rationale */}
-            <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl mb-4 text-[11px] text-amber-900 leading-relaxed">
-              <span className="font-bold block text-amber-800 mb-0.5">⚖️ Trade-off Analysis:</span>
-              Selected over generic alternatives because verified specifications and buyer feedback score were significantly higher with zero price volatility.
-            </div>
-
             <button
               onClick={() => setExplainProduct(null)}
               className="w-full py-2 bg-raya-navy hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
             >
-              Close Inspector
+              {t("common.close")}
             </button>
           </div>
         </div>

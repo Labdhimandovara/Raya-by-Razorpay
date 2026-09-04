@@ -9,6 +9,7 @@ import {
   Activity,
   MessageSquare,
 } from "lucide-react";
+import { useLocale } from "@/lib/locale-context";
 
 // Professional Commerce Assistant Badge
 function MerchantAssistantBadge({ className = "w-7 h-7" }: { className?: string }) {
@@ -22,20 +23,25 @@ function MerchantAssistantBadge({ className = "w-7 h-7" }: { className?: string 
 }
 
 export function MerchantFloatingDrawer() {
+  const { locale, t } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
   const [metrics, setMetrics] = useState<{ totalGMV: number; totalOrders: number; incrementalGMV: number } | null>(null);
   const [opportunities, setOpportunities] = useState<any[]>([]);
   
   // Copilot messages state
-  const [messages, setMessages] = useState<Array<{ role: "user" | "copilot"; text: string; time: string; action?: any }>>([
-    {
-      role: "copilot",
-      text: "Bazaar Merchant Assistant: Query live Razorpay order telemetry, strategy performance, conversion lift, or purchase guardrails.",
-      time: "Live",
-    },
-  ]);
+  const [messages, setMessages] = useState<Array<{ role: "user" | "copilot"; text: string; time: string; action?: any }>>([]);
   const [input, setInput] = useState("");
   const [copilotLoading, setCopilotLoading] = useState(false);
+
+  useEffect(() => {
+    setMessages([
+      {
+        role: "copilot",
+        text: `${t("merchant.copilot.title")}: ${t("merchant.copilot.subtitle")}`,
+        time: "Live",
+      },
+    ]);
+  }, [locale]);
 
   // Fetch telemetry when opened
   useEffect(() => {
@@ -87,6 +93,7 @@ export function MerchantFloatingDrawer() {
           metrics,
           opportunities,
           ordersCount: metrics?.totalOrders || 25,
+          locale,
         }),
       });
       const data = await res.json();
@@ -104,7 +111,7 @@ export function MerchantFloatingDrawer() {
         ...prev,
         {
           role: "copilot",
-          text: "Live telemetry sync error. Please check your backend connection.",
+          text: t("merchant.copilot.error"),
           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
@@ -151,7 +158,7 @@ export function MerchantFloatingDrawer() {
       >
         <MerchantAssistantBadge className="w-7 h-7 sm:w-8 sm:h-8 group-hover:scale-105 transition-transform" />
         <span className="text-xs sm:text-[13px] font-semibold text-[#172033] tracking-tight whitespace-nowrap">
-          Ask any questions
+          {t("merchant.copilot.askQuestions")}
         </span>
       </button>
 
@@ -171,10 +178,10 @@ export function MerchantFloatingDrawer() {
                 <MerchantAssistantBadge className="w-8 h-8" />
                 <div>
                   <h3 className="font-bold text-sm text-[#172033] tracking-tight">
-                    Merchant Assistant
+                    {t("merchant.copilot.title")}
                   </h3>
                   <p className="text-[11px] text-[#667085]">
-                    Live Commerce Intelligence & Razorpay Telemetry
+                    {t("merchant.copilot.subtitle")}
                   </p>
                 </div>
               </div>
@@ -193,7 +200,7 @@ export function MerchantFloatingDrawer() {
             <div className="px-5 py-2.5 bg-[#FBFBFB] border-b border-slate-100 flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[11px] font-semibold text-[#667085]">Total GMV:</span>
+                <span className="text-[11px] font-semibold text-[#667085]">{t("merchant.gmv")}:</span>
                 <span className="font-mono font-bold text-[#172033]">
                   {metrics ? `₹${metrics.totalGMV.toLocaleString()}` : "—"}
                 </span>
@@ -202,16 +209,16 @@ export function MerchantFloatingDrawer() {
               <div className="text-slate-300">|</div>
 
               <div className="text-[11px]">
-                <span className="text-[#667085]">Settled: </span>
+                <span className="text-[#667085]">{t("merchant.orders")}: </span>
                 <span className="font-bold text-emerald-700">
-                  {metrics ? `${metrics.totalOrders} Orders` : "—"}
+                  {metrics ? `${metrics.totalOrders}` : "—"}
                 </span>
               </div>
 
               <div className="text-slate-300">|</div>
 
               <div className="text-[11px]">
-                <span className="text-[#667085]">AI Lift: </span>
+                <span className="text-[#667085]">{t("merchant.incrementalGMV")}: </span>
                 <span className="font-bold text-[#0A63FF]">
                   {metrics ? `+₹${metrics.incrementalGMV.toLocaleString()}` : "—"}
                 </span>
@@ -223,9 +230,9 @@ export function MerchantFloatingDrawer() {
               {/* Clean Minimalist Quick Question Pills */}
               <div className="flex flex-wrap gap-1.5 pb-1">
                 {[
-                  "Why did revenue increase?",
-                  "What should I do next?",
-                  "Guardrails Status",
+                  t("merchant.copilot.revenueGrowth"),
+                  t("merchant.copilot.nextOpportunity"),
+                  t("merchant.copilot.guardrails"),
                 ].map((q, i) => (
                   <button
                     key={i}
@@ -250,7 +257,7 @@ export function MerchantFloatingDrawer() {
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3 text-[9.5px] text-slate-400">
-                      <span className="font-semibold">{m.role === "user" ? "You" : "Merchant Assistant"}</span>
+                      <span className="font-semibold">{m.role === "user" ? "You" : t("merchant.copilot.title")}</span>
                       <span>{m.time}</span>
                     </div>
                     <p className="whitespace-pre-wrap">{m.text}</p>
@@ -262,7 +269,7 @@ export function MerchantFloatingDrawer() {
                           className="px-3 py-1.5 rounded-lg bg-[#0A63FF] text-white font-bold text-[10px] flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                         >
                           <TrendingUp className="w-3 h-3 text-white" />
-                          <span>Activate Strategy</span>
+                          <span>{t("merchant.growthOpportunities.activateRule")}</span>
                         </button>
                       </div>
                     )}
@@ -273,7 +280,7 @@ export function MerchantFloatingDrawer() {
               {copilotLoading && (
                 <div className="flex items-center gap-2 text-xs text-[#667085] p-2 animate-pulse">
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0A63FF]" />
-                  <span>Synthesizing live commerce telemetry...</span>
+                  <span>{t("merchant.copilot.thinking")}</span>
                 </div>
               )}
             </div>
@@ -291,7 +298,7 @@ export function MerchantFloatingDrawer() {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask about revenue, conversion, or guardrails..."
+                  placeholder={t("merchant.copilot.inputPlaceholder")}
                   className="flex-1 bg-transparent text-xs text-[#172033] placeholder-slate-400 focus:outline-none min-w-0 pr-2"
                 />
                 <button

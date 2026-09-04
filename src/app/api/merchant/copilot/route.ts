@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, orders = [], metrics = {}, opportunities = [] } = await req.json();
+    const { message, orders = [], metrics = {}, opportunities = [], locale = "en" } = await req.json();
 
     if (!message || typeof message !== "string") {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
@@ -35,12 +35,30 @@ export async function POST(req: NextRequest) {
       };
     }
 
+    const fallbackReplies: Record<string, string> = {
+      en: `Merchant Copilot: AI-Attributed GMV is ₹${(metrics.aiAttributedGMV || 103662).toLocaleString()} (+24.8% AOV lift). Cross-sell rules for Headphones and Powerbanks are currently driving incremental revenue.`,
+      hi: `मर्चेंट कोपायलट: AI-एट्रिब्यूटेड GMV ₹${(metrics.aiAttributedGMV || 103662).toLocaleString()} (+24.8% AOV बढ़त) है। हेडफ़ोन और पावरबैंक के क्रॉस-सेल नियम वर्तमान में वृद्धिशील राजस्व को बढ़ा रहे हैं।`,
+      mr: `मर्चंट कोपायलट: AI-एट्रिब्यूटेड GMV ₹${(metrics.aiAttributedGMV || 103662).toLocaleString()} (+24.8% AOV वाढ) आहे. हेडफोन्स आणि पॉवरबँक्ससाठी क्रॉस-सेल नियम सध्या वाढीव महसूल मिळवून देत आहेत.`,
+      ta: `வணிக கோபைலட்: AI-காரணமான GMV ₹${(metrics.aiAttributedGMV || 103662).toLocaleString()} (+24.8% AOV வளர்ச்சி). ஹெட்ஃபோன்கள் மற்றும் பவர்பேங்க்களுக்கான குறுக்கு-விற்பனை விதிகள் தற்போது கூடுதல் வருவாயை அதிகரிக்கின்றன.`,
+      bn: `মার্চেন্ট কপাইলট: AI-আরোপিত GMV হলো ₹${(metrics.aiAttributedGMV || 103662).toLocaleString()} (+24.8% AOV বৃদ্ধি)। হেডফোন এবং পাওয়ারব্যাঙ্কের ক্রস-সেল নিয়মগুলি বর্তমানে ক্রমবর্ধমান রাজস্ব চালনা করছে।`,
+    };
+
     if (!geminiKey) {
       return NextResponse.json({
-        reply: `Merchant Copilot: AI-Attributed GMV is ₹${(metrics.aiAttributedGMV || 103662).toLocaleString()} (+24.8% AOV lift). Cross-sell rules for Headphones and Powerbanks are currently driving incremental revenue.`,
+        reply: fallbackReplies[locale] || fallbackReplies.en,
         action: actionPayload,
       });
     }
+
+    const languageInstructionMap: Record<string, string> = {
+      en: "Respond in clear, professional English.",
+      hi: "The merchant selected Hindi. You MUST write your ENTIRE reply in fluent, natural Hindi (हिन्दी). Do not mix English words into sentences. Keep brand names (Raya, Razorpay, Bazaar AI, NexusStore, ThreadVault, PixelMart, eBay), order IDs, and currency symbols (₹) in original form.",
+      mr: "The merchant selected Marathi. You MUST write your ENTIRE reply in fluent, natural Marathi (मराठी). Do not mix English words into sentences. Keep brand names (Raya, Razorpay, Bazaar AI, NexusStore, ThreadVault, PixelMart, eBay), order IDs, and currency symbols (₹) in original form.",
+      ta: "The merchant selected Tamil. You MUST write your ENTIRE reply in fluent, natural Tamil (தமிழ்). Do not mix English words into sentences. Keep brand names (Raya, Razorpay, Bazaar AI, NexusStore, ThreadVault, PixelMart, eBay), order IDs, and currency symbols (₹) in original form.",
+      bn: "The merchant selected Bengali. You MUST write your ENTIRE reply in fluent, natural Bengali (বাংলা). Do not mix English words into sentences. Keep brand names (Raya, Razorpay, Bazaar AI, NexusStore, ThreadVault, PixelMart, eBay), order IDs, and currency symbols (₹) in original form.",
+    };
+
+    const langInstruction = languageInstructionMap[locale] || languageInstructionMap.en;
 
     const prompt = `You are the Bazaar Multi-Store Merchant Copilot.
 You have real-time access to the merchant's multi-store commerce growth engine connecting NexusStore, ThreadVault, PixelMart, and eBay Marketplace via Razorpay infrastructure.
@@ -61,6 +79,7 @@ MERCHANT'S QUESTION:
 "${message}"
 
 INSTRUCTIONS:
+- ${langInstruction}
 - Give a direct, concise, and professional answer based strictly on the real data above.
 - If asked why revenue increased: explain that AI-attributed GMV rose because shoppers frequently accepted automated in-cart cross-sells (e.g. Laptop → Headphones, Heated Jacket → Powerbank).
 - If asked what to do next: recommend activating the "Capture Card → Broadcast XLR Mic" opportunity to capture an estimated ₹15,999 in untapped incremental GMV.

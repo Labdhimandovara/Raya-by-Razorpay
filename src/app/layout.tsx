@@ -15,6 +15,8 @@ export const viewport: Viewport = {
 };
 
 
+import { LocaleProvider } from "@/lib/locale-context";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,7 +32,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-raya-cloud text-raya-ink antialiased">
-        {children}
+        <LocaleProvider>{children}</LocaleProvider>
       </body>
     </html>
   );

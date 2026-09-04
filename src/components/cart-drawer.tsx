@@ -26,6 +26,7 @@ import {
   SAMPLE_THREADVAULT_PRODUCTS,
 } from "@/lib/gemini";
 import { triggerRazorpayPayment } from "@/lib/razorpay";
+import { useLocale } from "@/lib/locale-context";
 
 function lookupProduct(productId: string) {
   const all = [
@@ -82,6 +83,7 @@ export function BasketView({
   onClose,
   isDrawer = false,
 }: BasketProps & { onClose?: () => void; isDrawer?: boolean }) {
+  const { t, locale } = useLocale();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<{ paymentId: string; orderId: string } | null>(null);
   const [testModalData, setTestModalData] = useState<{ orderId: string; amount: number } | null>(null);
@@ -202,8 +204,6 @@ export function BasketView({
 
   const cartProductIds = new Set(items.map((i) => i.productId || i.id));
 
-  // Determine basket category context:
-  // Is the shopper buying clothing / fashion / wearable items or electronics / tech gear?
   const clothingKeywords = /\b(tee|shirt|jacket|hoodie|pants|trousers|sweater|coat|apparel|wear|cyberpunk|denim|belt|beanie|scarf|socks|kimono|cardigan|vest|streetwear)\b/i;
   const techKeywords = /\b(earbuds|headphones|laptop|charger|powerbank|keypad|capture|cable|rig|phone|keyboard|mouse|gadget|camera|display|audio)\b/i;
 
@@ -223,7 +223,6 @@ export function BasketView({
     }
   }
 
-  // Curated clothing & wearable accessories pool (ThreadVault & Nexus Wearables)
   const clothingAddons = [
     {
       id: "tv-cashmere-ribbed-beanie",
@@ -253,7 +252,7 @@ export function BasketView({
       store: "nexusstore",
       storeName: "NexusStore",
       imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop",
-      badge: "⚡ Wearable Gear",
+      badge: "⚡ Modular Sling",
     },
     {
       id: "tv-merino-winter-scarf",
@@ -267,27 +266,26 @@ export function BasketView({
     },
   ];
 
-  // Curated electronics & hardware accessories pool (PixelMart & NexusTech)
   const electronicsAddons = [
     {
-      id: "px-100w-gan-fast-charger",
-      name: "PixelMart 100W GaN Ultra-Fast Multi-Port Charger",
-      price: 2199,
-      category: "Tech",
-      store: "pixelmart",
-      storeName: "PixelMart",
-      imageUrl: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600&auto=format&fit=crop",
-      badge: "⚡ 100W Fast Charge",
-    },
-    {
-      id: "nx-magpulse-240w-cable",
-      name: "Nexus MagPulse Braided 240W USB-C Silicone Cable",
-      price: 899,
+      id: "nx-magnetic-cable",
+      name: "Nexus Magnetic Fast-Snap 240W Braided Cable",
+      price: 1299,
       category: "Tech",
       store: "nexusstore",
       storeName: "NexusStore",
-      imageUrl: "https://images.unsplash.com/photo-1609081219090-a6d81d3085bf?w=600&auto=format&fit=crop",
-      badge: "🔌 Cable Essential",
+      imageUrl: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600&auto=format&fit=crop",
+      badge: "⚡ High-Speed Cable",
+    },
+    {
+      id: "px-magnetic-desk-cable-hub",
+      name: "PixelMart Cyber-RGB Magnetic Cable Routing Hub",
+      price: 1699,
+      category: "Tech",
+      store: "pixelmart",
+      storeName: "PixelMart",
+      imageUrl: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600&auto=format&fit=crop",
+      badge: "🎮 Cable Organizer",
     },
     {
       id: "nx-magnetic-fast-charge-powerbank",
@@ -311,9 +309,6 @@ export function BasketView({
     },
   ];
 
-  // Dynamic context selection:
-  // When buying clothes -> recommend clothes/accessories to wear
-  // When buying electronics -> recommend electronics accessories
   let candidatePool = electronicsAddons;
   if (hasClothing && !hasElectronics) {
     candidatePool = clothingAddons;
@@ -331,9 +326,9 @@ export function BasketView({
       <div className="p-4 border-b border-raya-lightGray flex items-center justify-between bg-raya-softWhite/70 shrink-0">
         <div className="flex items-center gap-2">
           <ShoppingBag className="w-5 h-5 text-raya-blue" />
-          <h3 className="font-bold text-raya-navy text-sm sm:text-base">Your Basket</h3>
+          <h3 className="font-bold text-raya-navy text-sm sm:text-base">{t("cart.title")}</h3>
           <span className="px-2 py-0.5 rounded-full bg-raya-blue/10 text-raya-blue text-xs font-bold">
-            {items.length} {items.length === 1 ? "item" : "items"}
+            {t("cart.itemsCount", { count: items.length })}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -341,17 +336,17 @@ export function BasketView({
             <button
               onClick={onClearCart}
               className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded-lg font-semibold flex items-center gap-1 transition-all cursor-pointer"
-              title="Empty entire basket"
+              title={t("cart.clearBasket")}
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">Clear</span>
+              <span className="hidden xs:inline">{t("cart.clearBasket")}</span>
             </button>
           )}
           {isDrawer && onClose && (
             <button
               onClick={onClose}
               className="w-8 h-8 rounded-full hover:bg-raya-lightGray/50 active:scale-95 text-raya-coolGray flex items-center justify-center transition-all cursor-pointer"
-              aria-label="Close basket"
+              aria-label={t("common.close")}
             >
               <X className="w-5 h-5" />
             </button>
@@ -366,9 +361,9 @@ export function BasketView({
             <div className="w-14 h-14 rounded-2xl bg-raya-softWhite flex items-center justify-center text-raya-coolGray border border-raya-lightGray">
               <ShoppingBag className="w-7 h-7" />
             </div>
-            <h4 className="font-bold text-raya-navy text-sm">Your basket is currently empty</h4>
+            <h4 className="font-bold text-raya-navy text-sm">{t("cart.emptyTitle")}</h4>
             <p className="text-xs text-raya-coolGray max-w-xs leading-relaxed">
-              Items added during this chat session will appear here with strict purchase guardrails.
+              {t("cart.emptySubtitle")}
             </p>
           </div>
         ) : (
@@ -416,7 +411,7 @@ export function BasketView({
                             onUpdateQuantity(item.productId || item.id, item.quantity - 1);
                           }
                         }}
-                        title="Decrease quantity"
+                        title={t("cart.remove")}
                         className="w-4 h-4 flex items-center justify-center rounded hover:bg-white text-raya-navy font-bold text-xs active:scale-90 transition-all cursor-pointer"
                       >
                         <Minus className="w-2.5 h-2.5 text-raya-coolGray hover:text-raya-navy" />
@@ -430,7 +425,7 @@ export function BasketView({
                             onUpdateQuantity(item.productId || item.id, item.quantity + 1);
                           }
                         }}
-                        title="Increase quantity"
+                        title={t("product.addToBasket")}
                         className="w-4 h-4 flex items-center justify-center rounded hover:bg-white text-raya-navy font-bold text-xs active:scale-90 transition-all cursor-pointer"
                       >
                         <Plus className="w-2.5 h-2.5 text-raya-coolGray hover:text-raya-navy" />
@@ -445,7 +440,7 @@ export function BasketView({
                   {onRemoveItem && (
                     <button
                       onClick={() => onRemoveItem(item.productId || item.id)}
-                      title="Delete product from basket"
+                      title={t("cart.remove")}
                       className="text-raya-coolGray hover:text-red-500 hover:bg-red-50 p-1 rounded-md transition-all cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -466,10 +461,10 @@ export function BasketView({
             >
               <div className="flex items-center gap-1.5 text-emerald-700">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>PURCHASE CONTROL (6 GATES)</span>
+                <span>{t("safeguards.title")}</span>
               </div>
               <div className="flex items-center gap-1 text-[11px] text-raya-coolGray">
-                <span>{showGates ? "Hide" : "Inspect"}</span>
+                <span>{showGates ? t("common.close") : t("common.details")}</span>
                 {showGates ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </div>
             </button>
@@ -477,28 +472,28 @@ export function BasketView({
             {showGates && (
               <div className="p-3 pt-0 text-[11px] space-y-1.5 border-t border-raya-lightGray/40 bg-white">
                 <div className="flex items-center justify-between text-slate-700">
-                  <span>1. Spend Limit Guard</span>
-                  <span className="font-bold text-emerald-600">✓ PASSED</span>
+                  <span>1. {t("safeguards.spendLimitExceeded")}</span>
+                  <span className="font-bold text-emerald-600">✓ {t("common.success")}</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
-                  <span>2. Quantity Limit Guard</span>
-                  <span className="font-bold text-emerald-600">✓ PASSED</span>
+                  <span>2. {t("safeguards.quantityLimitExceeded")}</span>
+                  <span className="font-bold text-emerald-600">✓ {t("common.success")}</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
-                  <span>3. Real-time Price Validation</span>
-                  <span className="font-bold text-emerald-600">✓ PASSED</span>
+                  <span>3. {t("safeguards.priceChanged")}</span>
+                  <span className="font-bold text-emerald-600">✓ {t("common.success")}</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
                   <span>4. Currency Match (INR)</span>
-                  <span className="font-bold text-emerald-600">✓ PASSED</span>
+                  <span className="font-bold text-emerald-600">✓ {t("common.success")}</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
-                  <span>5. Merchant Authorization</span>
-                  <span className="font-bold text-emerald-600">✓ PASSED</span>
+                  <span>5. {t("merchant.controlRoom")}</span>
+                  <span className="font-bold text-emerald-600">✓ {t("common.success")}</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
-                  <span>6. Approval Expiry Protection</span>
-                  <span className="font-bold text-emerald-600">✓ ACTIVE (15m)</span>
+                  <span>6. {t("safeguards.approvalInvalidated")}</span>
+                  <span className="font-bold text-emerald-600">✓ {t("common.active")}</span>
                 </div>
               </div>
             )}
@@ -511,7 +506,7 @@ export function BasketView({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-bold text-raya-navy">
                 <ShoppingBag className="w-3.5 h-3.5 text-raya-blue" />
-                <span>Frequently Bought Together</span>
+                <span>{t("cart.frequentlyBoughtTogether")}</span>
               </div>
             </div>
 
@@ -538,7 +533,7 @@ export function BasketView({
                     onClick={() => onAddToCart && onAddToCart(rec)}
                     className="px-2 py-1 rounded-lg bg-raya-blue/10 hover:bg-raya-blue hover:text-white text-raya-blue text-[10.5px] font-bold transition-all active:scale-95 cursor-pointer shrink-0"
                   >
-                    + Add
+                    + {t("product.addToBasket")}
                   </button>
                 </div>
               ))}
@@ -552,13 +547,13 @@ export function BasketView({
         <div className="p-4 border-t border-raya-lightGray bg-white space-y-3 shadow-lg shrink-0">
           <div className="flex items-center justify-between text-sm">
             <div>
-              <span className="text-raya-coolGray font-medium block text-xs">Total Amount</span>
+              <span className="text-raya-coolGray font-medium block text-xs">{t("cart.total")}</span>
               <button
                 onClick={() => setShowLedger(true)}
                 className="text-[11px] text-raya-blue font-bold flex items-center gap-1 hover:underline cursor-pointer"
               >
                 <FileText className="w-3 h-3" />
-                <span>View Decision Ledger</span>
+                <span>{t("ledger.title")}</span>
               </button>
             </div>
             <span className="text-base font-black text-raya-navy">₹{total.toLocaleString()}</span>
@@ -569,17 +564,19 @@ export function BasketView({
             <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs space-y-1">
               <div className="font-bold flex items-center gap-1 text-red-700">
                 <AlertTriangle className="w-3.5 h-3.5" />
-                <span>PURCHASE BLOCKED: MAX_SPEND</span>
+                <span>{t("safeguards.spendLimitExceeded")}</span>
               </div>
               <p className="text-[10.5px] text-red-600 leading-snug">
-                Cart total of ₹{total.toLocaleString()} exceeds your active policy limit of ₹{budget?.toLocaleString()}.
-                Payment was never initiated.
+                {t("safeguards.spendLimitMessage", {
+                  requested: total.toLocaleString(),
+                  allowed: budget?.toLocaleString() || "0",
+                })}
               </p>
             </div>
           ) : (
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-[10.5px] font-medium border border-emerald-200">
               <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-              <span>Razorpay Purchase Guard: Policy Compliant</span>
+              <span>{t("safeguards.policyPassed")}</span>
             </div>
           )}
 
@@ -588,7 +585,7 @@ export function BasketView({
             <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs space-y-0.5">
               <div className="font-bold flex items-center gap-1 text-emerald-700">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>PAYMENT CAPTURED (TEST MODE)</span>
+                <span>{t("checkout.paymentSuccessful")}</span>
               </div>
               <p className="text-[10px] text-emerald-700 font-mono">
                 Payment ID: {paymentSuccess.paymentId}
@@ -610,14 +607,14 @@ export function BasketView({
             {isProcessingPayment ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Connecting to Razorpay...</span>
+                <span>{t("loading.processingPayment")}</span>
               </>
             ) : isLimitExceeded ? (
-              <span>Purchase Blocked by Policy Guard</span>
+              <span>{t("safeguards.paymentBlocked")}</span>
             ) : (
               <>
                 <CreditCard className="w-3.5 h-3.5" />
-                <span>Pay ₹{total.toLocaleString()} • Razorpay Test Mode</span>
+                <span>{t("checkout.payWithRazorpay")} • ₹{total.toLocaleString()}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </>
             )}

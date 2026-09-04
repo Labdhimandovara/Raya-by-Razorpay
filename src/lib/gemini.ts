@@ -143,6 +143,51 @@ Tone & Output Formatting:
 - Speak naturally as Raya, a helpful and polite shopping concierge. Never expose internal tool parameters or system logic.
 `;
 
+export function getRayaSystemInstruction(locale: string = "en"): string {
+  const languageInstructions: Record<string, string> = {
+    en: `
+LANGUAGE MANDATE:
+- The active user interface language is English.
+- Respond fluently in English.
+`,
+    hi: `
+LANGUAGE & LOCALIZATION MANDATE:
+- The active user interface language is Hindi (हिन्दी).
+- You MUST respond fluently and completely in Hindi (हिन्दी) in all your conversational responses.
+- When calling the 'listProducts' tool, you MUST translate any search keywords to English canonical keywords (for example: translate 'लैपटॉप' to 'laptop', 'हेडफोन' to 'headphone', 'जैकेट' to 'jacket', 'कीबोर्ड' to 'keyboard') so that store catalogs can find exact matches.
+- Never mix languages in conversational sentences (no accidental English words like 'sure', 'here are', 'options').
+- Keep brand names (Raya, Razorpay, NexusStore, ThreadVault, PixelMart, eBay), model numbers, prices (e.g. ₹5,000), and URLs in their original form.
+`,
+    mr: `
+LANGUAGE & LOCALIZATION MANDATE:
+- The active user interface language is Marathi (मराठी).
+- You MUST respond fluently and completely in Marathi (मराठी) in all your conversational responses.
+- When calling the 'listProducts' tool, you MUST translate any search keywords to English canonical keywords (for example: translate 'लॅपटॉप' to 'laptop', 'हेडफोन' to 'headphone', 'जॅकेट' to 'jacket', 'कीबोर्ड' to 'keyboard') so that store catalogs can find exact matches.
+- Never mix languages in conversational sentences (no accidental English words).
+- Keep brand names (Raya, Razorpay, NexusStore, ThreadVault, PixelMart, eBay), model numbers, prices (e.g. ₹5,000), and URLs in their original form.
+`,
+    ta: `
+LANGUAGE & LOCALIZATION MANDATE:
+- The active user interface language is Tamil (தமிழ்).
+- You MUST respond fluently and completely in Tamil (தமிழ்) in all your conversational responses.
+- When calling the 'listProducts' tool, you MUST translate any search keywords to English canonical keywords (for example: translate 'லேப்டாப்' or 'மடிக்கணினி' to 'laptop', 'ஹெட்ஃபோன்' to 'headphone', 'ஜாக்கெட்' to 'jacket') so that store catalogs can find exact matches.
+- Never mix languages in conversational sentences (no accidental English words).
+- Keep brand names (Raya, Razorpay, NexusStore, ThreadVault, PixelMart, eBay), model numbers, prices (e.g. ₹5,000), and URLs in their original form.
+`,
+    bn: `
+LANGUAGE & LOCALIZATION MANDATE:
+- The active user interface language is Bengali (বাংলা).
+- You MUST respond fluently and completely in Bengali (বাংলা) in all your conversational responses.
+- When calling the 'listProducts' tool, you MUST translate any search keywords to English canonical keywords (for example: translate 'ল্যাপটপ' to 'laptop', 'হেডফোন' to 'headphone', 'জ্যাকেট' to 'jacket', 'কীবোর্ড' to 'keyboard') so that store catalogs can find exact matches.
+- Never mix languages in conversational sentences (no accidental English words).
+- Keep brand names (Raya, Razorpay, NexusStore, ThreadVault, PixelMart, eBay), model numbers, prices (e.g. ₹5,000), and URLs in their original form.
+`,
+  };
+
+  const extra = languageInstructions[locale] || languageInstructions.en;
+  return `${RAYA_SYSTEM_INSTRUCTION}\n\n${extra}`;
+}
+
 export const GROQ_TOOLS = [
   {
     type: "function",
