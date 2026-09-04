@@ -107,7 +107,7 @@ INSTRUCTIONS:
     }
 
     return NextResponse.json({
-      reply: `AI-attributed GMV is currently ₹${(metrics.aiAttributedGMV || 103662).toLocaleString()} across ${metrics.totalOrders || 25} live Razorpay transactions. Cross-sell conversions are performing at 24.6% with +24.8% AOV expansion.`,
+      reply: fallbackReplies[locale] || fallbackReplies.en,
       action: actionPayload,
     });
   } catch (error: any) {
