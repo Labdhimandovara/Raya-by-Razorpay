@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { CartItem } from "@/components/cart-drawer";
+import { useLocale } from "@/lib/locale-context";
 
 export interface ChatSession {
   id: string;
@@ -62,6 +63,7 @@ export function ChatSidebar({
   onRestoreCart,
   onDeleteSavedCart,
 }: ChatSidebarProps) {
+  const { t } = useLocale();
   const [activeTab, setActiveTab] = useState<"conversations" | "carts">("conversations");
   const [expandedCartId, setExpandedCartId] = useState<string | null>(null);
 
@@ -79,9 +81,9 @@ export function ChatSidebar({
           </div>
           <div>
             <span className="font-extrabold text-xs text-[#172033] tracking-tight block">
-              RAYA SESSIONS
+              {t("sidebar.title")}
             </span>
-            <span className="text-[10px] text-raya-coolGray">Autonomous Shopper</span>
+            <span className="text-[10px] text-raya-coolGray">{t("sidebar.subtitle")}</span>
           </div>
         </div>
 
@@ -101,7 +103,7 @@ export function ChatSidebar({
           className="w-full py-2.5 px-3 rounded-xl bg-[#172033] hover:bg-slate-800 active:scale-[0.98] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
         >
           <Plus className="w-4 h-4 text-emerald-400" />
-          <span>New Shopping Chat</span>
+          <span>{t("sidebar.newChat")}</span>
         </button>
       </div>
 
@@ -117,7 +119,7 @@ export function ChatSidebar({
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>Chats ({sessions.length})</span>
+            <span>{t("sidebar.chats")} ({sessions.length})</span>
           </button>
           <button
             onClick={() => setActiveTab("carts")}
@@ -128,7 +130,7 @@ export function ChatSidebar({
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5" />
-            <span>Past Carts ({savedCarts.length})</span>
+            <span>{t("sidebar.pastCarts")} ({savedCarts.length})</span>
           </button>
         </div>
       </div>
@@ -139,7 +141,7 @@ export function ChatSidebar({
           /* CONVERSATIONS LIST */
           sessions.length === 0 ? (
             <div className="text-center py-10 text-slate-400 text-xs">
-              No conversations yet. Start a new shopping chat!
+              {t("sidebar.noConversations")}
             </div>
           ) : (
             sessions.map((session) => {
@@ -166,20 +168,20 @@ export function ChatSidebar({
                       </h4>
                     </div>
 
-                    <button
+                      <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteSession(session.id);
                       }}
                       className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded transition-all shrink-0"
-                      title="Delete chat & dedicated cart"
+                      title={t("sidebar.deleteChat")}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
                   <p className="text-[11px] text-raya-coolGray truncate mt-1">
-                    {session.previewText || "Start shopping conversation..."}
+                    {session.previewText || t("sidebar.startConversation")}
                   </p>
 
                   <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[10px] text-slate-500">
@@ -191,10 +193,10 @@ export function ChatSidebar({
                     {/* Dedicated Cart Badge */}
                     {cartItemCount > 0 ? (
                       <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-md">
-                        🛒 {cartItemCount} item{cartItemCount > 1 ? "s" : ""} • ₹{cartTotal.toLocaleString()}
+                        🛒 {cartItemCount} {t("cart.title")} • ₹{cartTotal.toLocaleString()}
                       </span>
                     ) : (
-                      <span className="text-slate-400">Cart Empty</span>
+                      <span className="text-slate-400">{t("sidebar.cartEmpty")}</span>
                     )}
                   </div>
                 </div>
@@ -205,7 +207,7 @@ export function ChatSidebar({
           /* SAVED & PAST CARTS LIST */
           savedCarts.length === 0 ? (
             <div className="text-center py-10 text-slate-400 text-xs">
-              No saved carts or past orders recorded yet.
+              {t("sidebar.noSavedCarts")}
             </div>
           ) : (
             savedCarts.map((c) => {
@@ -225,19 +227,19 @@ export function ChatSidebar({
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                             : "bg-blue-50 text-raya-blue border border-blue-200"
                         }`}>
-                          {c.status === "PAID_ORDER" ? "Paid Order" : "Saved Cart"}
+                          {c.status === "PAID_ORDER" ? t("sidebar.paidOrder") : t("sidebar.savedCart")}
                         </span>
                       </div>
                       <h4 className="text-xs font-bold text-[#172033] truncate">{c.title}</h4>
                       <p className="text-[11px] font-black text-raya-blue mt-0.5">
-                        ₹{c.total.toLocaleString()} • {itemCount} item{itemCount > 1 ? "s" : ""}
+                        ₹{c.total.toLocaleString()} • {itemCount} {t("cart.title")}
                       </p>
                     </div>
 
                     <button
                       onClick={() => onDeleteSavedCart(c.id)}
                       className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded transition-all shrink-0"
-                      title="Remove saved snapshot"
+                      title={t("sidebar.removeSaved")}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

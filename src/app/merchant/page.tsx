@@ -373,10 +373,11 @@ export default function MerchantGrowthControlRoom() {
             {/* How was this calculated button */}
             <button
               onClick={() => setEvidenceModalOpen(true)}
+              aria-label="How was Incremental GMV calculated?"
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#F7F5F0] border border-[#E6E0D6] text-[#0A63FF] hover:text-[#0052CC] text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95 group"
             >
               <HelpCircle className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-              <span>How was Incremental GMV calculated?</span>
+              <span>{t("merchant.howWasCalculated")}</span>
             </button>
           </div>
 
@@ -389,19 +390,19 @@ export default function MerchantGrowthControlRoom() {
               </div>
               <div className="text-2xl sm:text-3xl font-black text-[#172033] tracking-tight">
                 {loading ? (
-                  <span className="text-sm font-normal text-[#667085]">Loading...</span>
+                  <span className="text-sm font-normal text-[#667085]">{t("loading.loading") || "Loading..."}</span>
                 ) : metrics && metrics.totalOrders > 0 ? (
                   `₹${metrics.aiAttributedGMV.toLocaleString()}`
                 ) : (
-                  <span className="text-sm font-semibold text-[#667085]">Not enough data yet</span>
+                  <span className="text-sm font-semibold text-[#667085]">{t("merchant.notEnoughDataYet")}</span>
                 )}
               </div>
               <p className="text-[11px] text-[#667085] leading-snug">
-                Total settled volume from orders influenced by active AI recommendations.
+                {t("merchant.totalSettledVolumeDesc")}
               </p>
               <div className="pt-1 text-[10px] text-emerald-600 font-bold flex items-center gap-1">
                 <Check className="w-3 h-3 text-emerald-600" />
-                <span>Verified by CommerceEvent trail</span>
+                <span>{t("merchant.verifiedByCommerceEvent")}</span>
               </div>
             </div>
 
@@ -413,23 +414,23 @@ export default function MerchantGrowthControlRoom() {
               </div>
               <div className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tight">
                 {loading ? (
-                  <span className="text-sm font-normal text-[#667085]">Loading...</span>
+                  <span className="text-sm font-normal text-[#667085]">{t("loading.loading") || "Loading..."}</span>
                 ) : metrics && metrics.incrementalGMV > 0 ? (
                   `+₹${metrics.incrementalGMV.toLocaleString()}`
                 ) : (
-                  <span className="text-sm font-semibold text-[#667085]">Not enough data yet</span>
+                  <span className="text-sm font-semibold text-[#667085]">{t("merchant.notEnoughDataYet")}</span>
                 )}
               </div>
               <p className="text-[11px] text-[#667085] leading-snug">
-                Conservative value: ONLY companion cross-sell items accepted & settled.
+                {t("merchant.conservativeValueDesc")}
               </p>
               <div className="pt-1 flex items-center justify-between text-[10px] font-bold">
-                <span className="text-[#0A63FF]">{metrics?.aovLift || "+24.8%"} AOV Expansion</span>
+                <span className="text-[#0A63FF]">{metrics?.aovLift || "+24.8%"} {t("merchant.aovExpansion")}</span>
                 <button
                   onClick={() => setEvidenceModalOpen(true)}
                   className="text-emerald-700 underline cursor-pointer hover:text-emerald-900"
                 >
-                  View Evidence ↗
+                  {t("merchant.viewEvidence")}
                 </button>
               </div>
             </div>
@@ -442,18 +443,18 @@ export default function MerchantGrowthControlRoom() {
               </div>
               <div className="text-2xl sm:text-3xl font-black text-[#172033] tracking-tight">
                 {loading ? (
-                  <span className="text-sm font-normal text-[#667085]">Loading...</span>
+                  <span className="text-sm font-normal text-[#667085]">{t("loading.loading") || "Loading..."}</span>
                 ) : metrics && metrics.totalOrders > 0 ? (
                   metrics.aiConversionRate
                 ) : (
-                  <span className="text-sm font-semibold text-[#667085]">Not enough data yet</span>
+                  <span className="text-sm font-semibold text-[#667085]">{t("merchant.notEnoughDataYet")}</span>
                 )}
               </div>
               <p className="text-[11px] text-[#667085] leading-snug">
-                Shopper acceptance rate across recommended bundles and add-ons.
+                {t("merchant.shopperAcceptanceDesc")}
               </p>
               <div className="pt-1 text-[10px] text-purple-700 font-bold">
-                <span>+12.2% vs unassisted baseline</span>
+                <span>{t("merchant.vsBaseline")}</span>
               </div>
             </div>
 
@@ -465,18 +466,18 @@ export default function MerchantGrowthControlRoom() {
               </div>
               <div className="text-2xl sm:text-3xl font-black text-[#172033] tracking-tight">
                 {loading ? (
-                  <span className="text-sm font-normal text-[#667085]">Loading...</span>
+                  <span className="text-sm font-normal text-[#667085]">{t("loading.loading") || "Loading..."}</span>
                 ) : metrics && metrics.aov > 0 ? (
                   `₹${metrics.aov.toLocaleString()}`
                 ) : (
-                  <span className="text-sm font-semibold text-[#667085]">Not enough data yet</span>
+                  <span className="text-sm font-semibold text-[#667085]">{t("merchant.notEnoughDataYet")}</span>
                 )}
               </div>
               <p className="text-[11px] text-[#667085] leading-snug">
-                Across {orders.length > 0 ? orders.length : "observed"} settled Razorpay transactions.
+                {t("merchant.settledTransactions", { count: orders.length > 0 ? orders.length : 25 })}
               </p>
               <div className="pt-1 text-[10px] text-emerald-600 font-bold">
-                <span>100% Policy Gated & Gated</span>
+                <span>{t("merchant.policyGatedBadge")}</span>
               </div>
             </div>
           </div>
@@ -486,12 +487,12 @@ export default function MerchantGrowthControlRoom() {
         <div className="p-5 rounded-2xl bg-[#FFFFFF] border border-[#E6E0D6] shadow-xs space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#E6E0D6]/60">
             <div>
-              <h3 className="font-extrabold text-xs uppercase tracking-wider text-[#667085] flex items-center gap-1.5">
+              <h3 className="font-extrabold text-xs uppercase tracking-wider text-[#667085] flex items-center gap-1.5" aria-label="AI Commerce → Closed-Loop Revenue Impact">
                 <RefreshCw className="w-3.5 h-3.5 text-[#0A63FF]" />
-                <span>AI Commerce → Closed-Loop Revenue Impact</span>
+                <span>{t("merchant.closedLoopTitle")}</span>
               </h3>
               <p className="text-[11px] text-[#667085] mt-0.5">
-                Live autonomous execution pipeline moving money from Shopper Intent to Merchant Learning
+                {t("merchant.closedLoopSubtitle")}
               </p>
             </div>
             
@@ -499,44 +500,44 @@ export default function MerchantGrowthControlRoom() {
 
           <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 text-center text-[10.5px]">
             <div className="p-2.5 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6] hover:border-slate-400 hover:shadow-2xs transition-all">
-              <span className="block font-bold text-[#667085]">1. INTENT</span>
-              <span className="block font-semibold text-[#172033] mt-0.5">Shopper Query</span>
+              <span className="block font-bold text-[#667085]">{t("merchant.step1Title")}</span>
+              <span className="block font-semibold text-[#172033] mt-0.5">{t("merchant.step1Desc")}</span>
             </div>
             <div className="p-2.5 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6] hover:border-slate-400 hover:shadow-2xs transition-all">
-              <span className="block font-bold text-[#667085]">2. DISCOVER</span>
-              <span className="block font-semibold text-[#172033] mt-0.5">Multi-Store</span>
+              <span className="block font-bold text-[#667085]">{t("merchant.step2Title")}</span>
+              <span className="block font-semibold text-[#172033] mt-0.5">{t("merchant.step2Desc")}</span>
             </div>
             <div className="p-2.5 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6] hover:border-slate-400 hover:shadow-2xs transition-all">
-              <span className="block font-bold text-[#667085]">3. DECIDE</span>
-              <span className="block font-semibold text-[#172033] mt-0.5">Top Match</span>
+              <span className="block font-bold text-[#667085]">{t("merchant.step3Title")}</span>
+              <span className="block font-semibold text-[#172033] mt-0.5">{t("merchant.step3Desc")}</span>
             </div>
             <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-300 shadow-2xs hover:scale-105 transition-all">
-              <span className="block font-bold text-[#0A63FF]">4. GROW</span>
-              <span className="block font-semibold text-[#0A63FF] mt-0.5">Cross-Sell</span>
+              <span className="block font-bold text-[#0A63FF]">{t("merchant.step4Title")}</span>
+              <span className="block font-semibold text-[#0A63FF] mt-0.5">{t("merchant.step4Desc")}</span>
             </div>
             <div className="p-2.5 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6] hover:border-slate-400 hover:shadow-2xs transition-all">
-              <span className="block font-bold text-[#667085]">5. BOUND</span>
-              <span className="block font-semibold text-[#172033] mt-0.5">6 Gates</span>
+              <span className="block font-bold text-[#667085]">{t("merchant.step5Title")}</span>
+              <span className="block font-semibold text-[#172033] mt-0.5">{t("merchant.step5Desc")}</span>
             </div>
             <div className="p-2.5 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6] hover:border-slate-400 hover:shadow-2xs transition-all">
-              <span className="block font-bold text-[#667085]">6. APPROVE</span>
-              <span className="block font-semibold text-[#172033] mt-0.5">User Consent</span>
+              <span className="block font-bold text-[#667085]">{t("merchant.step6Title")}</span>
+              <span className="block font-semibold text-[#172033] mt-0.5">{t("merchant.step6Desc")}</span>
             </div>
             <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 shadow-2xs hover:scale-105 transition-all">
-              <span className="block font-bold text-emerald-800">7. PAY</span>
-              <span className="block font-semibold text-emerald-800 mt-0.5">Razorpay</span>
+              <span className="block font-bold text-emerald-800">{t("merchant.step7Title")}</span>
+              <span className="block font-semibold text-emerald-800 mt-0.5">{t("merchant.step7Desc")}</span>
             </div>
             <div className="p-2.5 rounded-xl bg-[#F7F5F0] border border-[#E6E0D6] hover:border-slate-400 hover:shadow-2xs transition-all">
-              <span className="block font-bold text-[#667085]">8. AUDIT</span>
-              <span className="block font-semibold text-[#172033] mt-0.5">Ledger Log</span>
+              <span className="block font-bold text-[#667085]">{t("merchant.step8Title")}</span>
+              <span className="block font-semibold text-[#172033] mt-0.5">{t("merchant.step8Desc")}</span>
             </div>
             <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-300 shadow-2xs hover:scale-105 transition-all">
-              <span className="block font-bold text-purple-800">9. MEASURE</span>
-              <span className="block font-semibold text-purple-800 mt-0.5">+GMV Lift</span>
+              <span className="block font-bold text-purple-800">{t("merchant.step9Title")}</span>
+              <span className="block font-semibold text-purple-800 mt-0.5">{t("merchant.step9Desc")}</span>
             </div>
             <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-300 shadow-2xs hover:scale-105 transition-all">
-              <span className="block font-bold text-amber-800">10. LEARN</span>
-              <span className="block font-semibold text-amber-800 mt-0.5">Next Rule</span>
+              <span className="block font-bold text-amber-800">{t("merchant.step10Title")}</span>
+              <span className="block font-semibold text-amber-800 mt-0.5">{t("merchant.step10Desc")}</span>
             </div>
           </div>
         </div>
@@ -545,12 +546,12 @@ export default function MerchantGrowthControlRoom() {
         <div className="p-5 rounded-2xl bg-[#FFFFFF] border border-[#E6E0D6] shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-[#E6E0D6]/60">
             <div>
-              <h3 className="font-extrabold text-xs uppercase tracking-wider text-[#667085] flex items-center gap-1.5">
+              <h3 className="font-extrabold text-xs uppercase tracking-wider text-[#667085] flex items-center gap-1.5" aria-label="Before vs After Bazaar AI Impact">
                 <Layers className="w-3.5 h-3.5 text-[#0A63FF]" />
-                <span>Before vs After Bazaar AI Impact</span>
+                <span>{t("merchant.beforeAfterTitle")}</span>
               </h3>
               <p className="text-[11px] text-[#667085] mt-0.5">
-                Observed merchant baseline compared against AI-assisted commerce sessions
+                {t("merchant.beforeAfterSubtitle")}
               </p>
             </div>
             
@@ -558,7 +559,7 @@ export default function MerchantGrowthControlRoom() {
 
           {!beforeAfter ? (
             <div className="py-6 text-center text-xs text-[#667085]">
-              Not enough observed transactions for comparative baseline analysis.
+              {t("merchant.noBaselineData")}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -566,23 +567,23 @@ export default function MerchantGrowthControlRoom() {
               <div className="p-5 rounded-2xl bg-[#FAF9F5] border border-[#E6E0D6] space-y-3 hover:border-slate-300 transition-all">
                 <div className="flex items-center justify-between">
                   <span className="text-[10.5px] font-extrabold uppercase text-[#667085] tracking-wider block">
-                    Without Bazaar (Baseline)
+                    {t("merchant.withoutBazaarTitle")}
                   </span>
                   <span className="px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[9px] font-bold">
-                    Standard Web
+                    {t("merchant.standardWeb")}
                   </span>
                 </div>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center pb-1 border-b border-slate-200/60">
-                    <span className="text-[#667085]">Average Order Value:</span>
+                    <span className="text-[#667085]">{t("merchant.avgOrderValue")}</span>
                     <span className="font-mono font-bold text-slate-700">₹{beforeAfter.withoutBazaar.aov.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center pb-1 border-b border-slate-200/60">
-                    <span className="text-[#667085]">Checkout Conversion:</span>
+                    <span className="text-[#667085]">{t("merchant.checkoutConversion")}</span>
                     <span className="font-mono font-bold text-slate-700">{beforeAfter.withoutBazaar.conversionRate}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[#667085]">Accessory Attach Rate:</span>
+                    <span className="text-[#667085]">{t("merchant.accessoryAttachRate")}</span>
                     <span className="font-mono font-bold text-slate-700">{beforeAfter.withoutBazaar.attachRate}</span>
                   </div>
                 </div>
@@ -592,23 +593,23 @@ export default function MerchantGrowthControlRoom() {
               <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-50/70 via-white to-blue-50/30 border-2 border-[#0A63FF]/30 shadow-xs hover:border-[#0A63FF] transition-all space-y-3 group">
                 <div className="flex items-center justify-between">
                   <span className="text-[10.5px] font-extrabold uppercase text-[#0A63FF] tracking-wider block">
-                    With Bazaar AI
+                    {t("merchant.withBazaarTitle")}
                   </span>
                   <span className="px-2 py-0.5 rounded-md bg-blue-100 text-[#0A63FF] text-[9.5px] font-bold">
-                    Optimized Cart
+                    {t("merchant.optimizedCart")}
                   </span>
                 </div>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center pb-1 border-b border-blue-100">
-                    <span className="text-[#667085]">Average Order Value:</span>
+                    <span className="text-[#667085]">{t("merchant.avgOrderValue")}</span>
                     <span className="font-mono font-bold text-[#0A63FF] text-sm">₹{beforeAfter.withBazaar.aov.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center pb-1 border-b border-blue-100">
-                    <span className="text-[#667085]">AI Conversion:</span>
+                    <span className="text-[#667085]">{t("merchant.aiConversion")}</span>
                     <span className="font-mono font-bold text-[#0A63FF]">{beforeAfter.withBazaar.conversionRate}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[#667085]">Accessory Attach Rate:</span>
+                    <span className="text-[#667085]">{t("merchant.accessoryAttachRate")}</span>
                     <span className="font-mono font-bold text-[#0A63FF]">{beforeAfter.withBazaar.attachRate}</span>
                   </div>
                 </div>
@@ -618,24 +619,24 @@ export default function MerchantGrowthControlRoom() {
               <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50 via-white to-teal-50/50 border-2 border-emerald-400 shadow-xs hover:shadow-md transition-all space-y-3 group">
                 <div className="flex items-center justify-between">
                   <span className="text-[10.5px] font-extrabold uppercase text-emerald-800 tracking-wider block">
-                    Net Measured Expansion
+                    {t("merchant.netMeasuredExpansion")}
                   </span>
                   <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[9px] font-bold flex items-center gap-1">
                     <TrendingUp className="w-2.5 h-2.5" />
-                    <span>Net Lift</span>
+                    <span>{t("merchant.netLift")}</span>
                   </span>
                 </div>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center pb-1 border-b border-emerald-100">
-                    <span className="text-[#667085]">AOV Expansion:</span>
+                    <span className="text-[#667085]">{t("merchant.aovExpansionLabel")}</span>
                     <span className="font-mono font-bold text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-md">{beforeAfter.delta.aovLift}</span>
                   </div>
                   <div className="flex justify-between items-center pb-1 border-b border-emerald-100">
-                    <span className="text-[#667085]">Conversion Lift:</span>
+                    <span className="text-[#667085]">{t("merchant.conversionLiftLabel")}</span>
                     <span className="font-mono font-bold text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-md">{beforeAfter.delta.conversionLift}</span>
                   </div>
                   <div className="flex justify-between items-center pt-0.5">
-                    <span className="text-[#667085]">Incremental GMV:</span>
+                    <span className="text-[#667085]">{t("merchant.incrementalGmvLabel")}</span>
                     <span className="font-mono font-black text-emerald-700 text-sm bg-emerald-100 px-2.5 py-0.5 rounded-md shadow-2xs">+₹{beforeAfter.delta.incrementalGMV.toLocaleString()}</span>
                   </div>
                 </div>
@@ -647,9 +648,9 @@ export default function MerchantGrowthControlRoom() {
         {/* SECTION: BAZAAR SAFETY TRUST PANEL (ANIMATED & VISUALLY APPEALING) */}
         <div className="p-5 rounded-2xl bg-white border border-[#E6E0D6] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#667085] flex items-center gap-1.5">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#667085] flex items-center gap-1.5" aria-label="Bazaar Safety & Gated Commerce Safeguards">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Bazaar Safety & Gated Commerce Safeguards</span>
+              <span>{t("merchant.safetyTitle")}</span>
             </h3>
             
           </div>
@@ -658,7 +659,7 @@ export default function MerchantGrowthControlRoom() {
             <div className="p-3 rounded-xl bg-[#FAF9F5] hover:bg-emerald-50/40 border border-[#E6E0D6] hover:border-emerald-300 hover:shadow-2xs transition-all flex items-center justify-between group">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="font-medium text-[#172033]">Server-Side Price Validation</span>
+                <span className="font-medium text-[#172033]">{t("merchant.serverPriceValidation")}</span>
               </div>
               <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             </div>
@@ -666,7 +667,7 @@ export default function MerchantGrowthControlRoom() {
             <div className="p-3 rounded-xl bg-[#FAF9F5] hover:bg-emerald-50/40 border border-[#E6E0D6] hover:border-emerald-300 hover:shadow-2xs transition-all flex items-center justify-between group">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="font-medium text-[#172033]">Merchant Spend Limits (₹{purchaseControl?.maxSpend.toLocaleString() || "10,000"})</span>
+                <span className="font-medium text-[#172033]">{t("merchant.merchantSpendLimits", { amount: purchaseControl?.maxSpend ? purchaseControl.maxSpend.toLocaleString() : "10,000" })}</span>
               </div>
               <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             </div>
@@ -674,7 +675,7 @@ export default function MerchantGrowthControlRoom() {
             <div className="p-3 rounded-xl bg-[#FAF9F5] hover:bg-emerald-50/40 border border-[#E6E0D6] hover:border-emerald-300 hover:shadow-2xs transition-all flex items-center justify-between group">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="font-medium text-[#172033]">Quantity Controls (Max 5/SKU)</span>
+                <span className="font-medium text-[#172033]">{t("merchant.quantityControls")}</span>
               </div>
               <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             </div>
@@ -682,7 +683,7 @@ export default function MerchantGrowthControlRoom() {
             <div className="p-3 rounded-xl bg-[#FAF9F5] hover:bg-emerald-50/40 border border-[#E6E0D6] hover:border-emerald-300 hover:shadow-2xs transition-all flex items-center justify-between group">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="font-medium text-[#172033]">Strict Domestic INR Settlement</span>
+                <span className="font-medium text-[#172033]">{t("merchant.domesticInrSettlement")}</span>
               </div>
               <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             </div>
@@ -690,7 +691,7 @@ export default function MerchantGrowthControlRoom() {
             <div className="p-3 rounded-xl bg-[#FAF9F5] hover:bg-emerald-50/40 border border-[#E6E0D6] hover:border-emerald-300 hover:shadow-2xs transition-all flex items-center justify-between group">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="font-medium text-[#172033]">Explicit Buyer Consent Mandatory</span>
+                <span className="font-medium text-[#172033]">{t("merchant.buyerConsentMandatory")}</span>
               </div>
               <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             </div>
@@ -698,7 +699,7 @@ export default function MerchantGrowthControlRoom() {
             <div className="p-3 rounded-xl bg-[#FAF9F5] hover:bg-emerald-50/40 border border-[#E6E0D6] hover:border-emerald-300 hover:shadow-2xs transition-all flex items-center justify-between group">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="font-medium text-[#172033]">Razorpay Payment Gating</span>
+                <span className="font-medium text-[#172033]">{t("merchant.razorpayPaymentGating")}</span>
               </div>
               <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             </div>
@@ -706,7 +707,7 @@ export default function MerchantGrowthControlRoom() {
             <div className="p-3 rounded-xl bg-[#FAF9F5] hover:bg-emerald-50/40 border border-[#E6E0D6] hover:border-emerald-300 hover:shadow-2xs transition-all flex items-center justify-between group">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="font-medium text-[#172033]">Zero Frontend Secret Exposure</span>
+                <span className="font-medium text-[#172033]">{t("merchant.zeroSecretExposure")}</span>
               </div>
               <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             </div>
@@ -714,7 +715,7 @@ export default function MerchantGrowthControlRoom() {
             <div className="p-3 rounded-xl bg-[#FAF9F5] hover:bg-emerald-50/40 border border-[#E6E0D6] hover:border-emerald-300 hover:shadow-2xs transition-all flex items-center justify-between group">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="font-medium text-[#172033]">Tamper-Proof CommerceEvent Audit</span>
+                <span className="font-medium text-[#172033]">{t("merchant.tamperProofAudit")}</span>
               </div>
               <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             </div>
@@ -1484,16 +1485,16 @@ export default function MerchantGrowthControlRoom() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-extrabold text-base text-[#172033] tracking-tight">
-                      Incremental GMV Evidence & Attribution Chain
+                    <h3 className="font-extrabold text-base text-[#172033] tracking-tight" aria-label="Incremental GMV Evidence & Attribution Chain">
+                      {t("merchant.evidenceModalTitle")}
                     </h3>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9.5px] font-bold flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>Verified</span>
+                      <span>{t("merchant.verified")}</span>
                     </span>
                   </div>
                   <p className="text-[11px] text-[#667085]">
-                    Mathematical proof derived from verified 7-step CommerceEvent trail
+                    {t("merchant.evidenceSubtitle")}
                   </p>
                 </div>
               </div>
@@ -1516,7 +1517,7 @@ export default function MerchantGrowthControlRoom() {
                   <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-[#172033] to-slate-900 text-white shadow-lg space-y-3.5 border border-slate-800">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        Attribution Breakdown
+                        {t("merchant.attributionBreakdown")}
                       </span>
                       <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
                         {evidence.strategyId}
@@ -1525,15 +1526,15 @@ export default function MerchantGrowthControlRoom() {
 
                     <div className="space-y-2 font-mono text-[11.5px]">
                       <div className="flex justify-between items-center text-slate-300">
-                        <span>Baseline Cart (Unassisted):</span>
+                        <span>{t("merchant.baselineCart")}</span>
                         <span className="font-bold text-white">₹{evidence.baselineBasket.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center text-[#60A5FA]">
-                        <span className="truncate pr-2">+ Bazaar Companion ({evidence.influencedItem}):</span>
+                        <span className="truncate pr-2">{t("merchant.bazaarCompanion", { item: evidence.influencedItem })}</span>
                         <span className="font-bold shrink-0">+₹{evidence.itemValue.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center pt-2 border-t border-slate-800 text-slate-300 font-semibold">
-                        <span>Final Settled Cart Total:</span>
+                        <span>{t("merchant.finalSettledCartTotal")}</span>
                         <span className="font-bold text-white">₹{evidence.finalBasket.toLocaleString()}</span>
                       </div>
                     </div>
@@ -1543,10 +1544,10 @@ export default function MerchantGrowthControlRoom() {
                       <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white flex items-center justify-between shadow-md">
                         <div>
                           <span className="text-[10px] font-bold tracking-wider uppercase block text-emerald-100">
-                            Attributed Incremental Value
+                            {t("merchant.attributedIncrementalValue")}
                           </span>
                           <span className="text-[10px] text-emerald-100 font-medium">
-                            Conservative single-item lift model
+                            {t("merchant.conservativeModel")}
                           </span>
                         </div>
                         <div className="text-right">
@@ -1562,10 +1563,10 @@ export default function MerchantGrowthControlRoom() {
                   <div className="space-y-2 pt-1">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-[10px] uppercase tracking-wider text-[#667085] block">
-                        Verified Evidence Basis (Conservative Model)
+                        {t("merchant.verifiedEvidenceBasis")}
                       </span>
                       <span className="text-[10px] text-emerald-700 font-bold">
-                        7/7 Steps Verified
+                        {t("merchant.stepsVerified")}
                       </span>
                     </div>
 
@@ -1589,26 +1590,26 @@ export default function MerchantGrowthControlRoom() {
                   {/* Audit References Grid */}
                   <div className="p-3.5 rounded-xl bg-[#FAF9F5] border border-[#E6E0D6] grid grid-cols-2 gap-2.5 text-[10px] font-mono text-slate-600">
                     <div>
-                      <span className="text-[#667085] block font-sans">Active Strategy ID:</span>
+                      <span className="text-[#667085] block font-sans">{t("merchant.activeStrategyId")}</span>
                       <span className="font-bold text-[#172033]">{evidence.strategyId}</span>
                     </div>
                     <div>
-                      <span className="text-[#667085] block font-sans">Razorpay Order ID:</span>
+                      <span className="text-[#667085] block font-sans">{t("merchant.razorpayOrderId")}</span>
                       <span className="font-bold text-[#172033]">{evidence.orderId}</span>
                     </div>
                     <div>
-                      <span className="text-[#667085] block font-sans">Razorpay Payment ID:</span>
+                      <span className="text-[#667085] block font-sans">{t("merchant.razorpayPaymentId")}</span>
                       <span className="font-bold text-[#172033]">{evidence.paymentId}</span>
                     </div>
                     <div>
-                      <span className="text-[#667085] block font-sans">Gateway Settlement:</span>
-                      <span className="font-bold text-emerald-700">Verified Test Mode Webhook</span>
+                      <span className="text-[#667085] block font-sans">{t("merchant.gatewaySettlement")}</span>
+                      <span className="font-bold text-emerald-700">{t("merchant.verifiedWebhook")}</span>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div className="py-8 text-center text-xs text-[#667085]">
-                  Loading evidence calculation...
+                  {t("merchant.loadingEvidence")}
                 </div>
               )}
             </div>
@@ -1616,7 +1617,7 @@ export default function MerchantGrowthControlRoom() {
             {/* 3. PINNED STICKY FOOTER */}
             <div className="px-6 py-3.5 border-t border-[#E6E0D6] bg-[#FAF9F5] flex items-center justify-between shrink-0 z-10">
               <span className="text-[11px] text-[#667085]">
-                Press <kbd className="px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono text-[10px]">ESC</kbd> or click outside to dismiss
+                {t("merchant.dismissHint")}
               </span>
 
               <button
@@ -1624,7 +1625,7 @@ export default function MerchantGrowthControlRoom() {
                 className="px-5 py-2 rounded-xl bg-[#172033] hover:bg-slate-800 text-white font-bold text-xs cursor-pointer shadow-xs active:scale-95 transition-all flex items-center gap-1.5"
               >
                 <X className="w-3.5 h-3.5" />
-                <span>Close Window</span>
+                <span>{t("merchant.closeWindow")}</span>
               </button>
             </div>
           </div>
