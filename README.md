@@ -1,4 +1,4 @@
-# ⚡ Raya by Razorpay — Autonomous Multilingual AI Shopping Agent & Bazaar AI Merchant Growth Engine
+# ⚡ Raya by Razorpay
 
 > **"Raya buys. Bazaar grows. Razorpay moves the money."**
 
