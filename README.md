@@ -1,3 +1,8 @@
+Raya is live at:
+https://raya-by-razorpay.vercel.app/
+
+Go try now!
+
 # ⚡ Raya by Razorpay
 
 > **"Raya buys. Bazaar grows. Razorpay moves the money."**
