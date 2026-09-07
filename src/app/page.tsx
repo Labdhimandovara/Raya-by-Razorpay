@@ -724,7 +724,7 @@ export default function RayaHome() {
               className="px-3.5 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs hover:border-[#0A63FF]/50 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
             >
               <span>🌐</span>
-              <span>{t("chat.allStores")}</span>
+              <span>{t("product.allStores")}</span>
             </button>
 
             {/* Dynamic More Stores Dropdown (3 Connected Stores + eBay) */}
