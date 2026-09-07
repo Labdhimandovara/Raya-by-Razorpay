@@ -1,3 +1,6 @@
+# ⚡ Raya by Razorpay
+> **"Raya buys. Bazaar grows. Razorpay moves the money."**
+
 Raya is live at:
 https://raya-by-razorpay.vercel.app/
 
@@ -5,9 +8,6 @@ Merchant Control Room:
 https://raya-by-razorpay.vercel.app/merchant
 
 Go try now!
-
-# ⚡ Raya by Razorpay
-> **"Raya buys. Bazaar grows. Razorpay moves the money."**
 
 **Raya by Razorpay** is an end-to-end agentic commerce ecosystem that unifies buyer-facing autonomous shopping intelligence, multi-store catalog discovery, server-side financial policy safeguards, Razorpay payment processing, and closed-loop merchant growth telemetry with native **5-Language Multilingual Support** across India's primary linguistic regions:
 
@@ -332,23 +332,6 @@ flowchart LR
 
 ---
 
-## 🔬 Repository Technical Truth & Full Repository Audit
-
-| Subsystem / Claim | Actual Implementation in Repository | Verification Status |
-| :--- | :--- | :--- |
-| **Frontend Framework** | Next.js 14.2.8 / 14.2.35 (App Router), React 18.3.1, TypeScript 5.5.4, Tailwind CSS 3.4.10 | **Verified** in `package.json` |
-| **Conversational AI Model** | Google Gemini 1.5 Flash (`gemini-1.5-flash`) via native REST generateContent API with tool declarations | **Verified** in `src/app/api/chat/route.ts` |
-| **Model Tool Declarations** | 6 function tools: `listConnectedStores`, `listProducts`, `viewCart`, `addToCart`, `checkoutOrder`, `getOrderHistory` | **Verified** in `src/lib/gemini.ts` |
-| **Multi-Store Discovery** | Multi-store catalog query across NexusStore, ThreadVault, PixelMart, and eBay with multi-store balanced interleaving | **Verified** in `src/lib/gemini.ts` & `src/app/page.tsx` |
-| **Live eBay Integration** | Live eBay Browse API search via client credentials OAuth2 with certified refurbished fallbacks and USD➔INR conversion ($1 = ₹87.0) | **Verified** in `src/lib/gemini.ts` |
-| **Payment Gateway** | Razorpay Test Mode via `https://api.razorpay.com/v1/orders` with client checkout modal and HMAC-SHA256 signature verification | **Verified** in `src/app/api/razorpay/*` & `src/lib/razorpay.ts` |
-| **Model Context Protocol (MCP)** | Official Razorpay MCP server is **future architecture**. Core flow uses Razorpay Test Mode APIs and cryptographic verification. An external REST/OpenAPI bridge exposes store tools to AI clients. | **Honest Technical Truth** |
-| **Multilingual Coverage** | 5 complete JSON dictionaries (`en`, `hi`, `mr`, `ta`, `bn`) with 337 keys each (100% parity), managed via React Context (`LocaleProvider`) | **Verified** in `src/locales/*` & automated test suite |
-| **Database & Persistence** | Server-side in-memory singleton (`src/lib/merchant-store.ts`) + browser `localStorage` (`raya_sessions_v2`, `raya_messages_v2`, `raya_bazaar_locale`). No external SQL/NoSQL database in this repository. | **Honest Scope** |
-| **Merchant Control Room** | Interactive dashboard at `/merchant` with spend cap slider, strategy toggles, Decision Ledger, Copilot drawer, and failure demos | **Verified** in `src/app/merchant/page.tsx` |
-
----
-
 ## 🤖 Raya — The Main Autonomous Shopping Agent
 
 Raya is the **central protagonist** of this commerce experience. Raya is designed not as a generic chatbot, but as an **orchestration layer for agentic commerce**:
@@ -627,43 +610,6 @@ node tests/track01-verification.test.js
 - **Result**: `✓ All Track 01 automated checks passed (5/5)`.
 
 ---
-
-## 🔐 Environment Variables & Security
-
-Create a `.env.local` file in your root directory:
-
-```env
-# ==========================================
-# AI Model Configuration (Google Gemini)
-# ==========================================
-# Required for dynamic Gemini reasoning. If omitted, deterministic fallbacks ensure continuous operation.
-GEMINI_API_KEY=your_google_gemini_api_key
-
-# ==========================================
-# Razorpay Payment Gateway (Test Mode)
-# ==========================================
-# Test Mode Key ID (publicly visible in client checkout)
-NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_TTwic3LGIevFKg
-
-# Secret Key (server-side only; used for HMAC-SHA256 signature verification)
-RAZORPAY_KEY_SECRET=your_razorpay_test_secret
-
-# ==========================================
-# Bazaar AI Store Bridge & Microservices
-# ==========================================
-BAZAAR_BRIDGE_URL=https://bazaar-ai-backend.onrender.com/api/bridge
-NEXUS_API_URL=https://demo-shop-api.onrender.com/api
-THREADVAULT_API_URL=https://threadvault-api-i120.onrender.com/api
-PIXELMART_API_URL=https://pixelmart-api-2d25.onrender.com/api
-
-# ==========================================
-# Optional: eBay Developer Credentials
-# ==========================================
-EBAY_CLIENT_ID=your_ebay_client_id
-EBAY_CLIENT_SECRET=your_ebay_client_secret
-EBAY_ENVIRONMENT=production
-EBAY_MARKETPLACE_ID=EBAY_US
-```
 
 ### Security Audit Principles
 - **No Real Money Movement**: Operates strictly in Razorpay Test Mode (`rzp_test_...`).
