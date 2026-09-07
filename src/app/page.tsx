@@ -6,13 +6,24 @@ import { RayaChat, Message } from "@/components/raya-chat";
 import { RayaInput } from "@/components/raya-input";
 import { CartDrawer, BasketPanel, CartItem } from "@/components/cart-drawer";
 import { ChatSidebar, ChatSession, SavedCart } from "@/components/chat-sidebar";
-import { CONNECTED_STORES, SAMPLE_NEXUS_PRODUCTS, SAMPLE_EBAY_PRODUCTS } from "@/lib/gemini";
+import {
+  CONNECTED_STORES,
+  SAMPLE_NEXUS_PRODUCTS,
+  SAMPLE_THREADVAULT_PRODUCTS,
+  SAMPLE_PIXELMART_PRODUCTS,
+  SAMPLE_EBAY_PRODUCTS,
+} from "@/lib/gemini";
 import { Layers } from "lucide-react";
 import { triggerRazorpayPayment } from "@/lib/razorpay";
 import { useLocale, Locale } from "@/lib/locale-context";
 
 function lookupProduct(productId: string) {
-  const all = [...SAMPLE_NEXUS_PRODUCTS, ...SAMPLE_EBAY_PRODUCTS];
+  const all = [
+    ...SAMPLE_NEXUS_PRODUCTS,
+    ...SAMPLE_THREADVAULT_PRODUCTS,
+    ...SAMPLE_PIXELMART_PRODUCTS,
+    ...SAMPLE_EBAY_PRODUCTS,
+  ];
   return all.find((p) => p.id === productId);
 }
 

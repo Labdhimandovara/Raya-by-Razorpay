@@ -656,6 +656,18 @@ export const SAMPLE_NEXUS_PRODUCTS = [
     storeName: "NexusStore",
     storeUrl: "https://demo-shop-frontend.vercel.app",
   },
+  {
+    id: "nx-smart-fit-watch",
+    name: "Nexus ChronoPulse Smart Watch with ECG & OLED Display",
+    description: "Precision health tracking, aerospace titanium case, always-on AMOLED display, and 7-day battery life.",
+    price: 6499,
+    stock: 30,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop",
+    store: "nexusstore",
+    storeName: "NexusStore",
+    storeUrl: "https://demo-shop-frontend.vercel.app",
+  },
 ];
 
 export const SAMPLE_THREADVAULT_PRODUCTS = [
@@ -679,6 +691,18 @@ export const SAMPLE_THREADVAULT_PRODUCTS = [
     stock: 15,
     category: "Tech",
     imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop",
+    store: "threadvault",
+    storeName: "ThreadVault",
+    storeUrl: "https://threadvault-frontend.vercel.app",
+  },
+  {
+    id: "thread-artisan-earphones",
+    name: "Artisan Hybrid In-Ear Audio Monitors (IEMs)",
+    description: "High-resolution dual balanced armature drivers, precision acoustic chamber, and detachable silver-plated cable.",
+    price: 4799,
+    stock: 20,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop",
     store: "threadvault",
     storeName: "ThreadVault",
     storeUrl: "https://threadvault-frontend.vercel.app",
@@ -771,6 +795,18 @@ export const SAMPLE_PIXELMART_PRODUCTS = [
     storeUrl: "https://pixelmart-frontend.vercel.app",
   },
   {
+    id: "px-rgb-gaming-headset",
+    name: "PixelMart CyberPulse RGB 7.1 Spatial Gaming Headset",
+    description: "50mm neodymium audio drivers, virtual 7.1 surround sound, noise-cancelling broadcast mic, and RGB aura sync.",
+    price: 3999,
+    stock: 35,
+    category: "Tech",
+    imageUrl: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&auto=format&fit=crop",
+    store: "pixelmart",
+    storeName: "PixelMart",
+    storeUrl: "https://pixelmart-frontend.vercel.app",
+  },
+  {
     id: "px-4k-capture-card",
     name: "4K60 Pro HDR Ultra-Low Latency Video Capture Card",
     description: "PCIe and external USB 3.2 video capture interface capturing uncompressed 4K60 HDR10 with VRR passthrough.",
@@ -857,7 +893,8 @@ function matchesUniformCategory(product: any, query: string, requestedCategory?:
     q.includes("sound") ||
     q.includes("headset") ||
     q.includes("dac") ||
-    q.includes("speaker");
+    q.includes("speaker") ||
+    q.includes("iem");
 
   if (isAudioQuery) {
     const isAudioProduct =
@@ -871,11 +908,14 @@ function matchesUniformCategory(product: any, query: string, requestedCategory?:
       name.includes("subwoofer") ||
       name.includes("amp") ||
       name.includes("microphone") ||
+      name.includes("iem") ||
       desc.includes("headphone") ||
       desc.includes("earphone") ||
       desc.includes("noise-cancelling") ||
       desc.includes("noise cancelling") ||
-      desc.includes("acoustic");
+      desc.includes("acoustic") ||
+      desc.includes("audio") ||
+      desc.includes("spatial");
 
     if (!isAudioProduct) return false;
   }
@@ -900,7 +940,8 @@ function matchesUniformCategory(product: any, query: string, requestedCategory?:
       name.includes("terminal") ||
       desc.includes("laptop") ||
       desc.includes("notebook") ||
-      desc.includes("touchscreen");
+      desc.includes("touchscreen") ||
+      desc.includes("macbook");
 
     if (!isComputerProduct) return false;
   }
@@ -911,10 +952,28 @@ function matchesUniformCategory(product: any, query: string, requestedCategory?:
     return false;
   }
 
-  // General keyword check if neither audio nor electronics specifically
-  if (q && !isAudioQuery && !isElectronicsQuery) {
-    const matchesKeyword = name.includes(q) || desc.includes(q) || cat.includes(q);
-    if (!matchesKeyword) return false;
+  // Clothing / Apparel query check
+  const isClothingQuery =
+    q.includes("cloth") ||
+    q.includes("apparel") ||
+    q.includes("fashion") ||
+    q.includes("jacket") ||
+    q.includes("sweater") ||
+    q.includes("tee") ||
+    q.includes("shirt") ||
+    q.includes("wear");
+  if (isClothingQuery && cat !== "clothing") {
+    return false;
+  }
+
+  // General keyword check if neither audio, computer, electronics, nor clothing specifically
+  if (q && !isAudioQuery && !isComputerQuery && !isElectronicsQuery && !isClothingQuery) {
+    const genericTerms = ["all", "product", "products", "item", "items", "anything", "shop", "store", "everything", "best", "show", "find", "options", "give"];
+    const words = q.split(/\s+/).filter((w) => !genericTerms.includes(w) && w.length > 2);
+    if (words.length > 0) {
+      const matchesKeyword = words.some((w) => name.includes(w) || desc.includes(w) || cat.includes(w));
+      if (!matchesKeyword) return false;
+    }
   }
 
   return true;
@@ -953,8 +1012,8 @@ function calculateBuyerScoreAndRanking(products: any[], query: string, maxPrice?
       matchReason = maxPrice
         ? `Best verified headphones strictly within your ₹${maxPrice.toLocaleString()} budget with rich acoustics.`
         : "Top recommended studio-grade acoustic headphones with excellent audio clarity.";
-    } else if (name.includes("earbud")) {
-      matchReason = "Compact true wireless earbuds with active noise cancellation and ergonomic fit.";
+    } else if (name.includes("earbud") || name.includes("iem")) {
+      matchReason = "Compact true wireless earbuds or IEMs with active noise cancellation and ergonomic fit.";
     } else if (p.category === "Tech") {
       matchReason = "High-performance tech hardware with verified specifications and top buyer ratings.";
     } else {
@@ -1007,7 +1066,7 @@ export async function executeBridgeTool(
         const category = args?.category;
         const maxPrice = typeof args?.maxPrice === "number" ? args.maxPrice : undefined;
 
-        // Direct eBay search via live eBay Browse API
+        // Direct eBay search via live eBay Browse API if requested specifically
         if (store === "ebay") {
           let liveEbay = await searchRealEbay(search, maxPrice, 10);
           let filtered = liveEbay.filter((p) => matchesUniformCategory(p, search, category));
@@ -1018,95 +1077,145 @@ export async function executeBridgeTool(
           return { status: "SUCCESS", data: filtered };
         }
 
-        const params = new URLSearchParams();
-        params.append("store", store);
-        if (search) params.append("search", search);
-        if (category) params.append("category", category);
-        if (maxPrice !== undefined) params.append("maxPrice", String(maxPrice));
+        // Multi-Store Discovery (or single merchant store)
+        let collectedProducts: any[] = [];
 
+        // 1. Try querying remote bridge if available
         try {
+          const params = new URLSearchParams();
+          params.append("store", store);
+          if (search) params.append("search", search);
+          if (category) params.append("category", category);
+          if (maxPrice !== undefined) params.append("maxPrice", String(maxPrice));
+
           const url = `${normalizedBase}/products?${params.toString()}`;
-          const res = await fetch(url, { signal: AbortSignal.timeout(1200) });
+          const res = await fetch(url, { signal: AbortSignal.timeout(1500) });
           if (res.ok) {
             const json = await res.json();
-            let products = json.products || json.data?.products || (Array.isArray(json) ? json : []);
-
-            // Apply uniform matching and price limits if bridge missed them
-            products = products.filter((p: any) => matchesUniformCategory(p, search, category));
-            if (maxPrice !== undefined) {
-              products = products.filter((p: any) => (p.price || 0) <= maxPrice);
+            const bridgeProds = json.products || json.data?.products || (Array.isArray(json) ? json : []);
+            if (Array.isArray(bridgeProds) && bridgeProds.length > 0) {
+              for (const p of bridgeProds) {
+                const sId = p.store || store;
+                collectedProducts.push({
+                  ...p,
+                  store: sId,
+                  storeName: p.storeName || CONNECTED_STORES[sId]?.name || "Store",
+                  storeUrl: p.storeUrl || CONNECTED_STORES[sId]?.frontendUrl || "",
+                  productUrl: p.productUrl || (sId === "ebay" ? "https://www.ebay.com" : undefined),
+                  isEbay: sId === "ebay" || p.source === "ebay",
+                });
+              }
             }
-            products = calculateBuyerScoreAndRanking(products, search, maxPrice);
-
-            products = products.map((p: any) => ({
-              ...p,
-              store: p.store || store,
-              storeName: p.storeName || CONNECTED_STORES[p.store || store]?.name || "Store",
-              storeUrl: p.storeUrl || CONNECTED_STORES[p.store || store]?.frontendUrl || "",
-              productUrl: p.productUrl || (p.store === "ebay" ? "https://www.ebay.com" : undefined),
-              isEbay: p.store === "ebay" || p.source === "ebay",
-            }));
-            return { status: "SUCCESS", data: products };
           }
-        } catch (e) {
+        } catch {
           // Fast failover to pre-warmed multi-store catalogs without waiting
         }
 
-        // Direct Fallback to Store Endpoints with fast 1.2s timeout
+        // 2. Identify stores that need catalog fulfillment
         const targetStores =
           store === "all"
-            ? Object.values(CONNECTED_STORES).filter((s) => s.id !== "ebay")
-            : [CONNECTED_STORES[store] || CONNECTED_STORES.nexusstore];
+            ? ["nexusstore", "threadvault", "pixelmart"]
+            : [store];
 
-        const directPromises = targetStores.map(async (st) => {
-          try {
-            if (st.id === "nexusstore") return SAMPLE_NEXUS_PRODUCTS;
-            if (st.id === "threadvault") return SAMPLE_THREADVAULT_PRODUCTS;
-            if (st.id === "pixelmart") return SAMPLE_PIXELMART_PRODUCTS;
+        const catalogMap: Record<string, any[]> = {
+          nexusstore: SAMPLE_NEXUS_PRODUCTS,
+          threadvault: SAMPLE_THREADVAULT_PRODUCTS,
+          pixelmart: SAMPLE_PIXELMART_PRODUCTS,
+        };
 
-            const searchParams = new URLSearchParams();
-            if (search) searchParams.append("search", search);
-            if (category) searchParams.append("category", category);
-            const r = await fetch(`${st.baseUrl}/products?${searchParams.toString()}`, { signal: AbortSignal.timeout(1200) });
-            if (!r.ok) {
-              if (st.id === "nexusstore") return SAMPLE_NEXUS_PRODUCTS;
-              if (st.id === "threadvault") return SAMPLE_THREADVAULT_PRODUCTS;
-              if (st.id === "pixelmart") return SAMPLE_PIXELMART_PRODUCTS;
-              return [];
+        for (const stId of targetStores) {
+          // If remote bridge didn't return items for this merchant store, populate from direct or verified catalog
+          const existingForStore = collectedProducts.filter((p) => p.store === stId);
+          if (existingForStore.length === 0 && catalogMap[stId]) {
+            const storeInfo = CONNECTED_STORES[stId];
+            let storeProds: any[] = [];
+
+            // Attempt direct microservice call with quick timeout
+            if (storeInfo?.baseUrl) {
+              try {
+                const sp = new URLSearchParams();
+                if (search) sp.append("search", search);
+                if (category) sp.append("category", category);
+                const directRes = await fetch(`${storeInfo.baseUrl}/products?${sp.toString()}`, {
+                  signal: AbortSignal.timeout(1200),
+                });
+                if (directRes.ok) {
+                  const dj = await directRes.json();
+                  const dp = dj.data?.products || dj.products || [];
+                  if (Array.isArray(dp) && dp.length > 0) {
+                    storeProds = dp.map((p: any) => ({
+                      ...p,
+                      store: stId,
+                      storeName: storeInfo.name,
+                      storeUrl: storeInfo.frontendUrl,
+                    }));
+                  }
+                }
+              } catch {}
             }
-            const j = await r.json();
-            const prods = j.data?.products || j.products || [];
-            return prods.map((p: any) => ({
-              ...p,
-              store: st.id,
-              storeName: st.name,
-              storeUrl: st.frontendUrl,
-            }));
-          } catch {
-            if (st.id === "nexusstore") return SAMPLE_NEXUS_PRODUCTS;
-            if (st.id === "threadvault") return SAMPLE_THREADVAULT_PRODUCTS;
-            if (st.id === "pixelmart") return SAMPLE_PIXELMART_PRODUCTS;
-            return [];
+
+            // Resilient fallback to pre-warmed verified catalog
+            if (storeProds.length === 0) {
+              storeProds = catalogMap[stId].map((p) => ({
+                ...p,
+                store: stId,
+                storeName: storeInfo?.name || stId,
+                storeUrl: storeInfo?.frontendUrl || "",
+              }));
+            }
+
+            collectedProducts.push(...storeProds);
           }
-        });
-
-        let directResults = (await Promise.all(directPromises)).flat();
-
-        // If "all" was requested, also append live real eBay items
-        if (store === "all") {
-          const liveEbay = await searchRealEbay(search, maxPrice, 4);
-          directResults.push(...liveEbay);
         }
 
-        // Uniform Category Matching
-        directResults = directResults.filter((p) => matchesUniformCategory(p, search, category));
+        // 3. For multi-store queries ('all'), append live eBay items (capped at 2 items so eBay complements rather than dominates)
+        if (store === "all") {
+          const ebayExisting = collectedProducts.filter((p) => p.store === "ebay" || p.isEbay);
+          if (ebayExisting.length === 0) {
+            const liveEbay = await searchRealEbay(search, maxPrice, 2);
+            collectedProducts.push(...liveEbay);
+          }
+        }
 
-        // Strict Price Limit Filter
+        // 4. Uniform Category Matching
+        let directResults = collectedProducts.filter((p) => matchesUniformCategory(p, search, category));
+
+        // 5. Strict Price Limit Filter
         if (maxPrice !== undefined) {
           directResults = directResults.filter((p) => (p.price || 0) <= maxPrice);
         }
 
-        // Buyer Match Score & Ranking
+        // 6. Multi-Store Balanced Representation (DO NOT DEFAULT TO ONLY EBAY)
+        // Group by store and interleave top items per store so each merchant shines
+        if (store === "all" && directResults.length > 0) {
+          const byStore: Record<string, any[]> = {};
+          for (const p of directResults) {
+            const sKey = p.store || "nexusstore";
+            if (!byStore[sKey]) byStore[sKey] = [];
+            byStore[sKey].push(p);
+          }
+
+          // Balance across stores: NexusStore, ThreadVault, PixelMart, eBay
+          const balanced: any[] = [];
+          const storeOrder = ["nexusstore", "threadvault", "pixelmart", "ebay"];
+          const presentKeys = Object.keys(byStore);
+          const orderedKeys = [
+            ...storeOrder.filter((k) => presentKeys.includes(k)),
+            ...presentKeys.filter((k) => !storeOrder.includes(k)),
+          ];
+          const maxStoreLen = Math.max(...orderedKeys.map((k) => byStore[k].length));
+
+          for (let i = 0; i < maxStoreLen; i++) {
+            for (const k of orderedKeys) {
+              if (byStore[k][i]) {
+                balanced.push(byStore[k][i]);
+              }
+            }
+          }
+          directResults = balanced;
+        }
+
+        // 7. Buyer Match Score & Ranking
         directResults = calculateBuyerScoreAndRanking(directResults, search, maxPrice);
 
         return { status: "SUCCESS", data: directResults };
