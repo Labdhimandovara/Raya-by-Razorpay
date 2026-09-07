@@ -820,7 +820,8 @@ export function CartDrawer(props: CartDrawerProps) {
   if (!props.isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-raya-navy/50 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-      <div className="w-full sm:max-w-md bg-white h-full shadow-2xl flex flex-col justify-between border-l border-raya-lightGray">
+      <div className="fixed inset-0 cursor-pointer" onClick={props.onClose} aria-label="Close cart" />
+      <div className="relative z-10 w-full sm:max-w-md bg-white h-full shadow-2xl flex flex-col justify-between border-l border-raya-lightGray">
         <BasketView {...props} isDrawer={true} />
       </div>
     </div>

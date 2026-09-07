@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { RayaHeader } from "@/components/raya-header";
 import { RayaChat, Message } from "@/components/raya-chat";
 import { RayaInput } from "@/components/raya-input";
-import { CartDrawer, BasketPanel, CartItem } from "@/components/cart-drawer";
+import { CartDrawer, CartItem } from "@/components/cart-drawer";
 import { ChatSidebar, ChatSession, SavedCart } from "@/components/chat-sidebar";
 import {
   CONNECTED_STORES,
@@ -724,7 +724,7 @@ export default function RayaHome() {
               className="px-3.5 py-1 rounded-full bg-white hover:bg-[#F7F5F0] active:scale-95 border border-[#E6E0D6] text-[#172033] text-xs font-semibold whitespace-nowrap shadow-2xs hover:border-[#0A63FF]/50 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
             >
               <span>🌐</span>
-              <span>{t("nav.storesConnected")}</span>
+              <span>{t("chat.allStores")}</span>
             </button>
 
             {/* Dynamic More Stores Dropdown (3 Connected Stores + eBay) */}
@@ -805,38 +805,7 @@ export default function RayaHome() {
           </div>
         </main>
       </div>
-
-      {/* 3. RIGHT COLUMN: Permanent Fixed Basket on Desktop (xl: screens) */}
-      <div className="hidden xl:flex h-full shrink-0">
-        <BasketPanel
-          items={cartItems}
-          total={cartTotalAmount}
-          budget={budget}
-          onCheckout={handleCheckoutFromDrawer}
-          onRemoveItem={handleRemoveFromCart}
-          onUpdateQuantity={handleUpdateQuantity}
-          onClearCart={handleClearCart}
-          onAddToCart={handleAddToCartFromCard}
-          onPaymentSuccess={({ orderId, paymentId }) => {
-            const paidCart: SavedCart = {
-              id: `order_paid_${Date.now()}`,
-              title: `Paid Order (${cartItems.length} items)`,
-              createdAt: Date.now(),
-              items: [...cartItems],
-              total: cartTotalAmount,
-              status: "PAID_ORDER",
-              orderId,
-            };
-            persistSavedCarts([paidCart, ...savedCarts]);
-            updateActiveCart([]);
-            handleSendMessage(
-              `Payment completed successfully via Razorpay Test Mode! Razorpay Payment ID: ${paymentId}, Order ID: ${orderId}. Please confirm my receipt and tracking.`
-            );
-          }}
-        />
-      </div>
-
-      {/* Mobile/Tablet Slide-out Cart Drawer (< xl: screens) */}
+      {/* Slide-out Cart Drawer (Opens when cart icon is clicked) */}
       <CartDrawer
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
