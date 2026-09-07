@@ -195,8 +195,7 @@ REAL LIVE DATA:
 - Total Orders on Razorpay: ${totalOrders}
 - Active Spend Cap Guardrail: ₹${spendLimit.toLocaleString()} (Enforced via 6 Financial Policy Gates)
 - Recent Orders (Top 3):
-${orders.slice(0, 3).map((o: any, idx: number) => `  ${idx + 1}. [${o.id}] ₹${o.amount.toLocaleString()} (${o.store}) - ${o.agentHandshake}`).join("
-")}
+${orders.slice(0, 3).map((o: any, idx: number) => `  ${idx + 1}. [${o.id}] ₹${o.amount.toLocaleString()} (${o.store}) - ${o.agentHandshake}`).join('\n')}
 
 MERCHANT'S QUESTION:
 "${message}"
