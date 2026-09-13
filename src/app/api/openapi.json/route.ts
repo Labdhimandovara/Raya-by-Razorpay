@@ -1,0 +1,83 @@
+import { NextResponse } from "next/server";
+import { RAYA_MCP_TOOLS } from "@/mcp/tools";
+
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  const openApiSpec = {
+    openapi: "3.0.3",
+    info: {
+      title: "Raya by Razorpay Agentic Commerce API",
+      description:
+        "OpenAPI 3.0 specification for ChatGPT and external AI agents connecting to Raya by Razorpay multi-store commerce, genuine recommendations, 6-gate safety safeguards, and Razorpay settlements.",
+      version: "1.0.0",
+    },
+    servers: [
+      {
+        url: "https://raya-by-razorpay.vercel.app",
+        description: "Production Server",
+      },
+      {
+        url: "http://localhost:3005",
+        description: "Local Development Server",
+      },
+    ],
+    paths: {
+      "/api/mcp": {
+        get: {
+          summary: "List MCP Tools & Capabilities",
+          description: "Returns metadata for all 9 Raya MCP tools.",
+          responses: {
+            "200": {
+              description: "Available tools list",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean" },
+                      tools: { type: "array", items: { type: "object" } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        post: {
+          summary: "Execute Raya MCP Tool / JSON-RPC",
+          description: "Execute any of the 9 Raya MCP tools (search_products, get_product, compare_products, create_cart, get_cart, add_to_cart, prepare_checkout, request_purchase_approval, get_order).",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    jsonrpc: { type: "string", default: "2.0" },
+                    id: { type: "string", default: "1" },
+                    method: { type: "string", enum: ["tools/list", "tools/call", "initialize"] },
+                    params: {
+                      type: "object",
+                      properties: {
+                        name: { type: "string" },
+                        arguments: { type: "object" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Tool execution result",
+            },
+          },
+        },
+      },
+    },
+  };
+
+  return NextResponse.json(openApiSpec);
+}

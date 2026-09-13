@@ -966,8 +966,33 @@ function matchesUniformCategory(product: any, query: string, requestedCategory?:
     return false;
   }
 
-  // General keyword check if neither audio, computer, electronics, nor clothing specifically
-  if (q && !isAudioQuery && !isComputerQuery && !isElectronicsQuery && !isClothingQuery) {
+  // Smartphone / Mobile query check
+  const isPhoneQuery =
+    q.includes("phone") ||
+    q.includes("smartphone") ||
+    q.includes("mobile") ||
+    q.includes("android") ||
+    q.includes("iphone") ||
+    q.includes("galaxy") ||
+    q.includes("nord");
+
+  if (isPhoneQuery) {
+    const isPhoneProduct =
+      name.includes("phone") ||
+      name.includes("mobile") ||
+      name.includes("iphone") ||
+      name.includes("galaxy") ||
+      name.includes("smartphone") ||
+      name.includes("nord") ||
+      desc.includes("smartphone") ||
+      desc.includes("phone") ||
+      desc.includes("5g");
+
+    if (!isPhoneProduct) return false;
+  }
+
+  // General keyword check if neither audio, computer, electronics, clothing, nor phone specifically
+  if (q && !isAudioQuery && !isComputerQuery && !isElectronicsQuery && !isClothingQuery && !isPhoneQuery) {
     const genericTerms = ["all", "product", "products", "item", "items", "anything", "shop", "store", "everything", "best", "show", "find", "options", "give"];
     const words = q.split(/\s+/).filter((w) => !genericTerms.includes(w) && w.length > 2);
     if (words.length > 0) {
@@ -981,39 +1006,85 @@ function matchesUniformCategory(product: any, query: string, requestedCategory?:
 
 function calculateBuyerScoreAndRanking(products: any[], query: string, maxPrice?: number): any[] {
   const q = (query || "").toLowerCase().trim();
+  const isCheapestIntent = /\b(cheapest|lowest price|most affordable|least expensive)\b/i.test(q);
 
   let enriched = products.map((p) => {
-    let score = 84;
+    let score = 80;
     const name = (p.name || "").toLowerCase();
     const desc = (p.description || "").toLowerCase();
+    const fullText = `${name} ${desc}`;
 
     // Exact keyword relevance
     if (q) {
-      if (name.includes(q)) score += 8;
+      if (name.includes(q)) score += 6;
       if (desc.includes(q)) score += 3;
     }
 
-    // Budget fit
-    if (maxPrice && maxPrice > 0) {
-      const ratio = p.price / maxPrice;
-      if (ratio <= 0.6) score += 5;
-      else if (ratio <= 0.85) score += 3;
-      else if (ratio <= 1.0) score += 1;
+    // Hardware specifications & quality evaluation
+    let qualityPoints = 0;
+    if (fullText.includes("anc") || fullText.includes("noise-cancelling") || fullText.includes("noise cancelling")) qualityPoints += 4;
+    if (fullText.includes("bio-cellulose") || fullText.includes("planar magnetic") || fullText.includes("ess sabre")) qualityPoints += 4;
+    if (fullText.includes("certified") || fullText.includes("warranty")) qualityPoints += 3;
+    if (fullText.includes("titanium") || fullText.includes("cashmere") || fullText.includes("carbon fiber")) qualityPoints += 3;
+    if (fullText.includes("oled") || fullText.includes("rtx") || fullText.includes("240hz")) qualityPoints += 4;
+
+    // Check specific user priorities
+    if (/\b(gaming|games)\b/i.test(q) && (fullText.includes("rtx") || fullText.includes("gaming") || fullText.includes("hall-effect") || fullText.includes("spatial"))) {
+      qualityPoints += 5;
+    }
+    if (/\b(travel|portable)\b/i.test(q) && (fullText.includes("anc") || fullText.includes("noise cancelling") || fullText.includes("battery"))) {
+      qualityPoints += 5;
+    }
+    if (/\b(battery)\b/i.test(q) && (fullText.includes("battery") || fullText.includes("playtime") || fullText.includes("5000mah"))) {
+      qualityPoints += 4;
     }
 
-    // Bonus for noise cancellation / certified
-    if (name.includes("certified") || desc.includes("certified")) score += 2;
-    if (name.includes("anc") || name.includes("noise-cancelling")) score += 2;
+    score += Math.min(15, qualityPoints);
 
-    score = Math.min(score, 99);
+    // Budget & Value-for-Money Evaluation
+    // IMPORTANT: Budget is treated as a CONSTRAINT, not a reason to prefer cheap products!
+    if (maxPrice && maxPrice > 0) {
+      const price = p.price || 0;
+      if (price <= maxPrice) {
+        if (isCheapestIntent) {
+          // Explicit intent is CHEAPEST: prioritize lower price within budget
+          const priceSavingRatio = 1 - (price / maxPrice);
+          score += Math.round(priceSavingRatio * 15);
+        } else {
+          // Default intent is BEST VALUE: reward products delivering high quality within constraints
+          // An outstanding product near budget earns high value, whereas cheap-and-weak is not boosted
+          const ratio = price / maxPrice;
+          if (qualityPoints >= 8) {
+            score += 6; // High spec product delivering within budget
+          } else if (ratio >= 0.5 && ratio <= 0.85) {
+            score += 4; // Balanced sweet spot
+          } else {
+            score += 2;
+          }
+        }
+      } else {
+        score -= 20; // Penalty for exceeding budget
+      }
+    }
 
+    score = Math.min(99, Math.max(50, score));
+
+    // Dynamic match reasoning
     let matchReason = "";
     if (name.includes("headphone") || desc.includes("headphone")) {
       matchReason = maxPrice
-        ? `Best verified headphones strictly within your ₹${maxPrice.toLocaleString()} budget with rich acoustics.`
+        ? isCheapestIntent
+          ? `Lowest-priced verified headphones strictly within your ₹${maxPrice.toLocaleString()} budget.`
+          : `Best verified headphones strictly within your ₹${maxPrice.toLocaleString()} budget with rich acoustics and active noise cancellation.`
         : "Top recommended studio-grade acoustic headphones with excellent audio clarity.";
     } else if (name.includes("earbud") || name.includes("iem")) {
       matchReason = "Compact true wireless earbuds or IEMs with active noise cancellation and ergonomic fit.";
+    } else if (name.includes("phone") || desc.includes("phone") || desc.includes("5g")) {
+      matchReason = maxPrice
+        ? isCheapestIntent
+          ? `Lowest-priced smartphone within your ₹${maxPrice.toLocaleString()} budget.`
+          : `Strongest overall smartphone recommendation within your ₹${maxPrice.toLocaleString()} budget.`
+        : "Curated smartphone recommendation with verified specifications.";
     } else if (p.category === "Tech") {
       matchReason = "High-performance tech hardware with verified specifications and top buyer ratings.";
     } else {
@@ -1028,12 +1099,22 @@ function calculateBuyerScoreAndRanking(products: any[], query: string, maxPrice?
   });
 
   // Sort descending by buyerScore
-  enriched.sort((a, b) => (b.buyerScore || 0) - (a.buyerScore || 0));
+  enriched.sort((a, b) => {
+    if (b.buyerScore !== a.buyerScore) {
+      return (b.buyerScore || 0) - (a.buyerScore || 0);
+    }
+    if (isCheapestIntent) {
+      return (a.price || 0) - (b.price || 0);
+    }
+    return (b.price || 0) - (a.price || 0);
+  });
 
   // Mark the #1 item as isBestMatch
   if (enriched.length > 0) {
     enriched[0].isBestMatch = true;
-    enriched[0].matchReason = `⭐ #1 Best Overall Match: Outstanding value and top customer satisfaction ratings.`;
+    enriched[0].matchReason = isCheapestIntent
+      ? `⭐ #1 Lowest Price Match: Most economical option within your budget.`
+      : `⭐ #1 Best Overall Match: Outstanding value and top customer satisfaction ratings.`;
   }
 
   return enriched;
