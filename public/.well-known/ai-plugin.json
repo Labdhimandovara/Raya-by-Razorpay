@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Raya by Razorpay",
+  "name_for_model": "raya_by_razorpay",
+  "description_for_human": "AI shopping assistant for cross-store discovery, value-based recommendations, and Razorpay checkout with buyer safety controls.",
+  "description_for_model": "Connect to Raya multi-store agentic commerce backend. Allows querying products with genuine recommendation scoring, comparing products, managing carts, preparing checkouts, and initiating Razorpay payments with explicit user approval.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://raya-by-razorpay.vercel.app/api/openapi.json"
+  },
+  "logo_url": "https://raya-by-razorpay.vercel.app/logo.png",
+  "contact_email": "support@razorpay.com",
+  "legal_info_url": "https://razorpay.com"
+}

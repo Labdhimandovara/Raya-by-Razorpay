@@ -206,7 +206,7 @@ export async function compareProductsAdapter(args: {
   user_intent?: string;
 }): Promise<{
   success: boolean;
-  comparison: {
+  comparison?: {
     intent: any;
     products: StructuredProduct[];
     verdict: {
@@ -751,7 +751,7 @@ export async function requestPurchaseApprovalAdapter(args: {
   // Find checkout draft
   let draftId = args.checkout_order_id;
   if (!draftId && args.cart_id) {
-    for (const [id, d] of checkoutDrafts.entries()) {
+    for (const [id, d] of Array.from(checkoutDrafts.entries())) {
       if (d.cart_id === args.cart_id && d.status === "READY_FOR_APPROVAL") {
         draftId = id;
         break;
@@ -946,7 +946,7 @@ export async function getOrderAdapter(args: {
   let order = orderRecords.get(order_id);
   if (!order) {
     // Check by razorpay_order_id
-    for (const ord of orderRecords.values()) {
+    for (const ord of Array.from(orderRecords.values())) {
       if (ord.razorpay_order_id === order_id) {
         order = ord;
         break;
